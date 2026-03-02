@@ -1,0 +1,384 @@
+from uuid import UUID
+
+from fastapi import APIRouter, HTTPException, status
+
+from src.application.commands import (
+    AssignTestCommand,
+    CreateMicroSkillCommand,
+    CreateSubjectCommand,
+    CreateTestCommand,
+    CreateTopicCommand,
+    LinkMicroSkillPredecessorsCommand,
+    QuestionInput,
+    StartAttemptCommand,
+    SubmitAttemptCommand,
+    SubmittedAnswerInput,
+)
+from src.application.handlers import (
+    handle_assign_test,
+    handle_create_micro_skill,
+    handle_create_subject,
+    handle_create_test,
+    handle_create_topic,
+    handle_get_attempt_result,
+    handle_link_micro_skill_predecessors,
+    handle_list_micro_skills,
+    handle_list_subjects,
+    handle_list_tests,
+    handle_list_topics,
+    handle_start_attempt,
+    handle_submit_attempt,
+)
+from src.application.queries import (
+    GetAttemptResultQuery,
+    ListMicroSkillsQuery,
+    ListSubjectsQuery,
+    ListTestsQuery,
+    ListTopicsQuery,
+)
+from src.domain.errors import InvariantViolationError, NotFoundError
+from src.infrastructure.uow import InMemoryUnitOfWork
+from src.interface.http.v1.schemas import (
+    AssignmentResponse,
+    AssignTestRequest,
+    AttemptAnswerResponse,
+    AttemptResultResponse,
+    CreateTestRequest,
+    MicroSkillCreateRequest,
+    MicroSkillLinkRequest,
+    MicroSkillResponse,
+    QuestionResponse,
+    StartAttemptRequest,
+    StartAttemptResponse,
+    SubjectCreateRequest,
+    SubjectResponse,
+    SubmitAttemptRequest,
+    SubmitAttemptResponse,
+    TestResponse,
+    TopicCreateRequest,
+    TopicResponse,
+)
+
+router = APIRouter(prefix="/v1", tags=["assessment"])
+uow = InMemoryUnitOfWork()
+
+
+@router.post("/tests", response_model=TestResponse, status_code=status.HTTP_201_CREATED)
+def create_test(body: CreateTestRequest) -> TestResponse:
+    try:
+        test = handle_create_test(
+            CreateTestCommand(
+                subject_code=body.subject_code,
+                grade=body.grade,
+                questions=[
+                    QuestionInput(
+                        node_id=q.node_id,
+                        text=q.text,
+                        answer_key=q.answer_key,
+                        max_score=q.max_score,
+                    )
+                    for q in body.questions
+                ],
+            ),
+            uow=uow,
+        )
+    except NotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except InvariantViolationError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+    return TestResponse(
+        test_id=test.test_id,
+        subject_code=test.subject_code,
+        grade=test.grade,
+        version=test.version,
+        questions=[
+            QuestionResponse(
+                question_id=q.question_id,
+                node_id=q.node_id,
+                text=q.text,
+                max_score=q.max_score,
+            )
+            for q in test.questions
+        ],
+    )
+
+
+@router.get("/tests", response_model=list[TestResponse])
+def list_tests() -> list[TestResponse]:
+    tests = handle_list_tests(ListTestsQuery(), uow=uow)
+    return [
+        TestResponse(
+            test_id=t.test_id,
+            subject_code=t.subject_code,
+            grade=t.grade,
+            version=t.version,
+            questions=[
+                QuestionResponse(
+                    question_id=q.question_id,
+                    node_id=q.node_id,
+                    text=q.text,
+                    max_score=q.max_score,
+                )
+                for q in t.questions
+            ],
+        )
+        for t in tests
+    ]
+
+
+@router.post(
+    "/admin/subjects",
+    response_model=SubjectResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+def create_subject(body: SubjectCreateRequest) -> SubjectResponse:
+    try:
+        subject = handle_create_subject(
+            CreateSubjectCommand(code=body.code, name=body.name), uow=uow
+        )
+    except InvariantViolationError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    return SubjectResponse(code=subject.code, name=subject.name)
+
+
+@router.get("/admin/subjects", response_model=list[SubjectResponse])
+def list_subjects() -> list[SubjectResponse]:
+    subjects = handle_list_subjects(ListSubjectsQuery(), uow=uow)
+    return [SubjectResponse(code=s.code, name=s.name) for s in subjects]
+
+
+@router.post(
+    "/admin/topics",
+    response_model=TopicResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+def create_topic(body: TopicCreateRequest) -> TopicResponse:
+    try:
+        topic = handle_create_topic(
+            CreateTopicCommand(
+                code=body.code,
+                subject_code=body.subject_code,
+                grade=body.grade,
+                name=body.name,
+            ),
+            uow=uow,
+        )
+    except NotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except InvariantViolationError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    return TopicResponse(
+        code=topic.code,
+        subject_code=topic.subject_code,
+        grade=topic.grade,
+        name=topic.name,
+    )
+
+
+@router.get("/admin/topics", response_model=list[TopicResponse])
+def list_topics() -> list[TopicResponse]:
+    topics = handle_list_topics(ListTopicsQuery(), uow=uow)
+    return [
+        TopicResponse(
+            code=t.code,
+            subject_code=t.subject_code,
+            grade=t.grade,
+            name=t.name,
+        )
+        for t in topics
+    ]
+
+
+@router.post(
+    "/admin/micro-skills",
+    response_model=MicroSkillResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+def create_micro_skill(body: MicroSkillCreateRequest) -> MicroSkillResponse:
+    try:
+        node = handle_create_micro_skill(
+            CreateMicroSkillCommand(
+                node_id=body.node_id,
+                subject_code=body.subject_code,
+                grade=body.grade,
+                section_code=body.section_code,
+                section_name=body.section_name,
+                micro_skill_name=body.micro_skill_name,
+                predecessor_ids=body.predecessor_ids,
+                criticality=body.criticality,
+                source_ref=body.source_ref,
+            ),
+            uow=uow,
+        )
+    except NotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except InvariantViolationError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+    return MicroSkillResponse(
+        node_id=node.node_id,
+        subject_code=node.subject_code,
+        grade=node.grade,
+        section_code=node.section_code,
+        section_name=node.section_name,
+        micro_skill_name=node.micro_skill_name,
+        predecessor_ids=node.predecessor_ids,
+        criticality=node.criticality,
+        source_ref=node.source_ref,
+        blocks_count=0,
+    )
+
+
+@router.post(
+    "/admin/micro-skills/{node_id}/links",
+    response_model=MicroSkillResponse,
+)
+def link_micro_skill_predecessors(
+    node_id: str, body: MicroSkillLinkRequest
+) -> MicroSkillResponse:
+    try:
+        node = handle_link_micro_skill_predecessors(
+            LinkMicroSkillPredecessorsCommand(
+                node_id=node_id, predecessor_ids=body.predecessor_ids
+            ),
+            uow=uow,
+        )
+    except NotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except InvariantViolationError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+    blocks_count = next(
+        (
+            x["blocks_count"]
+            for x in handle_list_micro_skills(ListMicroSkillsQuery(), uow=uow)
+            if x["node"].node_id == node.node_id
+        ),
+        0,
+    )
+    return MicroSkillResponse(
+        node_id=node.node_id,
+        subject_code=node.subject_code,
+        grade=node.grade,
+        section_code=node.section_code,
+        section_name=node.section_name,
+        micro_skill_name=node.micro_skill_name,
+        predecessor_ids=node.predecessor_ids,
+        criticality=node.criticality,
+        source_ref=node.source_ref,
+        blocks_count=blocks_count,
+    )
+
+
+@router.get("/admin/micro-skills", response_model=list[MicroSkillResponse])
+def list_micro_skills() -> list[MicroSkillResponse]:
+    nodes = handle_list_micro_skills(ListMicroSkillsQuery(), uow=uow)
+    return [
+        MicroSkillResponse(
+            node_id=item["node"].node_id,
+            subject_code=item["node"].subject_code,
+            grade=item["node"].grade,
+            section_code=item["node"].section_code,
+            section_name=item["node"].section_name,
+            micro_skill_name=item["node"].micro_skill_name,
+            predecessor_ids=item["node"].predecessor_ids,
+            criticality=item["node"].criticality,
+            source_ref=item["node"].source_ref,
+            blocks_count=item["blocks_count"],
+        )
+        for item in nodes
+    ]
+
+
+@router.post(
+    "/assignments",
+    response_model=AssignmentResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+def assign_test(body: AssignTestRequest) -> AssignmentResponse:
+    try:
+        assignment = handle_assign_test(
+            AssignTestCommand(test_id=body.test_id, child_id=body.child_id), uow=uow
+        )
+    except NotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+    return AssignmentResponse(
+        assignment_id=assignment.assignment_id,
+        test_id=assignment.test_id,
+        child_id=assignment.child_id,
+        status=assignment.status.value,
+    )
+
+
+@router.post("/attempts/start", response_model=StartAttemptResponse)
+def start_attempt(body: StartAttemptRequest) -> StartAttemptResponse:
+    try:
+        attempt = handle_start_attempt(
+            StartAttemptCommand(
+                assignment_id=body.assignment_id, child_id=body.child_id
+            ),
+            uow=uow,
+        )
+    except NotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except InvariantViolationError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+    return StartAttemptResponse(
+        attempt_id=attempt.attempt_id,
+        assignment_id=attempt.assignment_id,
+        child_id=attempt.child_id,
+        status=attempt.status.value,
+    )
+
+
+@router.post(
+    "/attempts/{attempt_id}/submit",
+    response_model=SubmitAttemptResponse,
+)
+def submit_attempt(
+    attempt_id: UUID, body: SubmitAttemptRequest
+) -> SubmitAttemptResponse:
+    try:
+        result = handle_submit_attempt(
+            SubmitAttemptCommand(
+                attempt_id=attempt_id,
+                answers=[
+                    SubmittedAnswerInput(question_id=a.question_id, value=a.value)
+                    for a in body.answers
+                ],
+            ),
+            uow=uow,
+        )
+    except NotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except InvariantViolationError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+    return SubmitAttemptResponse(**result)
+
+
+@router.get("/attempts/{attempt_id}", response_model=AttemptResultResponse)
+def get_attempt_result(attempt_id: UUID) -> AttemptResultResponse:
+    try:
+        result = handle_get_attempt_result(
+            GetAttemptResultQuery(attempt_id=attempt_id), uow=uow
+        )
+    except NotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    return AttemptResultResponse(
+        attempt_id=result["attempt_id"],
+        status=result["status"],
+        score=result["score"],
+        answers=[
+            AttemptAnswerResponse(
+                question_id=a["question_id"],
+                value=a["value"],
+                is_correct=a["is_correct"],
+                awarded_score=a["awarded_score"],
+            )
+            for a in result["answers"]
+        ],
+    )

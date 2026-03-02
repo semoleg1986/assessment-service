@@ -1,0 +1,38 @@
+@startuml
+!theme plain
+skinparam shadowing false
+skinparam packageStyle rectangle
+
+package "Interface" {
+  [HTTP API]
+}
+
+package "Application" {
+  [Command Handlers]
+  [Query Handlers]
+  [Ports]
+}
+
+package "Domain" {
+  [Test Aggregate]
+  [Assignment Aggregate]
+  [Attempt Aggregate]
+  [Scoring Rules]
+}
+
+package "Infrastructure" {
+  [Repositories]
+  [DB]
+  [External Clients]
+}
+
+[HTTP API] --> [Command Handlers]
+[HTTP API] --> [Query Handlers]
+[Command Handlers] --> [Test Aggregate]
+[Command Handlers] --> [Assignment Aggregate]
+[Command Handlers] --> [Attempt Aggregate]
+[Query Handlers] --> [Ports]
+[Ports] --> [Repositories]
+[Repositories] --> [DB]
+[External Clients] --> [Ports]
+@enduml

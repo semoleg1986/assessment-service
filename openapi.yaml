@@ -1,0 +1,791 @@
+openapi: 3.1.0
+info:
+  title: assessment-service
+  version: 0.1.0
+paths:
+  /healthz:
+    get:
+      summary: Healthz
+      operationId: healthz_healthz_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                additionalProperties:
+                  type: string
+                type: object
+                title: Response Healthz Healthz Get
+  /readyz:
+    get:
+      summary: Readyz
+      operationId: readyz_readyz_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                additionalProperties:
+                  type: string
+                type: object
+                title: Response Readyz Readyz Get
+  /v1/tests:
+    get:
+      tags:
+      - assessment
+      summary: List Tests
+      operationId: list_tests_v1_tests_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/TestResponse'
+                type: array
+                title: Response List Tests V1 Tests Get
+    post:
+      tags:
+      - assessment
+      summary: Create Test
+      operationId: create_test_v1_tests_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTestRequest'
+        required: true
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TestResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /v1/admin/subjects:
+    get:
+      tags:
+      - assessment
+      summary: List Subjects
+      operationId: list_subjects_v1_admin_subjects_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/SubjectResponse'
+                type: array
+                title: Response List Subjects V1 Admin Subjects Get
+    post:
+      tags:
+      - assessment
+      summary: Create Subject
+      operationId: create_subject_v1_admin_subjects_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubjectCreateRequest'
+        required: true
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubjectResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /v1/admin/topics:
+    get:
+      tags:
+      - assessment
+      summary: List Topics
+      operationId: list_topics_v1_admin_topics_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/TopicResponse'
+                type: array
+                title: Response List Topics V1 Admin Topics Get
+    post:
+      tags:
+      - assessment
+      summary: Create Topic
+      operationId: create_topic_v1_admin_topics_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TopicCreateRequest'
+        required: true
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TopicResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /v1/admin/micro-skills:
+    get:
+      tags:
+      - assessment
+      summary: List Micro Skills
+      operationId: list_micro_skills_v1_admin_micro_skills_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/MicroSkillResponse'
+                type: array
+                title: Response List Micro Skills V1 Admin Micro Skills Get
+    post:
+      tags:
+      - assessment
+      summary: Create Micro Skill
+      operationId: create_micro_skill_v1_admin_micro_skills_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MicroSkillCreateRequest'
+        required: true
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MicroSkillResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /v1/admin/micro-skills/{node_id}/links:
+    post:
+      tags:
+      - assessment
+      summary: Link Micro Skill Predecessors
+      operationId: link_micro_skill_predecessors_v1_admin_micro_skills__node_id__links_post
+      parameters:
+      - name: node_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Node Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MicroSkillLinkRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MicroSkillResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /v1/assignments:
+    post:
+      tags:
+      - assessment
+      summary: Assign Test
+      operationId: assign_test_v1_assignments_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssignTestRequest'
+        required: true
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssignmentResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /v1/attempts/start:
+    post:
+      tags:
+      - assessment
+      summary: Start Attempt
+      operationId: start_attempt_v1_attempts_start_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StartAttemptRequest'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StartAttemptResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /v1/attempts/{attempt_id}/submit:
+    post:
+      tags:
+      - assessment
+      summary: Submit Attempt
+      operationId: submit_attempt_v1_attempts__attempt_id__submit_post
+      parameters:
+      - name: attempt_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Attempt Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubmitAttemptRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubmitAttemptResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /v1/attempts/{attempt_id}:
+    get:
+      tags:
+      - assessment
+      summary: Get Attempt Result
+      operationId: get_attempt_result_v1_attempts__attempt_id__get
+      parameters:
+      - name: attempt_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Attempt Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AttemptResultResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+components:
+  schemas:
+    AssignTestRequest:
+      properties:
+        test_id:
+          type: string
+          format: uuid
+          title: Test Id
+        child_id:
+          type: string
+          format: uuid
+          title: Child Id
+      type: object
+      required:
+      - test_id
+      - child_id
+      title: AssignTestRequest
+    AssignmentResponse:
+      properties:
+        assignment_id:
+          type: string
+          format: uuid
+          title: Assignment Id
+        test_id:
+          type: string
+          format: uuid
+          title: Test Id
+        child_id:
+          type: string
+          format: uuid
+          title: Child Id
+        status:
+          type: string
+          title: Status
+      type: object
+      required:
+      - assignment_id
+      - test_id
+      - child_id
+      - status
+      title: AssignmentResponse
+    AttemptResultResponse:
+      properties:
+        attempt_id:
+          type: string
+          title: Attempt Id
+        status:
+          type: string
+          title: Status
+        score:
+          type: integer
+          title: Score
+        answers:
+          items:
+            additionalProperties: true
+            type: object
+          type: array
+          title: Answers
+      type: object
+      required:
+      - attempt_id
+      - status
+      - score
+      - answers
+      title: AttemptResultResponse
+    CreateTestRequest:
+      properties:
+        subject_code:
+          type: string
+          title: Subject Code
+        grade:
+          type: integer
+          maximum: 4.0
+          minimum: 1.0
+          title: Grade
+        questions:
+          items:
+            $ref: '#/components/schemas/QuestionCreateRequest'
+          type: array
+          title: Questions
+      type: object
+      required:
+      - subject_code
+      - grade
+      - questions
+      title: CreateTestRequest
+    CriticalityLevel:
+      type: string
+      enum:
+      - low
+      - medium
+      - high
+      title: CriticalityLevel
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    MicroSkillCreateRequest:
+      properties:
+        node_id:
+          type: string
+          title: Node Id
+        subject_code:
+          type: string
+          title: Subject Code
+        grade:
+          type: integer
+          maximum: 11.0
+          minimum: 1.0
+          title: Grade
+        section_code:
+          type: string
+          title: Section Code
+        section_name:
+          type: string
+          title: Section Name
+        micro_skill_name:
+          type: string
+          title: Micro Skill Name
+        predecessor_ids:
+          items:
+            type: string
+          type: array
+          title: Predecessor Ids
+        criticality:
+          $ref: '#/components/schemas/CriticalityLevel'
+          default: medium
+        source_ref:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Source Ref
+      type: object
+      required:
+      - node_id
+      - subject_code
+      - grade
+      - section_code
+      - section_name
+      - micro_skill_name
+      title: MicroSkillCreateRequest
+    MicroSkillLinkRequest:
+      properties:
+        predecessor_ids:
+          items:
+            type: string
+          type: array
+          title: Predecessor Ids
+      type: object
+      required:
+      - predecessor_ids
+      title: MicroSkillLinkRequest
+    MicroSkillResponse:
+      properties:
+        node_id:
+          type: string
+          title: Node Id
+        subject_code:
+          type: string
+          title: Subject Code
+        grade:
+          type: integer
+          title: Grade
+        section_code:
+          type: string
+          title: Section Code
+        section_name:
+          type: string
+          title: Section Name
+        micro_skill_name:
+          type: string
+          title: Micro Skill Name
+        predecessor_ids:
+          items:
+            type: string
+          type: array
+          title: Predecessor Ids
+        criticality:
+          $ref: '#/components/schemas/CriticalityLevel'
+        source_ref:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Source Ref
+        blocks_count:
+          type: integer
+          title: Blocks Count
+      type: object
+      required:
+      - node_id
+      - subject_code
+      - grade
+      - section_code
+      - section_name
+      - micro_skill_name
+      - predecessor_ids
+      - criticality
+      - source_ref
+      - blocks_count
+      title: MicroSkillResponse
+    QuestionCreateRequest:
+      properties:
+        node_id:
+          type: string
+          title: Node Id
+        text:
+          type: string
+          title: Text
+        answer_key:
+          type: string
+          title: Answer Key
+        max_score:
+          type: integer
+          title: Max Score
+          default: 1
+      type: object
+      required:
+      - node_id
+      - text
+      - answer_key
+      title: QuestionCreateRequest
+    QuestionResponse:
+      properties:
+        question_id:
+          type: string
+          format: uuid
+          title: Question Id
+        node_id:
+          type: string
+          title: Node Id
+        text:
+          type: string
+          title: Text
+        max_score:
+          type: integer
+          title: Max Score
+      type: object
+      required:
+      - question_id
+      - node_id
+      - text
+      - max_score
+      title: QuestionResponse
+    StartAttemptRequest:
+      properties:
+        assignment_id:
+          type: string
+          format: uuid
+          title: Assignment Id
+        child_id:
+          type: string
+          format: uuid
+          title: Child Id
+      type: object
+      required:
+      - assignment_id
+      - child_id
+      title: StartAttemptRequest
+    StartAttemptResponse:
+      properties:
+        attempt_id:
+          type: string
+          format: uuid
+          title: Attempt Id
+        assignment_id:
+          type: string
+          format: uuid
+          title: Assignment Id
+        child_id:
+          type: string
+          format: uuid
+          title: Child Id
+        status:
+          type: string
+          title: Status
+      type: object
+      required:
+      - attempt_id
+      - assignment_id
+      - child_id
+      - status
+      title: StartAttemptResponse
+    SubjectCreateRequest:
+      properties:
+        code:
+          type: string
+          title: Code
+        name:
+          type: string
+          title: Name
+      type: object
+      required:
+      - code
+      - name
+      title: SubjectCreateRequest
+    SubjectResponse:
+      properties:
+        code:
+          type: string
+          title: Code
+        name:
+          type: string
+          title: Name
+      type: object
+      required:
+      - code
+      - name
+      title: SubjectResponse
+    SubmitAttemptRequest:
+      properties:
+        answers:
+          items:
+            $ref: '#/components/schemas/SubmittedAnswerRequest'
+          type: array
+          title: Answers
+      type: object
+      required:
+      - answers
+      title: SubmitAttemptRequest
+    SubmitAttemptResponse:
+      properties:
+        attempt_id:
+          type: string
+          title: Attempt Id
+        status:
+          type: string
+          title: Status
+        score:
+          type: integer
+          title: Score
+        max_score:
+          type: integer
+          title: Max Score
+        signal:
+          type: string
+          title: Signal
+      type: object
+      required:
+      - attempt_id
+      - status
+      - score
+      - max_score
+      - signal
+      title: SubmitAttemptResponse
+    SubmittedAnswerRequest:
+      properties:
+        question_id:
+          type: string
+          format: uuid
+          title: Question Id
+        value:
+          type: string
+          title: Value
+      type: object
+      required:
+      - question_id
+      - value
+      title: SubmittedAnswerRequest
+    TestResponse:
+      properties:
+        test_id:
+          type: string
+          format: uuid
+          title: Test Id
+        subject_code:
+          type: string
+          title: Subject Code
+        grade:
+          type: integer
+          title: Grade
+        version:
+          type: integer
+          title: Version
+        questions:
+          items:
+            $ref: '#/components/schemas/QuestionResponse'
+          type: array
+          title: Questions
+      type: object
+      required:
+      - test_id
+      - subject_code
+      - grade
+      - version
+      - questions
+      title: TestResponse
+    TopicCreateRequest:
+      properties:
+        code:
+          type: string
+          title: Code
+        subject_code:
+          type: string
+          title: Subject Code
+        grade:
+          type: integer
+          maximum: 11.0
+          minimum: 1.0
+          title: Grade
+        name:
+          type: string
+          title: Name
+      type: object
+      required:
+      - code
+      - subject_code
+      - grade
+      - name
+      title: TopicCreateRequest
+    TopicResponse:
+      properties:
+        code:
+          type: string
+          title: Code
+        subject_code:
+          type: string
+          title: Subject Code
+        grade:
+          type: integer
+          title: Grade
+        name:
+          type: string
+          title: Name
+      type: object
+      required:
+      - code
+      - subject_code
+      - grade
+      - name
+      title: TopicResponse
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError

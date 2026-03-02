@@ -1,0 +1,14 @@
+fastapi
+uvicorn[standard]
+pydantic
+pytest
+pytest-cov
+pyyaml
+types-PyYAML
+pip-tools
+
+black
+isort
+flake8
+mypy
+pre-commit

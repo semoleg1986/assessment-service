@@ -1,0 +1,46 @@
+@startuml
+!theme plain
+skinparam shadowing false
+skinparam packageStyle rectangle
+
+class Test {
+  test_id
+  subject_id
+  grade
+  version
+  status
+}
+
+class Question {
+  question_id
+  topic_id
+  micro_skill_id
+  max_score
+}
+
+class Assignment {
+  assignment_id
+  child_id
+  test_id
+  status
+}
+
+class Attempt {
+  attempt_id
+  assignment_id
+  child_id
+  status
+  score
+}
+
+class Answer {
+  answer_id
+  question_id
+  awarded_score
+}
+
+Test "1" o-- "1..*" Question
+Assignment "1" --> "1" Test
+Attempt "1" --> "1" Assignment
+Attempt "1" o-- "0..*" Answer
+@enduml

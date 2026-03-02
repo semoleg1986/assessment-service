@@ -1,0 +1,39 @@
+@startuml
+!theme plain
+skinparam shadowing false
+skinparam packageStyle rectangle
+
+actor Parent
+actor Child
+actor Teacher
+actor Admin
+
+rectangle "Clients" {
+  [user-web]
+  [admin-web]
+}
+
+rectangle "Assessment Service" {
+  [Assessment API]
+  [Scoring Engine]
+  [Recommendation Engine]
+}
+
+rectangle "Other Services" {
+  [Auth Service]
+  [User-Children Service]
+  [Notification Service]
+}
+
+Parent --> [user-web]
+Child --> [user-web]
+Teacher --> [admin-web]
+Admin --> [admin-web]
+
+[user-web] --> [Assessment API]
+[admin-web] --> [Assessment API]
+
+[Assessment API] --> [Auth Service] : verify identity/roles
+[Assessment API] --> [User-Children Service] : validate child ownership/existence
+[Assessment API] --> [Notification Service] : optional events
+@enduml
