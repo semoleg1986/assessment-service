@@ -1,6 +1,6 @@
 repos:
-  - repo: https://github.com/pre-commit/mirrors-isort
-    rev: v5.13.2
+  - repo: https://github.com/PyCQA/isort
+    rev: 5.13.2
     hooks:
       - id: isort
 
@@ -18,7 +18,12 @@ repos:
     rev: v1.14.1
     hooks:
       - id: mypy
-        args: ["--install-types", "--non-interactive"]
+        args: ["--config-file=mypy.ini", "--install-types", "--non-interactive"]
+        additional_dependencies:
+          - fastapi
+          - pydantic
+          - pyyaml
+          - types-PyYAML
 
   - repo: local
     hooks:

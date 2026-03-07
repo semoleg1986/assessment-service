@@ -39,8 +39,8 @@ from src.application.queries import (
 from src.domain.errors import InvariantViolationError, NotFoundError
 from src.infrastructure.uow import InMemoryUnitOfWork
 from src.interface.http.v1.schemas import (
-    AssignmentResponse,
     AssignmentListItemResponse,
+    AssignmentResponse,
     AssignTestRequest,
     AttemptAnswerResponse,
     AttemptResultResponse,
