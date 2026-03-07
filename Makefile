@@ -39,6 +39,21 @@ check: format lint test ## Полная проверка качества
 run: ## Запустить HTTP сервис
 	uvicorn src.interface.http.main:app --host 0.0.0.0 --port 8003 --reload
 
+docker-up: ## Запустить assessment-service через Docker Compose
+	docker compose up --build -d
+
+docker-down: ## Остановить Docker Compose окружение
+	docker compose down
+
+docker-logs: ## Показать логи Docker Compose
+	docker compose logs -f --tail=200
+
+docker-pull: ## Забрать свежий образ (image mode)
+	docker compose pull
+
+docker-restart: ## Перезапустить сервис из образа
+	docker compose up -d --force-recreate
+
 # ========================
 # API Contract
 # ========================

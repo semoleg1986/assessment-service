@@ -78,10 +78,21 @@
   - `POST /v1/tests`
   - `GET /v1/tests`
   - `POST /v1/assignments`
+  - `POST /v1/admin/tests`
+  - `GET /v1/admin/tests`
+  - `POST /v1/admin/tests/{test_id}/publish`
+  - `POST /v1/admin/assignments`
+  - `GET /v1/user/children/{child_id}/assignments`
+  - `POST /v1/user/assignments/{assignment_id}/start`
+  - `POST /v1/user/attempts/{attempt_id}/answers`
+  - `POST /v1/user/attempts/{attempt_id}/submit`
+  - `GET /v1/user/attempts/{attempt_id}/result`
+  - `GET /v1/admin/diagnostics/children/{child_id}`
+  - `POST /v1/admin/content/import`
   - `POST /v1/attempts/start`
   - `POST /v1/attempts/{attempt_id}/submit`
   - `GET /v1/attempts/{attempt_id}`
-- Тесты: `4 passed`.
+- Тесты: `6 passed`.
 
 ## Локальный запуск MVP
 ```bash
@@ -92,3 +103,15 @@ make run
 
 Health:
 - `GET http://localhost:8003/healthz`
+
+## Запуск в Docker
+```bash
+cd /Users/olegsemenov/Programming/monitoring/assessment-service
+cp .env.example .env
+make docker-up
+```
+
+Проверка:
+```bash
+curl -i http://localhost:8003/healthz
+```
