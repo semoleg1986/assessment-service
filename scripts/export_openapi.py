@@ -3,13 +3,18 @@ from __future__ import annotations
 import argparse
 import json
 from pathlib import Path
+import sys
 
-import yaml
+import yaml  # type: ignore[import-untyped]
 
-from src.interface.http.app import create_app
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 
 
 def main() -> None:
+    from src.interface.http.app import create_app
+
     parser = argparse.ArgumentParser()
     parser.add_argument("--output", required=True)
     parser.add_argument("--check", action="store_true")

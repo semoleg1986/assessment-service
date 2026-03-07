@@ -31,6 +31,71 @@ paths:
                   type: string
                 type: object
                 title: Response Readyz Readyz Get
+  /v1/admin/content/import:
+    post:
+      tags:
+      - assessment
+      summary: Import Content
+      operationId: import_content_v1_admin_content_import_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ContentImportRequest'
+        required: true
+      responses:
+        '202':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContentImportResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /v1/admin/tests:
+    get:
+      tags:
+      - assessment
+      summary: List Tests
+      operationId: list_tests_v1_admin_tests_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/TestResponse'
+                type: array
+                title: Response List Tests V1 Admin Tests Get
+    post:
+      tags:
+      - assessment
+      summary: Create Test
+      operationId: create_test_v1_admin_tests_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTestRequest'
+        required: true
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TestResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
   /v1/tests:
     get:
       tags:
@@ -65,6 +130,33 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/TestResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /v1/admin/tests/{test_id}/publish:
+    post:
+      tags:
+      - assessment
+      summary: Publish Test
+      operationId: publish_test_v1_admin_tests__test_id__publish_post
+      parameters:
+      - name: test_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Test Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublishTestResponse'
         '422':
           description: Validation Error
           content:
@@ -223,6 +315,31 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+  /v1/admin/assignments:
+    post:
+      tags:
+      - assessment
+      summary: Assign Test
+      operationId: assign_test_v1_admin_assignments_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssignTestRequest'
+        required: true
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssignmentResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
   /v1/assignments:
     post:
       tags:
@@ -248,6 +365,37 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+  /v1/user/children/{child_id}/assignments:
+    get:
+      tags:
+      - assessment
+      summary: List Assignments By Child
+      operationId: list_assignments_by_child_v1_user_children__child_id__assignments_get
+      parameters:
+      - name: child_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Child Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AssignmentListItemResponse'
+                title: Response List Assignments By Child V1 User Children  Child
+                  Id  Assignments Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
   /v1/attempts/start:
     post:
       tags:
@@ -267,6 +415,72 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/StartAttemptResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /v1/user/assignments/{assignment_id}/start:
+    post:
+      tags:
+      - assessment
+      summary: Start Attempt For Assignment
+      operationId: start_attempt_for_assignment_v1_user_assignments__assignment_id__start_post
+      parameters:
+      - name: assignment_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Assignment Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StartAttemptByAssignmentRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StartAttemptResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /v1/user/attempts/{attempt_id}/submit:
+    post:
+      tags:
+      - assessment
+      summary: Submit Attempt
+      operationId: submit_attempt_v1_user_attempts__attempt_id__submit_post
+      parameters:
+      - name: attempt_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Attempt Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubmitAttemptRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubmitAttemptResponse'
         '422':
           description: Validation Error
           content:
@@ -306,6 +520,39 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+  /v1/user/attempts/{attempt_id}/answers:
+    post:
+      tags:
+      - assessment
+      summary: Save Attempt Answers
+      operationId: save_attempt_answers_v1_user_attempts__attempt_id__answers_post
+      parameters:
+      - name: attempt_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Attempt Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SaveAttemptAnswersRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SaveAttemptAnswersResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
   /v1/attempts/{attempt_id}:
     get:
       tags:
@@ -333,6 +580,60 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+  /v1/user/attempts/{attempt_id}/result:
+    get:
+      tags:
+      - assessment
+      summary: Get Attempt Result For User
+      operationId: get_attempt_result_for_user_v1_user_attempts__attempt_id__result_get
+      parameters:
+      - name: attempt_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Attempt Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AttemptResultResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /v1/admin/diagnostics/children/{child_id}:
+    get:
+      tags:
+      - assessment
+      summary: Get Child Diagnostics
+      operationId: get_child_diagnostics_v1_admin_diagnostics_children__child_id__get
+      parameters:
+      - name: child_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Child Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChildDiagnosticsResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
 components:
   schemas:
     AssignTestRequest:
@@ -350,6 +651,35 @@ components:
       - test_id
       - child_id
       title: AssignTestRequest
+    AssignmentListItemResponse:
+      properties:
+        assignment_id:
+          type: string
+          format: uuid
+          title: Assignment Id
+        test_id:
+          type: string
+          format: uuid
+          title: Test Id
+        test_title:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Test Title
+        status:
+          type: string
+          title: Status
+        due_at:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Due At
+      type: object
+      required:
+      - assignment_id
+      - test_id
+      - status
+      title: AssignmentListItemResponse
     AssignmentResponse:
       properties:
         assignment_id:
@@ -374,6 +704,27 @@ components:
       - child_id
       - status
       title: AssignmentResponse
+    AttemptAnswerResponse:
+      properties:
+        question_id:
+          type: string
+          title: Question Id
+        value:
+          type: string
+          title: Value
+        is_correct:
+          type: boolean
+          title: Is Correct
+        awarded_score:
+          type: integer
+          title: Awarded Score
+      type: object
+      required:
+      - question_id
+      - value
+      - is_correct
+      - awarded_score
+      title: AttemptAnswerResponse
     AttemptResultResponse:
       properties:
         attempt_id:
@@ -387,8 +738,7 @@ components:
           title: Score
         answers:
           items:
-            additionalProperties: true
-            type: object
+            $ref: '#/components/schemas/AttemptAnswerResponse'
           type: array
           title: Answers
       type: object
@@ -398,6 +748,59 @@ components:
       - score
       - answers
       title: AttemptResultResponse
+    ChildDiagnosticsResponse:
+      properties:
+        child_id:
+          type: string
+          format: uuid
+          title: Child Id
+        assignments_total:
+          type: integer
+          title: Assignments Total
+        attempts_total:
+          type: integer
+          title: Attempts Total
+      type: object
+      required:
+      - child_id
+      - assignments_total
+      - attempts_total
+      title: ChildDiagnosticsResponse
+    ContentImportRequest:
+      properties:
+        source_id:
+          type: string
+          title: Source Id
+        contract_version:
+          type: string
+          title: Contract Version
+        payload:
+          additionalProperties: true
+          type: object
+          title: Payload
+      type: object
+      required:
+      - source_id
+      - contract_version
+      - payload
+      title: ContentImportRequest
+    ContentImportResponse:
+      properties:
+        source_id:
+          type: string
+          title: Source Id
+        imported:
+          type: integer
+          title: Imported
+        status:
+          type: string
+          title: Status
+      type: object
+      required:
+      - source_id
+      - imported
+      - status
+      title: ContentImportResponse
     CreateTestRequest:
       properties:
         subject_code:
@@ -538,6 +941,20 @@ components:
       - source_ref
       - blocks_count
       title: MicroSkillResponse
+    PublishTestResponse:
+      properties:
+        test_id:
+          type: string
+          format: uuid
+          title: Test Id
+        status:
+          type: string
+          title: Status
+      type: object
+      required:
+      - test_id
+      - status
+      title: PublishTestResponse
     QuestionCreateRequest:
       properties:
         node_id:
@@ -581,6 +998,40 @@ components:
       - text
       - max_score
       title: QuestionResponse
+    SaveAttemptAnswersRequest:
+      properties:
+        answers:
+          items:
+            $ref: '#/components/schemas/SubmittedAnswerRequest'
+          type: array
+          title: Answers
+      type: object
+      required:
+      - answers
+      title: SaveAttemptAnswersRequest
+    SaveAttemptAnswersResponse:
+      properties:
+        attempt_id:
+          type: string
+          title: Attempt Id
+        saved_answers:
+          type: integer
+          title: Saved Answers
+      type: object
+      required:
+      - attempt_id
+      - saved_answers
+      title: SaveAttemptAnswersResponse
+    StartAttemptByAssignmentRequest:
+      properties:
+        child_id:
+          type: string
+          format: uuid
+          title: Child Id
+      type: object
+      required:
+      - child_id
+      title: StartAttemptByAssignmentRequest
     StartAttemptRequest:
       properties:
         assignment_id:

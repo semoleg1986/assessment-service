@@ -45,6 +45,14 @@ class AssignmentResponse(BaseModel):
     status: str
 
 
+class AssignmentListItemResponse(BaseModel):
+    assignment_id: UUID
+    test_id: UUID
+    test_title: str | None = None
+    status: str
+    due_at: str | None = None
+
+
 class StartAttemptRequest(BaseModel):
     assignment_id: UUID
     child_id: UUID
@@ -74,6 +82,15 @@ class SubmitAttemptResponse(BaseModel):
     signal: str
 
 
+class SaveAttemptAnswersRequest(BaseModel):
+    answers: list[SubmittedAnswerRequest]
+
+
+class SaveAttemptAnswersResponse(BaseModel):
+    attempt_id: str
+    saved_answers: int
+
+
 class AttemptAnswerResponse(BaseModel):
     question_id: str
     value: str
@@ -86,6 +103,33 @@ class AttemptResultResponse(BaseModel):
     status: str
     score: int
     answers: list[AttemptAnswerResponse]
+
+
+class StartAttemptByAssignmentRequest(BaseModel):
+    child_id: UUID
+
+
+class ContentImportRequest(BaseModel):
+    source_id: str
+    contract_version: str
+    payload: dict[str, object]
+
+
+class ContentImportResponse(BaseModel):
+    source_id: str
+    imported: int
+    status: str
+
+
+class PublishTestResponse(BaseModel):
+    test_id: UUID
+    status: str
+
+
+class ChildDiagnosticsResponse(BaseModel):
+    child_id: UUID
+    assignments_total: int
+    attempts_total: int
 
 
 class SubjectCreateRequest(BaseModel):

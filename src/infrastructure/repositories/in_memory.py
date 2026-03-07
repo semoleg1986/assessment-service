@@ -41,6 +41,9 @@ class InMemoryAssignmentRepository(AssignmentRepository):
     def get(self, assignment_id: UUID) -> AssignmentAggregate | None:
         return self._store.get(assignment_id)
 
+    def list_by_child(self, child_id: UUID) -> list[AssignmentAggregate]:
+        return [a for a in self._store.values() if a.child_id == child_id]
+
 
 class InMemoryAttemptRepository(AttemptRepository):
     def __init__(self) -> None:
@@ -60,6 +63,9 @@ class InMemoryAttemptRepository(AttemptRepository):
             ):
                 return attempt
         return None
+
+    def list_by_child(self, child_id: UUID) -> list[AttemptAggregate]:
+        return [a for a in self._store.values() if a.child_id == child_id]
 
 
 class InMemorySubjectRepository(SubjectRepository):

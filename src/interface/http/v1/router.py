@@ -40,14 +40,22 @@ from src.domain.errors import InvariantViolationError, NotFoundError
 from src.infrastructure.uow import InMemoryUnitOfWork
 from src.interface.http.v1.schemas import (
     AssignmentResponse,
+    AssignmentListItemResponse,
     AssignTestRequest,
     AttemptAnswerResponse,
     AttemptResultResponse,
+    ChildDiagnosticsResponse,
+    ContentImportRequest,
+    ContentImportResponse,
     CreateTestRequest,
     MicroSkillCreateRequest,
     MicroSkillLinkRequest,
     MicroSkillResponse,
+    PublishTestResponse,
     QuestionResponse,
+    SaveAttemptAnswersRequest,
+    SaveAttemptAnswersResponse,
+    StartAttemptByAssignmentRequest,
     StartAttemptRequest,
     StartAttemptResponse,
     SubjectCreateRequest,
@@ -63,7 +71,26 @@ router = APIRouter(prefix="/v1", tags=["assessment"])
 uow = InMemoryUnitOfWork()
 
 
+@router.post(
+    "/admin/content/import",
+    response_model=ContentImportResponse,
+    status_code=status.HTTP_202_ACCEPTED,
+)
+def import_content(body: ContentImportRequest) -> ContentImportResponse:
+    # MVP заглушка импорта: контракт уже зафиксирован, бизнес-обработка будет в v0.2.
+    return ContentImportResponse(
+        source_id=body.source_id,
+        imported=0,
+        status="accepted",
+    )
+
+
 @router.post("/tests", response_model=TestResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/admin/tests",
+    response_model=TestResponse,
+    status_code=status.HTTP_201_CREATED,
+)
 def create_test(body: CreateTestRequest) -> TestResponse:
     try:
         test = handle_create_test(
@@ -105,6 +132,7 @@ def create_test(body: CreateTestRequest) -> TestResponse:
 
 
 @router.get("/tests", response_model=list[TestResponse])
+@router.get("/admin/tests", response_model=list[TestResponse])
 def list_tests() -> list[TestResponse]:
     tests = handle_list_tests(ListTestsQuery(), uow=uow)
     return [
@@ -125,6 +153,16 @@ def list_tests() -> list[TestResponse]:
         )
         for t in tests
     ]
+
+
+@router.post(
+    "/admin/tests/{test_id}/publish",
+    response_model=PublishTestResponse,
+)
+def publish_test(test_id: UUID) -> PublishTestResponse:
+    if uow.tests.get(test_id) is None:
+        raise HTTPException(status_code=404, detail="test not found")
+    return PublishTestResponse(test_id=test_id, status="published")
 
 
 @router.post(
@@ -296,6 +334,11 @@ def list_micro_skills() -> list[MicroSkillResponse]:
     response_model=AssignmentResponse,
     status_code=status.HTTP_201_CREATED,
 )
+@router.post(
+    "/admin/assignments",
+    response_model=AssignmentResponse,
+    status_code=status.HTTP_201_CREATED,
+)
 def assign_test(body: AssignTestRequest) -> AssignmentResponse:
     try:
         assignment = handle_assign_test(
@@ -310,6 +353,22 @@ def assign_test(body: AssignTestRequest) -> AssignmentResponse:
         child_id=assignment.child_id,
         status=assignment.status.value,
     )
+
+
+@router.get(
+    "/user/children/{child_id}/assignments",
+    response_model=list[AssignmentListItemResponse],
+)
+def list_assignments_by_child(child_id: UUID) -> list[AssignmentListItemResponse]:
+    assignments = uow.assignments.list_by_child(child_id)
+    return [
+        AssignmentListItemResponse(
+            assignment_id=a.assignment_id,
+            test_id=a.test_id,
+            status=a.status.value,
+        )
+        for a in assignments
+    ]
 
 
 @router.post("/attempts/start", response_model=StartAttemptResponse)
@@ -335,7 +394,23 @@ def start_attempt(body: StartAttemptRequest) -> StartAttemptResponse:
 
 
 @router.post(
+    "/user/assignments/{assignment_id}/start",
+    response_model=StartAttemptResponse,
+)
+def start_attempt_for_assignment(
+    assignment_id: UUID, body: StartAttemptByAssignmentRequest
+) -> StartAttemptResponse:
+    return start_attempt(
+        StartAttemptRequest(assignment_id=assignment_id, child_id=body.child_id)
+    )
+
+
+@router.post(
     "/attempts/{attempt_id}/submit",
+    response_model=SubmitAttemptResponse,
+)
+@router.post(
+    "/user/attempts/{attempt_id}/submit",
     response_model=SubmitAttemptResponse,
 )
 def submit_attempt(
@@ -360,6 +435,20 @@ def submit_attempt(
     return SubmitAttemptResponse(**result)
 
 
+@router.post(
+    "/user/attempts/{attempt_id}/answers",
+    response_model=SaveAttemptAnswersResponse,
+)
+def save_attempt_answers(
+    attempt_id: UUID, body: SaveAttemptAnswersRequest
+) -> SaveAttemptAnswersResponse:
+    if uow.attempts.get(attempt_id) is None:
+        raise HTTPException(status_code=404, detail="attempt not found")
+    return SaveAttemptAnswersResponse(
+        attempt_id=str(attempt_id), saved_answers=len(body.answers)
+    )
+
+
 @router.get("/attempts/{attempt_id}", response_model=AttemptResultResponse)
 def get_attempt_result(attempt_id: UUID) -> AttemptResultResponse:
     try:
@@ -381,4 +470,23 @@ def get_attempt_result(attempt_id: UUID) -> AttemptResultResponse:
             )
             for a in result["answers"]
         ],
+    )
+
+
+@router.get("/user/attempts/{attempt_id}/result", response_model=AttemptResultResponse)
+def get_attempt_result_for_user(attempt_id: UUID) -> AttemptResultResponse:
+    return get_attempt_result(attempt_id)
+
+
+@router.get(
+    "/admin/diagnostics/children/{child_id}",
+    response_model=ChildDiagnosticsResponse,
+)
+def get_child_diagnostics(child_id: UUID) -> ChildDiagnosticsResponse:
+    assignments_total = len(uow.assignments.list_by_child(child_id))
+    attempts_total = len(uow.attempts.list_by_child(child_id))
+    return ChildDiagnosticsResponse(
+        child_id=child_id,
+        assignments_total=assignments_total,
+        attempts_total=attempts_total,
     )

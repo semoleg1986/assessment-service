@@ -27,6 +27,9 @@ class AssignmentRepository(ABC):
     @abstractmethod
     def get(self, assignment_id: UUID) -> AssignmentAggregate | None: ...
 
+    @abstractmethod
+    def list_by_child(self, child_id: UUID) -> list[AssignmentAggregate]: ...
+
 
 class AttemptRepository(ABC):
     @abstractmethod
@@ -39,6 +42,9 @@ class AttemptRepository(ABC):
     def find_active_by_assignment(
         self, assignment_id: UUID
     ) -> AttemptAggregate | None: ...
+
+    @abstractmethod
+    def list_by_child(self, child_id: UUID) -> list[AttemptAggregate]: ...
 
 
 class SubjectRepository(ABC):
