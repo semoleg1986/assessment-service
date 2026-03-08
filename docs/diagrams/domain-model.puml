@@ -3,44 +3,78 @@
 skinparam shadowing false
 skinparam packageStyle rectangle
 
-class Test {
-  test_id
-  subject_id
-  grade
-  version
-  status
+class AssessmentTest {
+  test_id: UUID
+  subject_code: str
+  grade: int
+  created_at: datetime
+  version: int
 }
 
 class Question {
-  question_id
-  topic_id
-  micro_skill_id
-  max_score
+  question_id: UUID
+  node_id: str
+  text: str
+  answer_key: str
+  max_score: int
 }
 
-class Assignment {
-  assignment_id
-  child_id
-  test_id
-  status
+class AssignmentAggregate {
+  assignment_id: UUID
+  test_id: UUID
+  child_id: UUID
+  status: AssignmentStatus
+  assigned_at: datetime
+  version: int
 }
 
-class Attempt {
-  attempt_id
-  assignment_id
-  child_id
-  status
-  score
+class AttemptAggregate {
+  attempt_id: UUID
+  assignment_id: UUID
+  child_id: UUID
+  status: AttemptStatus
+  started_at: datetime
+  submitted_at: datetime?
+  score: int
+  version: int
 }
 
 class Answer {
-  answer_id
-  question_id
-  awarded_score
+  question_id: UUID
+  value: str
+  is_correct: bool
+  awarded_score: int
 }
 
-Test "1" o-- "1..*" Question
-Assignment "1" --> "1" Test
-Attempt "1" --> "1" Assignment
-Attempt "1" o-- "0..*" Answer
+class Subject {
+  code: str
+  name: str
+}
+
+class Topic {
+  code: str
+  subject_code: str
+  grade: int
+  name: str
+}
+
+class MicroSkillNode {
+  node_id: str
+  subject_code: str
+  grade: int
+  section_code: str
+  section_name: str
+  micro_skill_name: str
+  predecessor_ids: list[str]
+  criticality: low|medium|high
+  source_ref: str?
+}
+
+AssessmentTest "1" o-- "1..*" Question
+AssignmentAggregate "1" --> "1" AssessmentTest
+AttemptAggregate "1" --> "1" AssignmentAggregate
+AttemptAggregate "1" o-- "0..*" Answer
+Topic "*" --> "1" Subject
+Question "*" --> "1" MicroSkillNode
+MicroSkillNode "*" --> "1" Topic
 @enduml

@@ -1,29 +1,104 @@
 # Доменная Модель
 
+## Purpose
+
+Контракт доменной модели сервиса `assessment-service`.
+Документ синхронизирован с реализацией `v0.2.0`.
+
 ## Агрегаты
-- Test (Aggregate Root)
-  - Поля: `test_id`, `subject_id`, `grade`, `status`, `version`, `created_at`, `updated_at`.
-  - Содержит: `Question[*]`.
 
-- Assignment (Aggregate Root)
-  - Поля: `assignment_id`, `child_id`, `test_id`, `status`, `assigned_at`, `expires_at`, `version`.
-  - Статусы: `assigned | started | completed | expired | cancelled`.
+### 1. AssessmentTest (Aggregate Root)
 
-- Attempt (Aggregate Root)
-  - Поля: `attempt_id`, `assignment_id`, `child_id`, `status`, `started_at`, `submitted_at`, `score`, `version`.
-  - Содержит: `Answer[*]`.
-  - Статусы: `started | submitted | cancelled`.
+- **Поля**:
+  - `test_id: UUID`
+  - `subject_code: str`
+  - `grade: int`
+  - `questions: list[Question]`
+  - `created_at: datetime`
+  - `version: int`
+- **Инварианты**:
+  - тест содержит минимум один вопрос
+  - `grade` в диапазоне `1..4`
+
+### 2. AssignmentAggregate (Aggregate Root)
+
+- **Поля**:
+  - `assignment_id: UUID`
+  - `test_id: UUID`
+  - `child_id: UUID`
+  - `status: assigned | started | completed | expired | cancelled`
+  - `assigned_at: datetime`
+  - `version: int`
+- **Поведение**:
+  - `mark_started()`
+  - `mark_completed()`
+
+### 3. AttemptAggregate (Aggregate Root)
+
+- **Поля**:
+  - `attempt_id: UUID`
+  - `assignment_id: UUID`
+  - `child_id: UUID`
+  - `status: started | submitted | cancelled`
+  - `started_at: datetime`
+  - `submitted_at: datetime | None`
+  - `score: int`
+  - `answers: list[Answer]`
+  - `version: int`
+- **Поведение**:
+  - `submit(answers)`
+- **Инварианты**:
+  - отправка попытки разрешена только из `started`
 
 ## Сущности
-- Question: `question_id`, `type`, `prompt`, `options`, `correct_answer`, `max_score`, `topic_id`, `micro_skill_id`.
-- Answer: `answer_id`, `question_id`, `value`, `is_correct`, `awarded_score`.
+
+### Subject
+
+- `code: str`
+- `name: str`
+
+### Topic
+
+- `code: str`
+- `subject_code: str`
+- `grade: int`
+- `name: str`
+
+### MicroSkillNode
+
+- `node_id: str`
+- `subject_code: str`
+- `grade: int`
+- `section_code: str`
+- `section_name: str`
+- `micro_skill_name: str`
+- `predecessor_ids: list[str]`
+- `criticality: low | medium | high`
+- `source_ref: str | None`
+
+### Question
+
+- `question_id: UUID`
+- `node_id: str`
+- `text: str`
+- `answer_key: str`
+- `max_score: int`
+
+### Answer
+
+- `question_id: UUID`
+- `value: str`
+- `is_correct: bool`
+- `awarded_score: int`
 
 ## Value Objects
-- SignalLevel: `norm | risk | gap | critical_gap`.
-- GradeLevel: `1 | 2 | 3 | 4`.
+
+- `AssignmentStatus`: `assigned | started | completed | expired | cancelled`
+- `AttemptStatus`: `started | submitted | cancelled`
+- `CriticalityLevel`: `low | medium | high`
 
 ## Инварианты
-- Assignment ссылается на существующего ребенка и тест.
+
+- Assignment ссылается на существующие `child_id` и `test_id` (проверка в application/integration).
 - Для одного assignment только одна активная attempt.
-- Отправка попытки разрешена только из `started`.
-- Итоговый score детерминированно считается из ответов и весов вопросов.
+- Итоговый `score` детерминированно считается как сумма `awarded_score` ответов.
