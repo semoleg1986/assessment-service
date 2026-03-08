@@ -39,6 +39,12 @@ check: format lint test ## Полная проверка качества
 run: ## Запустить HTTP сервис
 	uvicorn src.interface.http.main:app --host 0.0.0.0 --port 8003 --reload
 
+db-upgrade: ## Применить alembic миграции до head
+	alembic upgrade head
+
+db-downgrade: ## Откатить alembic миграции на один шаг
+	alembic downgrade -1
+
 docker-up: ## Запустить assessment-service через Docker Compose
 	docker compose up --build -d
 

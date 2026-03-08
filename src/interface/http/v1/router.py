@@ -37,7 +37,7 @@ from src.application.queries import (
     ListTopicsQuery,
 )
 from src.domain.errors import InvariantViolationError, NotFoundError
-from src.infrastructure.uow import InMemoryUnitOfWork
+from src.infrastructure.uow import build_uow
 from src.interface.http.v1.schemas import (
     AssignmentListItemResponse,
     AssignmentResponse,
@@ -68,7 +68,7 @@ from src.interface.http.v1.schemas import (
 )
 
 router = APIRouter(prefix="/v1", tags=["assessment"])
-uow = InMemoryUnitOfWork()
+uow = build_uow()
 
 
 @router.post(

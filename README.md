@@ -67,7 +67,7 @@
 
 ## Статус
 - Домен и архитектурные документы готовы.
-- Реализован MVP-каркас сервиса (in-memory):
+- Реализован MVP-каркас сервиса (in-memory + Postgres persistence при наличии `DATABASE_URL`):
   - `POST /v1/admin/subjects`
   - `GET /v1/admin/subjects`
   - `POST /v1/admin/topics`
@@ -98,6 +98,7 @@
 ```bash
 cd /Users/olegsemenov/Programming/monitoring/assessment-service
 make install
+make db-upgrade
 make run
 ```
 
@@ -109,6 +110,13 @@ Health:
 cd /Users/olegsemenov/Programming/monitoring/assessment-service
 cp .env.example .env
 make docker-up
+```
+
+Если используется Postgres, перед стартом сервиса примените миграции:
+
+```bash
+cd /Users/olegsemenov/Programming/monitoring/assessment-service
+make db-upgrade
 ```
 
 Проверка:

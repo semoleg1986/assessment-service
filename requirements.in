@@ -1,6 +1,10 @@
 fastapi
 uvicorn[standard]
 pydantic
+sqlalchemy
+alembic
+psycopg
+greenlet
 pytest
 pytest-cov
 pyyaml

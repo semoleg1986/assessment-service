@@ -8,6 +8,8 @@ annotated-doc==0.0.4
     # via fastapi
 annotated-types==0.7.0
     # via pydantic
+alembic==1.17.1
+    # via -r requirements.in
 anyio==4.12.1
     # via
     #   starlette
@@ -35,6 +37,10 @@ filelock==3.25.0
     #   virtualenv
 flake8==7.3.0
     # via -r requirements.in
+greenlet==3.2.4
+    # via
+    #   -r requirements.in
+    #   sqlalchemy
 h11==0.16.0
     # via uvicorn
 httptools==0.7.1
@@ -92,6 +98,8 @@ pydantic-core==2.41.5
     # via pydantic
 pyflakes==3.4.0
     # via flake8
+psycopg==3.2.12
+    # via -r requirements.in
 pygments==2.19.2
     # via pytest
 pyproject-hooks==1.2.0
@@ -117,6 +125,10 @@ pyyaml==6.0.3
     #   uvicorn
 starlette==0.52.1
     # via fastapi
+sqlalchemy==2.0.44
+    # via
+    #   -r requirements.in
+    #   alembic
 typing-extensions==4.15.0
     # via
     #   anyio
