@@ -2,6 +2,8 @@ name: release
 on:
   push:
     branches: [main]
+    tags:
+      - 'v*'
 
 jobs:
   build-push:
@@ -25,3 +27,4 @@ jobs:
           tags: |
             ghcr.io/semoleg1986/${{ github.event.repository.name }}:latest
             ghcr.io/semoleg1986/${{ github.event.repository.name }}:${{ github.sha }}
+            ghcr.io/semoleg1986/${{ github.event.repository.name }}:${{ github.ref_name }}
