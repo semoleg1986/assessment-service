@@ -1,4 +1,4 @@
-from uuid import UUID
+from uuid import NAMESPACE_URL, UUID, uuid5
 
 from fastapi import APIRouter, HTTPException, status
 
@@ -36,7 +36,13 @@ from src.application.queries import (
     ListTestsQuery,
     ListTopicsQuery,
 )
+from src.domain.aggregates.test_aggregate import AssessmentTest
+from src.domain.entities.micro_skill_node import MicroSkillNode
+from src.domain.entities.question import Question
+from src.domain.entities.subject import Subject
+from src.domain.entities.topic import Topic
 from src.domain.errors import InvariantViolationError, NotFoundError
+from src.domain.value_objects.statuses import CriticalityLevel
 from src.infrastructure.uow import build_uow
 from src.interface.http.v1.schemas import (
     AssignmentListItemResponse,
@@ -71,17 +77,235 @@ router = APIRouter(prefix="/v1", tags=["assessment"])
 uow = build_uow()
 
 
+def _ensure_unique(items: list[str], *, label: str) -> None:
+    if len(items) != len(set(items)):
+        raise HTTPException(
+            status_code=422,
+            detail=f"Duplicate identifiers in import payload: {label}",
+        )
+
+
 @router.post(
     "/admin/content/import",
     response_model=ContentImportResponse,
     status_code=status.HTTP_202_ACCEPTED,
 )
 def import_content(body: ContentImportRequest) -> ContentImportResponse:
-    # MVP заглушка импорта: контракт уже зафиксирован, бизнес-обработка будет в v0.2.
+    if not body.contract_version.startswith("v1"):
+        raise HTTPException(
+            status_code=422,
+            detail="Unsupported contract_version, expected v1*",
+        )
+
+    payload = body.payload
+    _ensure_unique([s.code for s in payload.subjects], label="subjects.code")
+    _ensure_unique([t.code for t in payload.topics], label="topics.code")
+    _ensure_unique(
+        [m.node_id for m in payload.micro_skills], label="micro_skills.node_id"
+    )
+    _ensure_unique([t.external_id for t in payload.tests], label="tests.external_id")
+    for test in payload.tests:
+        _ensure_unique(
+            [q.external_id for q in test.questions],
+            label=f"tests[{test.external_id}].questions.external_id",
+        )
+
+    details: dict[str, int] = {
+        "subjects_created": 0,
+        "subjects_updated": 0,
+        "topics_created": 0,
+        "topics_updated": 0,
+        "micro_skills_created": 0,
+        "micro_skills_updated": 0,
+        "tests_created": 0,
+        "tests_updated": 0,
+    }
+
+    for subject in payload.subjects:
+        existing_subject = uow.subjects.get(subject.code)
+        if existing_subject is None:
+            details["subjects_created"] += 1
+            handle_create_subject(
+                CreateSubjectCommand(code=subject.code, name=subject.name), uow=uow
+            )
+            continue
+
+        elif existing_subject.name != subject.name:
+            details["subjects_updated"] += 1
+        uow.subjects.save(
+            Subject(
+                code=subject.code,
+                name=subject.name,
+            )
+        )
+        uow.commit()
+
+    for topic in payload.topics:
+        if uow.subjects.get(topic.subject_code) is None:
+            raise HTTPException(
+                status_code=422,
+                detail=f"Topic references unknown subject_code: {topic.subject_code}",
+            )
+        existing_topic = uow.topics.get(topic.code)
+        if existing_topic is None:
+            details["topics_created"] += 1
+            handle_create_topic(
+                CreateTopicCommand(
+                    code=topic.code,
+                    subject_code=topic.subject_code,
+                    grade=topic.grade,
+                    name=topic.name,
+                ),
+                uow=uow,
+            )
+            continue
+        changed = (
+            existing_topic.subject_code != topic.subject_code
+            or existing_topic.grade != topic.grade
+            or existing_topic.name != topic.name
+        )
+        if changed:
+            details["topics_updated"] += 1
+        uow.topics.save(
+            Topic(
+                code=topic.code,
+                subject_code=topic.subject_code,
+                grade=topic.grade,
+                name=topic.name,
+            )
+        )
+        uow.commit()
+
+    seen_nodes: set[str] = {n.node_id for n in uow.micro_skills.list()}
+    for node in payload.micro_skills:
+        if uow.subjects.get(node.subject_code) is None:
+            raise HTTPException(
+                status_code=422,
+                detail=(
+                    "Micro-skill references unknown subject_code: "
+                    f"{node.subject_code}"
+                ),
+            )
+        for pred in node.predecessor_ids:
+            if pred not in seen_nodes:
+                raise HTTPException(
+                    status_code=422,
+                    detail=f"Unknown predecessor_id: {pred} for node {node.node_id}",
+                )
+
+        existing_node = uow.micro_skills.get(node.node_id)
+        if existing_node is None:
+            details["micro_skills_created"] += 1
+            handle_create_micro_skill(
+                CreateMicroSkillCommand(
+                    node_id=node.node_id,
+                    subject_code=node.subject_code,
+                    grade=node.grade,
+                    section_code=node.section_code,
+                    section_name=node.section_name,
+                    micro_skill_name=node.micro_skill_name,
+                    predecessor_ids=node.predecessor_ids,
+                    criticality=node.criticality,
+                    source_ref=node.source_ref,
+                ),
+                uow=uow,
+            )
+            seen_nodes.add(node.node_id)
+            continue
+
+        changed = (
+            existing_node.subject_code != node.subject_code
+            or existing_node.grade != node.grade
+            or existing_node.section_code != node.section_code
+            or existing_node.section_name != node.section_name
+            or existing_node.micro_skill_name != node.micro_skill_name
+            or existing_node.predecessor_ids != node.predecessor_ids
+            or existing_node.criticality.value != node.criticality
+            or existing_node.source_ref != node.source_ref
+        )
+        if changed:
+            details["micro_skills_updated"] += 1
+        uow.micro_skills.save(
+            MicroSkillNode(
+                node_id=node.node_id,
+                subject_code=node.subject_code,
+                grade=node.grade,
+                section_code=node.section_code,
+                section_name=node.section_name,
+                micro_skill_name=node.micro_skill_name,
+                predecessor_ids=node.predecessor_ids,
+                criticality=CriticalityLevel(node.criticality),
+                source_ref=node.source_ref,
+            )
+        )
+        uow.commit()
+        seen_nodes.add(node.node_id)
+
+    for test in payload.tests:
+        if uow.subjects.get(test.subject_code) is None:
+            raise HTTPException(
+                status_code=422,
+                detail=f"Test references unknown subject_code: {test.subject_code}",
+            )
+        for question in test.questions:
+            if uow.micro_skills.get(question.node_id) is None:
+                raise HTTPException(
+                    status_code=422,
+                    detail=f"Question references unknown node_id: {question.node_id}",
+                )
+
+        test_id = uuid5(
+            NAMESPACE_URL,
+            f"{body.source_id}:test:{test.external_id}",
+        )
+        existing_test = uow.tests.get(test_id)
+        questions = [
+            Question(
+                question_id=uuid5(
+                    NAMESPACE_URL,
+                    (
+                        f"{body.source_id}:test:{test.external_id}"
+                        f":question:{question.external_id}"
+                    ),
+                ),
+                node_id=question.node_id,
+                text=question.text,
+                answer_key=question.answer_key,
+                max_score=question.max_score,
+            )
+            for question in test.questions
+        ]
+        if existing_test is None:
+            aggregate = AssessmentTest(
+                test_id=test_id,
+                subject_code=test.subject_code,
+                grade=test.grade,
+                questions=questions,
+                version=1,
+            )
+        else:
+            aggregate = AssessmentTest(
+                test_id=test_id,
+                subject_code=test.subject_code,
+                grade=test.grade,
+                questions=questions,
+                version=existing_test.version + 1,
+                created_at=existing_test.created_at,
+            )
+        aggregate.validate()
+        if existing_test is None:
+            details["tests_created"] += 1
+        else:
+            details["tests_updated"] += 1
+        uow.tests.save(aggregate)
+        uow.commit()
+
+    imported_total = sum(details.values())
     return ContentImportResponse(
         source_id=body.source_id,
-        imported=0,
-        status="accepted",
+        imported=imported_total,
+        status="completed",
+        details=details,
     )
 
 

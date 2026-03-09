@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from uuid import UUID
 
 from pydantic import BaseModel, Field
@@ -112,13 +114,60 @@ class StartAttemptByAssignmentRequest(BaseModel):
 class ContentImportRequest(BaseModel):
     source_id: str
     contract_version: str
-    payload: dict[str, object]
+    payload: ContentImportPayload
 
 
 class ContentImportResponse(BaseModel):
     source_id: str
     imported: int
     status: str
+    details: dict[str, int] | None = None
+
+
+class ContentImportSubjectItem(BaseModel):
+    code: str
+    name: str
+
+
+class ContentImportTopicItem(BaseModel):
+    code: str
+    subject_code: str
+    grade: int = Field(ge=1, le=11)
+    name: str
+
+
+class ContentImportMicroSkillItem(BaseModel):
+    node_id: str
+    subject_code: str
+    grade: int = Field(ge=1, le=11)
+    section_code: str
+    section_name: str
+    micro_skill_name: str
+    predecessor_ids: list[str] = Field(default_factory=list)
+    criticality: CriticalityLevel = CriticalityLevel.MEDIUM
+    source_ref: str | None = None
+
+
+class ContentImportQuestionItem(BaseModel):
+    external_id: str
+    node_id: str
+    text: str
+    answer_key: str
+    max_score: int = Field(default=1, ge=1)
+
+
+class ContentImportTestItem(BaseModel):
+    external_id: str
+    subject_code: str
+    grade: int = Field(ge=1, le=4)
+    questions: list[ContentImportQuestionItem] = Field(min_length=1)
+
+
+class ContentImportPayload(BaseModel):
+    subjects: list[ContentImportSubjectItem] = Field(default_factory=list)
+    topics: list[ContentImportTopicItem] = Field(default_factory=list)
+    micro_skills: list[ContentImportMicroSkillItem] = Field(default_factory=list)
+    tests: list[ContentImportTestItem] = Field(default_factory=list)
 
 
 class PublishTestResponse(BaseModel):
