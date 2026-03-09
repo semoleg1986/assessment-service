@@ -112,7 +112,12 @@ cp .env.example .env
 make docker-up
 ```
 
-Если используется Postgres, перед стартом сервиса примените миграции:
+Если используется Postgres, при запуске Docker-контейнера миграции применяются автоматически
+(`AUTO_MIGRATE_ON_START=true` по умолчанию). Параметры ретраев:
+- `MIGRATION_MAX_RETRIES`
+- `MIGRATION_RETRY_DELAY`
+
+Ручной запуск миграций (опционально):
 
 ```bash
 cd /Users/olegsemenov/Programming/monitoring/assessment-service
