@@ -135,6 +135,15 @@ make docker-up
 - `MIGRATION_MAX_RETRIES`
 - `MIGRATION_RETRY_DELAY`
 
+Минимальная observability:
+- при старте контейнера entrypoint пишет metric-логи миграций:
+  - `metric=assessment_migration_runs_total status=started|succeeded|failed`
+- HTTP middleware добавляет/пробрасывает `x-request-id` и пишет request-логи:
+  - `request_completed ... request_id=<id>`
+  - `request_failed ... request_id=<id>`
+- seed-скрипт пишет metric-логи:
+  - `metric=assessment_seed_runs_total status=started|succeeded|failed`
+
 Ручной запуск миграций (опционально):
 
 ```bash

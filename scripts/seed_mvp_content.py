@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import logging
 from dataclasses import dataclass
 from os import getenv
 
@@ -14,6 +15,8 @@ from src.application.handlers.commands.create_subject import handle_create_subje
 from src.application.handlers.commands.create_topic import handle_create_topic
 from src.domain.value_objects.statuses import CriticalityLevel
 from src.infrastructure.uow import AppSettings, build_uow
+
+logger = logging.getLogger("assessment.seed")
 
 
 @dataclass(frozen=True)
@@ -147,10 +150,17 @@ def resolve_seed_profile(
 
 
 def main() -> None:
+    logging.basicConfig(
+        level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s"
+    )
     args = parse_args()
     settings = AppSettings.from_env()
     if not settings.database_url:
         raise SystemExit("DATABASE_URL is required for seed script")
+    logger.info(
+        "metric=assessment_seed_runs_total status=started value=1 profile=%s",
+        args.profile,
+    )
 
     app_env = getenv("APP_ENV", "dev").strip().lower()
     if args.profile == "demo" and app_env not in {"dev", "local"}:
@@ -205,6 +215,16 @@ def main() -> None:
         )
         created_skills += 1
 
+    logger.info(
+        (
+            "metric=assessment_seed_runs_total status=succeeded value=1 profile=%s "
+            "subjects_created=%s topics_created=%s micro_skills_created=%s"
+        ),
+        args.profile,
+        created_subjects,
+        created_topics,
+        created_skills,
+    )
     print(
         "seed completed:",
         {
@@ -217,4 +237,8 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception:
+        logger.exception("metric=assessment_seed_runs_total status=failed value=1")
+        raise
