@@ -15,6 +15,9 @@ install: requirements ## Установить зависимости
 test: ## Запустить все тесты
 	pytest -q
 
+test-integration: ## Запустить интеграционные тесты (Postgres в Docker)
+	RUN_INTEGRATION_TESTS=1 pytest -q tests/integration
+
 test-cov: ## Запустить тесты с покрытием
 	pytest --cov=src -q
 

@@ -105,6 +105,24 @@ make run
 Health:
 - `GET http://localhost:8003/healthz`
 
+## Интеграционные тесты (Postgres)
+Проверяют сценарий:
+- `alembic upgrade head`
+- `seed_mvp_content.py --profile prod-min`
+- повторный `upgrade + seed` (эмуляция restart, проверка idempotency)
+
+Запуск:
+
+```bash
+cd /Users/olegsemenov/Programming/monitoring/assessment-service
+make test-integration
+```
+
+Требования:
+- локально доступен Docker daemon
+- доступен образ `postgres:16`
+- в окружении установлен `psycopg`
+
 ## Запуск в Docker
 ```bash
 cd /Users/olegsemenov/Programming/monitoring/assessment-service
