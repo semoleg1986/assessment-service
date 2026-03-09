@@ -48,6 +48,9 @@ db-downgrade: ## Откатить alembic миграции на один шаг
 seed-mvp: ## Заполнить базовый контент (subjects/topics/micro-skills)
 	python scripts/seed_mvp_content.py
 
+seed-demo: ## Заполнить demo-контент (только для dev/local)
+	python scripts/seed_mvp_content.py --profile demo --confirm-demo
+
 docker-up: ## Запустить assessment-service через Docker Compose
 	docker compose up --build -d
 

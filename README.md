@@ -131,10 +131,21 @@ cd /Users/olegsemenov/Programming/monitoring/assessment-service
 make seed-mvp
 ```
 
+Профили seed:
+- `prod-min` (по умолчанию) — минимальный боевой набор.
+- `demo` — расширенный demo-набор (требует явного подтверждения вне dev/local).
+
+Примеры:
+
+```bash
+python scripts/seed_mvp_content.py --profile prod-min
+python scripts/seed_mvp_content.py --profile demo --confirm-demo
+```
+
 Для already-running Docker контейнера используйте:
 
 ```bash
-docker exec -it assessment-service python -m scripts.seed_mvp_content
+docker exec -it assessment-service python -m scripts.seed_mvp_content --profile prod-min
 ```
 
 Проверка:

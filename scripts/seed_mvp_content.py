@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import argparse
 from dataclasses import dataclass
+from os import getenv
 
 from src.application.commands.create_micro_skill import CreateMicroSkillCommand
 from src.application.commands.create_subject import CreateSubjectCommand
@@ -35,18 +37,18 @@ class MicroSkillSeed:
     source_ref: str
 
 
-SUBJECTS: tuple[tuple[str, str], ...] = (
+PROD_MIN_SUBJECTS: tuple[tuple[str, str], ...] = (
     ("math", "Математика"),
     ("ru", "Русский язык"),
 )
 
-TOPICS: tuple[TopicSeed, ...] = (
+PROD_MIN_TOPICS: tuple[TopicSeed, ...] = (
     TopicSeed("M2-ADD", "math", 2, "Сложение"),
     TopicSeed("M2-SUB", "math", 2, "Вычитание"),
     TopicSeed("R2-ORTH", "ru", 2, "Орфография"),
 )
 
-MICRO_SKILLS: tuple[MicroSkillSeed, ...] = (
+PROD_MIN_MICRO_SKILLS: tuple[MicroSkillSeed, ...] = (
     MicroSkillSeed(
         node_id="M2-ADD-01",
         subject_code="math",
@@ -56,7 +58,7 @@ MICRO_SKILLS: tuple[MicroSkillSeed, ...] = (
         micro_skill_name="Сложение в пределах 20 без перехода",
         predecessor_ids=[],
         criticality=CriticalityLevel.MEDIUM,
-        source_ref="seed:v0.2.1",
+        source_ref="seed:prod-min:v0.2.3",
     ),
     MicroSkillSeed(
         node_id="M2-ADD-02",
@@ -67,7 +69,7 @@ MICRO_SKILLS: tuple[MicroSkillSeed, ...] = (
         micro_skill_name="Сложение в пределах 20 с переходом",
         predecessor_ids=["M2-ADD-01"],
         criticality=CriticalityLevel.HIGH,
-        source_ref="seed:v0.2.1",
+        source_ref="seed:prod-min:v0.2.3",
     ),
     MicroSkillSeed(
         node_id="M2-SUB-01",
@@ -78,7 +80,7 @@ MICRO_SKILLS: tuple[MicroSkillSeed, ...] = (
         micro_skill_name="Вычитание в пределах 20",
         predecessor_ids=["M2-ADD-01"],
         criticality=CriticalityLevel.MEDIUM,
-        source_ref="seed:v0.2.1",
+        source_ref="seed:prod-min:v0.2.3",
     ),
     MicroSkillSeed(
         node_id="R2-ORTH-01",
@@ -89,29 +91,88 @@ MICRO_SKILLS: tuple[MicroSkillSeed, ...] = (
         micro_skill_name="Проверяемые безударные гласные",
         predecessor_ids=[],
         criticality=CriticalityLevel.HIGH,
-        source_ref="seed:v0.2.1",
+        source_ref="seed:prod-min:v0.2.3",
+    ),
+)
+
+DEMO_SUBJECTS: tuple[tuple[str, str], ...] = PROD_MIN_SUBJECTS + (
+    ("demo_science", "Demo: Окружающий мир"),
+)
+
+DEMO_TOPICS: tuple[TopicSeed, ...] = PROD_MIN_TOPICS + (
+    TopicSeed("D2-WORLD-01", "demo_science", 2, "Живая и неживая природа"),
+)
+
+DEMO_MICRO_SKILLS: tuple[MicroSkillSeed, ...] = PROD_MIN_MICRO_SKILLS + (
+    MicroSkillSeed(
+        node_id="D2-WORLD-01",
+        subject_code="demo_science",
+        grade=2,
+        section_code="D1",
+        section_name="Demo section",
+        micro_skill_name="Различает объекты живой/неживой природы",
+        predecessor_ids=[],
+        criticality=CriticalityLevel.LOW,
+        source_ref="seed:demo:v0.2.3",
     ),
 )
 
 
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Seed MVP content to database")
+    parser.add_argument(
+        "--profile",
+        choices=("prod-min", "demo"),
+        default="prod-min",
+        help="Seed profile. Default: prod-min",
+    )
+    parser.add_argument(
+        "--confirm-demo",
+        action="store_true",
+        help="Required for --profile demo in non-dev environments",
+    )
+    return parser.parse_args()
+
+
+def resolve_seed_profile(
+    profile: str,
+) -> tuple[
+    tuple[tuple[str, str], ...],
+    tuple[TopicSeed, ...],
+    tuple[MicroSkillSeed, ...],
+]:
+    if profile == "prod-min":
+        return PROD_MIN_SUBJECTS, PROD_MIN_TOPICS, PROD_MIN_MICRO_SKILLS
+    return DEMO_SUBJECTS, DEMO_TOPICS, DEMO_MICRO_SKILLS
+
+
 def main() -> None:
+    args = parse_args()
     settings = AppSettings.from_env()
     if not settings.database_url:
         raise SystemExit("DATABASE_URL is required for seed script")
 
+    app_env = getenv("APP_ENV", "dev").strip().lower()
+    if args.profile == "demo" and app_env not in {"dev", "local"}:
+        if not args.confirm_demo:
+            raise SystemExit(
+                "Demo profile requires --confirm-demo outside dev/local APP_ENV"
+            )
+
+    subjects, topics, micro_skills = resolve_seed_profile(args.profile)
     uow = build_uow()
 
     created_subjects = 0
     created_topics = 0
     created_skills = 0
 
-    for code, name in SUBJECTS:
+    for code, name in subjects:
         if uow.subjects.get(code) is not None:
             continue
         handle_create_subject(CreateSubjectCommand(code=code, name=name), uow=uow)
         created_subjects += 1
 
-    for topic in TOPICS:
+    for topic in topics:
         if uow.topics.get(topic.code) is not None:
             continue
         handle_create_topic(
@@ -125,7 +186,7 @@ def main() -> None:
         )
         created_topics += 1
 
-    for node in MICRO_SKILLS:
+    for node in micro_skills:
         if uow.micro_skills.get(node.node_id) is not None:
             continue
         handle_create_micro_skill(
@@ -147,6 +208,7 @@ def main() -> None:
     print(
         "seed completed:",
         {
+            "profile": args.profile,
             "subjects_created": created_subjects,
             "topics_created": created_topics,
             "micro_skills_created": created_skills,
