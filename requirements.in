@@ -3,7 +3,7 @@ uvicorn[standard]
 pydantic
 sqlalchemy
 alembic
-psycopg
+psycopg[binary]
 greenlet
 pytest
 pytest-cov

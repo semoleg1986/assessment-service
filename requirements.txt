@@ -90,8 +90,10 @@ pluggy==1.6.0
     #   pytest-cov
 pre-commit==4.5.1
     # via -r requirements.in
-psycopg==3.2.12
+psycopg[binary]==3.2.12
     # via -r requirements.in
+psycopg-binary==3.2.12
+    # via psycopg
 pycodestyle==2.14.0
     # via flake8
 pydantic==2.12.5
