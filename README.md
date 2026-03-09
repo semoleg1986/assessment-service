@@ -126,6 +126,12 @@ cd /Users/olegsemenov/Programming/monitoring/assessment-service
 make seed-mvp
 ```
 
+Для already-running Docker контейнера используйте:
+
+```bash
+docker exec -it assessment-service python -m scripts.seed_mvp_content
+```
+
 Проверка:
 ```bash
 curl -i http://localhost:8003/healthz
