@@ -119,6 +119,13 @@ cd /Users/olegsemenov/Programming/monitoring/assessment-service
 make db-upgrade
 ```
 
+Заполнить стартовый контент (idempotent):
+
+```bash
+cd /Users/olegsemenov/Programming/monitoring/assessment-service
+make seed-mvp
+```
+
 Проверка:
 ```bash
 curl -i http://localhost:8003/healthz
