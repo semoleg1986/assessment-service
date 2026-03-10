@@ -9,6 +9,7 @@ from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoin
 from starlette.responses import Response
 
 logger = logging.getLogger("assessment.request")
+logger.setLevel(logging.INFO)
 
 
 class RequestIdLoggingMiddleware(BaseHTTPMiddleware):
