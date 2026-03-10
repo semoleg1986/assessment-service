@@ -4,45 +4,51 @@ from fastapi import APIRouter, HTTPException, status
 
 from src.application.commands import (
     AssignTestCommand,
+    CleanupFixturesCommand,
     CreateMicroSkillCommand,
     CreateSubjectCommand,
     CreateTestCommand,
     CreateTopicCommand,
     LinkMicroSkillPredecessorsCommand,
     QuestionInput,
+    SaveAttemptAnswersCommand,
     StartAttemptCommand,
     SubmitAttemptCommand,
     SubmittedAnswerInput,
 )
 from src.application.handlers import (
     handle_assign_test,
+    handle_cleanup_fixtures,
     handle_create_micro_skill,
     handle_create_subject,
     handle_create_test,
     handle_create_topic,
     handle_get_attempt_result,
+    handle_get_child_diagnostics,
+    handle_get_test_by_id,
     handle_link_micro_skill_predecessors,
+    handle_list_assignments_by_child,
     handle_list_micro_skills,
     handle_list_subjects,
     handle_list_tests,
     handle_list_topics,
+    handle_save_attempt_answers,
     handle_start_attempt,
     handle_submit_attempt,
 )
+from src.application.ports.fixture_cleanup import FixtureCleanupUnsupportedError
 from src.application.queries import (
     GetAttemptResultQuery,
+    GetChildDiagnosticsQuery,
+    GetTestByIdQuery,
+    ListAssignmentsByChildQuery,
     ListMicroSkillsQuery,
     ListSubjectsQuery,
     ListTestsQuery,
     ListTopicsQuery,
 )
 from src.domain.errors import InvariantViolationError, NotFoundError
-from src.infrastructure.maintenance import (
-    FixtureCleanupFilters,
-    FixtureCleanupUnsupportedError,
-    run_fixture_cleanup,
-)
-from src.infrastructure.uow import build_uow
+from src.interface.http.dependencies import get_fixture_cleanup_service, get_uow
 from src.interface.http.v1.content_import import import_content_with_uow
 from src.interface.http.v1.schemas import (
     AssignmentListItemResponse,
@@ -78,7 +84,8 @@ from src.interface.http.v1.schemas import (
 )
 
 router = APIRouter(prefix="/v1", tags=["assessment"])
-uow = build_uow()
+uow = get_uow()
+fixture_cleanup_service = get_fixture_cleanup_service()
 
 
 @router.post(
@@ -123,16 +130,16 @@ def _cleanup_counts_response(
     status_code=status.HTTP_200_OK,
 )
 def cleanup_fixtures(body: FixtureCleanupRequest) -> FixtureCleanupResponse:
-    filters = FixtureCleanupFilters(
-        subject_code_patterns=tuple(body.subject_code_patterns),
-        topic_code_patterns=tuple(body.topic_code_patterns),
-        node_id_patterns=tuple(body.node_id_patterns),
-    )
     try:
-        result = run_fixture_cleanup(
+        result = handle_cleanup_fixtures(
+            CleanupFixturesCommand(
+                dry_run=body.dry_run,
+                subject_code_patterns=tuple(body.subject_code_patterns),
+                topic_code_patterns=tuple(body.topic_code_patterns),
+                node_id_patterns=tuple(body.node_id_patterns),
+            ),
             uow=uow,
-            dry_run=body.dry_run,
-            filters=filters,
+            service=fixture_cleanup_service,
         )
     except FixtureCleanupUnsupportedError as exc:
         raise HTTPException(
@@ -251,7 +258,7 @@ def list_tests() -> list[TestResponse]:
     response_model=PublishTestResponse,
 )
 def publish_test(test_id: UUID) -> PublishTestResponse:
-    if uow.tests.get(test_id) is None:
+    if handle_get_test_by_id(GetTestByIdQuery(test_id=test_id), uow=uow) is None:
         raise HTTPException(status_code=404, detail="test not found")
     return PublishTestResponse(test_id=test_id, status="published")
 
@@ -476,7 +483,10 @@ def assign_test(body: AssignTestRequest) -> AssignmentResponse:
     response_model=list[AssignmentListItemResponse],
 )
 def list_assignments_by_child(child_id: UUID) -> list[AssignmentListItemResponse]:
-    assignments = uow.assignments.list_by_child(child_id)
+    assignments = handle_list_assignments_by_child(
+        ListAssignmentsByChildQuery(child_id=child_id),
+        uow=uow,
+    )
     return [
         AssignmentListItemResponse(
             assignment_id=a.assignment_id,
@@ -558,10 +568,22 @@ def submit_attempt(
 def save_attempt_answers(
     attempt_id: UUID, body: SaveAttemptAnswersRequest
 ) -> SaveAttemptAnswersResponse:
-    if uow.attempts.get(attempt_id) is None:
-        raise HTTPException(status_code=404, detail="attempt not found")
+    try:
+        result = handle_save_attempt_answers(
+            SaveAttemptAnswersCommand(
+                attempt_id=attempt_id,
+                answers=[
+                    SubmittedAnswerInput(question_id=a.question_id, value=a.value)
+                    for a in body.answers
+                ],
+            ),
+            uow=uow,
+        )
+    except NotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
     return SaveAttemptAnswersResponse(
-        attempt_id=str(attempt_id), saved_answers=len(body.answers)
+        attempt_id=str(result["attempt_id"]),
+        saved_answers=int(result["saved_answers"]),
     )
 
 
@@ -599,10 +621,12 @@ def get_attempt_result_for_user(attempt_id: UUID) -> AttemptResultResponse:
     response_model=ChildDiagnosticsResponse,
 )
 def get_child_diagnostics(child_id: UUID) -> ChildDiagnosticsResponse:
-    assignments_total = len(uow.assignments.list_by_child(child_id))
-    attempts_total = len(uow.attempts.list_by_child(child_id))
+    result = handle_get_child_diagnostics(
+        GetChildDiagnosticsQuery(child_id=child_id),
+        uow=uow,
+    )
     return ChildDiagnosticsResponse(
         child_id=child_id,
-        assignments_total=assignments_total,
-        attempts_total=attempts_total,
+        assignments_total=result["assignments_total"],
+        attempts_total=result["attempts_total"],
     )
