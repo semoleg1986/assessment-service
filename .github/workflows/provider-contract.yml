@@ -39,7 +39,19 @@ jobs:
           pip install -r requirements.txt
 
       - name: Check OpenAPI artifact is in sync
+        id: openapi_check
         run: make openapi-check
+        continue-on-error: true
+
+      - name: Debug OpenAPI mismatch
+        if: steps.openapi_check.outcome != 'success'
+        run: |
+          make openapi-export
+          echo "=== git status ==="
+          git status --short
+          echo "=== openapi diff ==="
+          git diff -- openapi.yaml | sed -n '1,220p'
+          exit 1
 
       - name: Run tests
         run: make test
