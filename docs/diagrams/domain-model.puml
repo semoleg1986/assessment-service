@@ -68,6 +68,12 @@ class MicroSkillNode {
   predecessor_ids: list[str]
   criticality: low|medium|high
   source_ref: str?
+  description: str?
+  status: draft|active|archived
+  external_ref: str?
+  version: int
+  created_at: datetime
+  updated_at: datetime
 }
 
 AssessmentTest "1" o-- "1..*" Question

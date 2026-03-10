@@ -75,6 +75,12 @@
 - `predecessor_ids: list[str]`
 - `criticality: low | medium | high`
 - `source_ref: str | None`
+- `description: str | None`
+- `status: draft | active | archived`
+- `external_ref: str | None`
+- `version: int`
+- `created_at: datetime`
+- `updated_at: datetime`
 
 ### Question
 
@@ -96,6 +102,7 @@
 - `AssignmentStatus`: `assigned | started | completed | expired | cancelled`
 - `AttemptStatus`: `started | submitted | cancelled`
 - `CriticalityLevel`: `low | medium | high`
+- `MicroSkillStatus`: `draft | active | archived`
 
 ## Инварианты
 

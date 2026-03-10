@@ -1,6 +1,7 @@
 from dataclasses import dataclass, field
+from datetime import UTC, datetime
 
-from src.domain.value_objects.statuses import CriticalityLevel
+from src.domain.value_objects.statuses import CriticalityLevel, MicroSkillStatus
 
 
 @dataclass(slots=True)
@@ -26,6 +27,18 @@ class MicroSkillNode:
     :type criticality: CriticalityLevel
     :param source_ref: Ссылка на источник контента.
     :type source_ref: str | None
+    :param description: Описание микро-умения.
+    :type description: str | None
+    :param status: Статус жизненного цикла узла.
+    :type status: MicroSkillStatus
+    :param external_ref: Внешний идентификатор в контент-системе.
+    :type external_ref: str | None
+    :param version: Версия узла для отслеживания изменений.
+    :type version: int
+    :param created_at: Время создания узла.
+    :type created_at: datetime
+    :param updated_at: Время последнего обновления узла.
+    :type updated_at: datetime
     """
 
     node_id: str
@@ -37,3 +50,9 @@ class MicroSkillNode:
     predecessor_ids: list[str] = field(default_factory=list)
     criticality: CriticalityLevel = CriticalityLevel.MEDIUM
     source_ref: str | None = None
+    description: str | None = None
+    status: MicroSkillStatus = MicroSkillStatus.ACTIVE
+    external_ref: str | None = None
+    version: int = 1
+    created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
+    updated_at: datetime = field(default_factory=lambda: datetime.now(UTC))

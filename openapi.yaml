@@ -818,6 +818,19 @@ components:
           - type: string
           - type: 'null'
           title: Source Ref
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Description
+        status:
+          $ref: '#/components/schemas/MicroSkillStatus'
+          default: active
+        external_ref:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: External Ref
       type: object
       required:
       - node_id
@@ -1076,6 +1089,19 @@ components:
           - type: string
           - type: 'null'
           title: Source Ref
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Description
+        status:
+          $ref: '#/components/schemas/MicroSkillStatus'
+          default: active
+        external_ref:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: External Ref
       type: object
       required:
       - node_id
@@ -1128,6 +1154,29 @@ components:
           - type: string
           - type: 'null'
           title: Source Ref
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Description
+        status:
+          $ref: '#/components/schemas/MicroSkillStatus'
+        external_ref:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: External Ref
+        version:
+          type: integer
+          title: Version
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+        updated_at:
+          type: string
+          format: date-time
+          title: Updated At
         blocks_count:
           type: integer
           title: Blocks Count
@@ -1142,8 +1191,21 @@ components:
       - predecessor_ids
       - criticality
       - source_ref
+      - description
+      - status
+      - external_ref
+      - version
+      - created_at
+      - updated_at
       - blocks_count
       title: MicroSkillResponse
+    MicroSkillStatus:
+      type: string
+      enum:
+      - draft
+      - active
+      - archived
+      title: MicroSkillStatus
     PublishTestResponse:
       properties:
         test_id:
@@ -1437,11 +1499,6 @@ components:
         type:
           type: string
           title: Error Type
-        input:
-          title: Input
-        ctx:
-          type: object
-          title: Context
       type: object
       required:
       - loc

@@ -72,6 +72,10 @@ def handle_create_micro_skill(
         predecessor_ids=command.predecessor_ids,
         criticality=command.criticality,
         source_ref=command.source_ref,
+        description=command.description,
+        status=command.status,
+        external_ref=command.external_ref,
+        version=1,
     )
     uow.micro_skills.save(node)
     uow.commit()

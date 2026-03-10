@@ -1,3 +1,5 @@
+from datetime import UTC, datetime
+
 from src.application.commands.link_micro_skill_predecessors import (
     LinkMicroSkillPredecessorsCommand,
 )
@@ -65,7 +67,12 @@ def handle_link_micro_skill_predecessors(
         if _has_path(uow, pred, command.node_id):
             raise InvariantViolationError("cycle detected in micro-skill graph")
 
+    if node.predecessor_ids == command.predecessor_ids:
+        return node
+
     node.predecessor_ids = command.predecessor_ids
+    node.version += 1
+    node.updated_at = datetime.now(UTC)
     uow.micro_skills.save(node)
     uow.commit()
     return node

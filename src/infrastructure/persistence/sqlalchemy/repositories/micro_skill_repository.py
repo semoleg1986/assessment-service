@@ -26,6 +26,12 @@ class SqlAlchemyMicroSkillNodeRepository(MicroSkillNodeRepository):
                 predecessor_ids=list(node.predecessor_ids),
                 criticality=node.criticality.value,
                 source_ref=node.source_ref,
+                description=node.description,
+                status=node.status.value,
+                external_ref=node.external_ref,
+                version=node.version,
+                created_at=node.created_at,
+                updated_at=node.updated_at,
             )
             self._session.add(model)
             return
@@ -38,6 +44,12 @@ class SqlAlchemyMicroSkillNodeRepository(MicroSkillNodeRepository):
         model.predecessor_ids = list(node.predecessor_ids)
         model.criticality = node.criticality.value
         model.source_ref = node.source_ref
+        model.description = node.description
+        model.status = node.status.value
+        model.external_ref = node.external_ref
+        model.version = node.version
+        model.created_at = node.created_at
+        model.updated_at = node.updated_at
 
     def get(self, node_id: str) -> MicroSkillNode | None:
         model = self._session.get(MicroSkillNodeModel, node_id)

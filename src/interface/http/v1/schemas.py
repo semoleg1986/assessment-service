@@ -1,11 +1,12 @@
 from __future__ import annotations
 
+from datetime import datetime
 from typing import Literal
 from uuid import UUID
 
 from pydantic import BaseModel, Field
 
-from src.domain.value_objects.statuses import CriticalityLevel
+from src.domain.value_objects.statuses import CriticalityLevel, MicroSkillStatus
 
 
 class QuestionCreateRequest(BaseModel):
@@ -158,6 +159,9 @@ class ContentImportMicroSkillItem(BaseModel):
     predecessor_ids: list[str] = Field(default_factory=list)
     criticality: CriticalityLevel = CriticalityLevel.MEDIUM
     source_ref: str | None = None
+    description: str | None = None
+    status: MicroSkillStatus = MicroSkillStatus.ACTIVE
+    external_ref: str | None = None
 
 
 class ContentImportQuestionItem(BaseModel):
@@ -227,6 +231,9 @@ class MicroSkillCreateRequest(BaseModel):
     predecessor_ids: list[str] = Field(default_factory=list)
     criticality: CriticalityLevel = CriticalityLevel.MEDIUM
     source_ref: str | None = None
+    description: str | None = None
+    status: MicroSkillStatus = MicroSkillStatus.ACTIVE
+    external_ref: str | None = None
 
 
 class MicroSkillLinkRequest(BaseModel):
@@ -243,4 +250,10 @@ class MicroSkillResponse(BaseModel):
     predecessor_ids: list[str]
     criticality: CriticalityLevel
     source_ref: str | None
+    description: str | None
+    status: MicroSkillStatus
+    external_ref: str | None
+    version: int
+    created_at: datetime
+    updated_at: datetime
     blocks_count: int

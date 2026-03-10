@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from src.domain.value_objects.statuses import CriticalityLevel
+from src.domain.value_objects.statuses import CriticalityLevel, MicroSkillStatus
 
 
 @dataclass(slots=True)
@@ -14,3 +14,6 @@ class CreateMicroSkillCommand:
     predecessor_ids: list[str]
     criticality: CriticalityLevel
     source_ref: str | None = None
+    description: str | None = None
+    status: MicroSkillStatus = MicroSkillStatus.ACTIVE
+    external_ref: str | None = None

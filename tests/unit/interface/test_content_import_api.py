@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from typing import Any, cast
 from uuid import uuid4
 
 from fastapi.testclient import TestClient
@@ -7,7 +8,7 @@ from fastapi.testclient import TestClient
 from src.interface.http.app import create_app
 
 
-def _payload(prefix: str) -> dict[str, object]:
+def _payload(prefix: str) -> dict[str, Any]:
     subject_code = f"math_{prefix}"
     topic_code = f"T_{prefix}"
     node_id = f"N_{prefix}"
@@ -32,6 +33,9 @@ def _payload(prefix: str) -> dict[str, object]:
                 "predecessor_ids": [],
                 "criticality": "medium",
                 "source_ref": "test",
+                "description": f"Description {prefix}",
+                "status": "active",
+                "external_ref": f"external-{prefix}",
             }
         ],
         "tests": [
@@ -149,3 +153,37 @@ def test_import_apply_is_idempotent() -> None:
     assert second_body["status"] == "completed"
     assert second_body["errors"] == []
     assert second_body["imported"] == 0
+
+
+def test_import_updates_micro_skill_metadata_and_version() -> None:
+    client = TestClient(create_app())
+    prefix = uuid4().hex[:8]
+    payload = _payload(prefix)
+    request_body = {
+        "source_id": f"test-{prefix}",
+        "contract_version": "v1.1",
+        "payload": payload,
+    }
+
+    created = client.post("/v1/admin/content/import", json=request_body)
+    assert created.status_code == 202
+    assert created.json()["status"] == "completed"
+
+    micro_skills = cast(list[dict[str, Any]], payload["micro_skills"])
+    micro_skills[0]["description"] = "Updated description"
+    micro_skills[0]["status"] = "draft"
+    micro_skills[0]["external_ref"] = f"updated-{prefix}"
+    updated = client.post("/v1/admin/content/import", json=request_body)
+    assert updated.status_code == 202
+    body = updated.json()
+    assert body["status"] == "completed"
+    assert body["details"]["micro_skills_updated"] == 1
+
+    micro_skills = client.get("/v1/admin/micro-skills").json()
+    target = next(item for item in micro_skills if item["node_id"] == f"N_{prefix}")
+    assert target["description"] == "Updated description"
+    assert target["status"] == "draft"
+    assert target["external_ref"] == f"updated-{prefix}"
+    assert target["version"] == 2
+    assert target["created_at"]
+    assert target["updated_at"]

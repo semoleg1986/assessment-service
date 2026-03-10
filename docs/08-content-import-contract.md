@@ -34,7 +34,8 @@ Endpoint: `POST /v1/admin/content/import`
 - `subjects[]`: `code`, `name`
 - `topics[]`: `code`, `subject_code`, `grade`, `name`
 - `micro_skills[]`: `node_id`, `subject_code`, `grade`, `section_code`, `section_name`,
-  `micro_skill_name`, `predecessor_ids[]`, `criticality`, `source_ref`
+  `micro_skill_name`, `predecessor_ids[]`, `criticality`, `source_ref`,
+  `description?`, `status?`, `external_ref?`
 - `tests[]`: `external_id`, `subject_code`, `grade`, `questions[]`
 - `questions[]`: `external_id`, `node_id`, `text`, `answer_key`, `max_score`
 
@@ -88,3 +89,4 @@ Known codes:
 ## Notes
 - Test and question IDs are deterministic (`uuid5`) from `source_id + external_id`.
 - `details` reports only actual changes (`created/updated`), not scanned entities.
+- For micro-skills, `version`/`created_at`/`updated_at` are server-managed metadata.

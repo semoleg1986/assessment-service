@@ -12,6 +12,7 @@ from src.domain.value_objects.statuses import (
     AssignmentStatus,
     AttemptStatus,
     CriticalityLevel,
+    MicroSkillStatus,
 )
 from src.infrastructure.persistence.sqlalchemy.models import (
     AssignmentModel,
@@ -48,6 +49,12 @@ def micro_skill_from_model(model: MicroSkillNodeModel) -> MicroSkillNode:
         predecessor_ids=list(model.predecessor_ids or []),
         criticality=CriticalityLevel(model.criticality),
         source_ref=model.source_ref,
+        description=model.description,
+        status=MicroSkillStatus(model.status),
+        external_ref=model.external_ref,
+        version=model.version,
+        created_at=model.created_at,
+        updated_at=model.updated_at,
     )
 
 

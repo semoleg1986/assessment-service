@@ -107,3 +107,50 @@ def test_blocks_count_is_calculated_from_reverse_dependencies() -> None:
     assert blocks_by_node["N1"] == 2
     assert blocks_by_node["N2"] == 1
     assert blocks_by_node["N3"] == 0
+
+
+def test_link_updates_micro_skill_version_and_timestamp() -> None:
+    uow = InMemoryUnitOfWork()
+    handle_create_subject(CreateSubjectCommand(code="math", name="Math"), uow=uow)
+
+    handle_create_micro_skill(
+        CreateMicroSkillCommand(
+            node_id="N1",
+            subject_code="math",
+            grade=2,
+            section_code="R1",
+            section_name="Section",
+            micro_skill_name="Node1",
+            predecessor_ids=[],
+            criticality=CriticalityLevel.HIGH,
+        ),
+        uow=uow,
+    )
+    node2 = handle_create_micro_skill(
+        CreateMicroSkillCommand(
+            node_id="N2",
+            subject_code="math",
+            grade=2,
+            section_code="R1",
+            section_name="Section",
+            micro_skill_name="Node2",
+            predecessor_ids=[],
+            criticality=CriticalityLevel.MEDIUM,
+        ),
+        uow=uow,
+    )
+
+    initial_updated_at = node2.updated_at
+    linked = handle_link_micro_skill_predecessors(
+        LinkMicroSkillPredecessorsCommand(node_id="N2", predecessor_ids=["N1"]),
+        uow=uow,
+    )
+    assert linked.version == 2
+    assert linked.updated_at > initial_updated_at
+
+    same_link = handle_link_micro_skill_predecessors(
+        LinkMicroSkillPredecessorsCommand(node_id="N2", predecessor_ids=["N1"]),
+        uow=uow,
+    )
+    assert same_link.version == 2
+    assert same_link.updated_at == linked.updated_at

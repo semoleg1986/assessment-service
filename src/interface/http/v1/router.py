@@ -1,3 +1,4 @@
+from datetime import UTC, datetime
 from uuid import NAMESPACE_URL, UUID, uuid4, uuid5
 
 from fastapi import APIRouter, HTTPException, status
@@ -42,7 +43,7 @@ from src.domain.entities.question import Question
 from src.domain.entities.subject import Subject
 from src.domain.entities.topic import Topic
 from src.domain.errors import InvariantViolationError, NotFoundError
-from src.domain.value_objects.statuses import CriticalityLevel
+from src.domain.value_objects.statuses import CriticalityLevel, MicroSkillStatus
 from src.infrastructure.uow import build_uow
 from src.interface.http.v1.schemas import (
     AssignmentListItemResponse,
@@ -179,8 +180,11 @@ def _predict_details(body: ContentImportRequest) -> dict[str, int]:
             or existing_node.section_name != node.section_name
             or existing_node.micro_skill_name != node.micro_skill_name
             or existing_node.predecessor_ids != node.predecessor_ids
-            or existing_node.criticality.value != node.criticality
+            or existing_node.criticality.value != node.criticality.value
             or existing_node.source_ref != node.source_ref
+            or existing_node.description != node.description
+            or existing_node.status.value != node.status.value
+            or existing_node.external_ref != node.external_ref
         ):
             details["micro_skills_updated"] += 1
 
@@ -420,6 +424,9 @@ def import_content(body: ContentImportRequest) -> ContentImportResponse:
                     predecessor_ids=node.predecessor_ids,
                     criticality=node.criticality,
                     source_ref=node.source_ref,
+                    description=node.description,
+                    status=node.status,
+                    external_ref=node.external_ref,
                 ),
                 uow=uow,
             )
@@ -432,11 +439,19 @@ def import_content(body: ContentImportRequest) -> ContentImportResponse:
             or existing_node.section_name != node.section_name
             or existing_node.micro_skill_name != node.micro_skill_name
             or existing_node.predecessor_ids != node.predecessor_ids
-            or existing_node.criticality.value != node.criticality
+            or existing_node.criticality.value != node.criticality.value
             or existing_node.source_ref != node.source_ref
+            or existing_node.description != node.description
+            or existing_node.status.value != node.status.value
+            or existing_node.external_ref != node.external_ref
         )
         if changed:
             details["micro_skills_updated"] += 1
+        updated_at = existing_node.updated_at
+        version = existing_node.version
+        if changed:
+            version += 1
+            updated_at = datetime.now(UTC)
         uow.micro_skills.save(
             MicroSkillNode(
                 node_id=node.node_id,
@@ -448,9 +463,16 @@ def import_content(body: ContentImportRequest) -> ContentImportResponse:
                 predecessor_ids=node.predecessor_ids,
                 criticality=CriticalityLevel(node.criticality),
                 source_ref=node.source_ref,
+                description=node.description,
+                status=MicroSkillStatus(node.status),
+                external_ref=node.external_ref,
+                version=version,
+                created_at=existing_node.created_at,
+                updated_at=updated_at,
             )
         )
-        uow.commit()
+        if changed:
+            uow.commit()
 
     for test in payload.tests:
         test_id = uuid5(
@@ -705,6 +727,9 @@ def create_micro_skill(body: MicroSkillCreateRequest) -> MicroSkillResponse:
                 predecessor_ids=body.predecessor_ids,
                 criticality=body.criticality,
                 source_ref=body.source_ref,
+                description=body.description,
+                status=body.status,
+                external_ref=body.external_ref,
             ),
             uow=uow,
         )
@@ -723,6 +748,12 @@ def create_micro_skill(body: MicroSkillCreateRequest) -> MicroSkillResponse:
         predecessor_ids=node.predecessor_ids,
         criticality=node.criticality,
         source_ref=node.source_ref,
+        description=node.description,
+        status=node.status,
+        external_ref=node.external_ref,
+        version=node.version,
+        created_at=node.created_at,
+        updated_at=node.updated_at,
         blocks_count=0,
     )
 
@@ -764,6 +795,12 @@ def link_micro_skill_predecessors(
         predecessor_ids=node.predecessor_ids,
         criticality=node.criticality,
         source_ref=node.source_ref,
+        description=node.description,
+        status=node.status,
+        external_ref=node.external_ref,
+        version=node.version,
+        created_at=node.created_at,
+        updated_at=node.updated_at,
         blocks_count=blocks_count,
     )
 
@@ -782,6 +819,12 @@ def list_micro_skills() -> list[MicroSkillResponse]:
             predecessor_ids=item["node"].predecessor_ids,
             criticality=item["node"].criticality,
             source_ref=item["node"].source_ref,
+            description=item["node"].description,
+            status=item["node"].status,
+            external_ref=item["node"].external_ref,
+            version=item["node"].version,
+            created_at=item["node"].created_at,
+            updated_at=item["node"].updated_at,
             blocks_count=item["blocks_count"],
         )
         for item in nodes
