@@ -18,6 +18,10 @@ black==26.1.0
     # via -r requirements.in
 build==1.4.0
     # via pip-tools
+certifi==2025.10.5
+    # via
+    #   httpcore
+    #   httpx
 cfgv==3.5.0
     # via pre-commit
 click==8.3.1
@@ -43,6 +47,10 @@ h11==0.16.0
     # via uvicorn
 httptools==0.7.1
     # via uvicorn
+httpcore==1.0.9
+    # via httpx
+httpx==0.28.1
+    # via -r requirements.in
 identify==2.6.17
     # via pre-commit
 idna==3.11

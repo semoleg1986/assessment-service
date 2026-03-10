@@ -7,6 +7,7 @@ psycopg[binary]
 greenlet
 pytest
 pytest-cov
+httpx
 pyyaml
 types-PyYAML
 pip-tools
