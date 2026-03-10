@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from typing import Literal
 from uuid import UUID
 
 from pydantic import BaseModel, Field
@@ -114,13 +115,24 @@ class StartAttemptByAssignmentRequest(BaseModel):
 class ContentImportRequest(BaseModel):
     source_id: str
     contract_version: str
+    validate_only: bool = False
+    error_mode: Literal["collect", "fail_fast"] = "collect"
     payload: ContentImportPayload
 
 
+class ContentImportIssue(BaseModel):
+    code: str
+    message: str
+    path: str
+
+
 class ContentImportResponse(BaseModel):
+    import_id: str
     source_id: str
     imported: int
     status: str
+    errors: list[ContentImportIssue] = Field(default_factory=list)
+    warnings: list[ContentImportIssue] = Field(default_factory=list)
     details: dict[str, int] | None = None
 
 

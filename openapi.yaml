@@ -766,6 +766,23 @@ components:
       - assignments_total
       - attempts_total
       title: ChildDiagnosticsResponse
+    ContentImportIssue:
+      properties:
+        code:
+          type: string
+          title: Code
+        message:
+          type: string
+          title: Message
+        path:
+          type: string
+          title: Path
+      type: object
+      required:
+      - code
+      - message
+      - path
+      title: ContentImportIssue
     ContentImportMicroSkillItem:
       properties:
         node_id:
@@ -868,6 +885,17 @@ components:
         contract_version:
           type: string
           title: Contract Version
+        validate_only:
+          type: boolean
+          title: Validate Only
+          default: false
+        error_mode:
+          type: string
+          enum:
+          - collect
+          - fail_fast
+          title: Error Mode
+          default: collect
         payload:
           $ref: '#/components/schemas/ContentImportPayload'
       type: object
@@ -878,6 +906,9 @@ components:
       title: ContentImportRequest
     ContentImportResponse:
       properties:
+        import_id:
+          type: string
+          title: Import Id
         source_id:
           type: string
           title: Source Id
@@ -887,6 +918,16 @@ components:
         status:
           type: string
           title: Status
+        errors:
+          items:
+            $ref: '#/components/schemas/ContentImportIssue'
+          type: array
+          title: Errors
+        warnings:
+          items:
+            $ref: '#/components/schemas/ContentImportIssue'
+          type: array
+          title: Warnings
         details:
           anyOf:
           - additionalProperties:
@@ -896,6 +937,7 @@ components:
           title: Details
       type: object
       required:
+      - import_id
       - source_id
       - imported
       - status

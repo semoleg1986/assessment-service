@@ -1,4 +1,4 @@
-from uuid import NAMESPACE_URL, UUID, uuid5
+from uuid import NAMESPACE_URL, UUID, uuid4, uuid5
 
 from fastapi import APIRouter, HTTPException, status
 
@@ -51,6 +51,7 @@ from src.interface.http.v1.schemas import (
     AttemptAnswerResponse,
     AttemptResultResponse,
     ChildDiagnosticsResponse,
+    ContentImportIssue,
     ContentImportRequest,
     ContentImportResponse,
     CreateTestRequest,
@@ -77,40 +78,8 @@ router = APIRouter(prefix="/v1", tags=["assessment"])
 uow = build_uow()
 
 
-def _ensure_unique(items: list[str], *, label: str) -> None:
-    if len(items) != len(set(items)):
-        raise HTTPException(
-            status_code=422,
-            detail=f"Duplicate identifiers in import payload: {label}",
-        )
-
-
-@router.post(
-    "/admin/content/import",
-    response_model=ContentImportResponse,
-    status_code=status.HTTP_202_ACCEPTED,
-)
-def import_content(body: ContentImportRequest) -> ContentImportResponse:
-    if not body.contract_version.startswith("v1"):
-        raise HTTPException(
-            status_code=422,
-            detail="Unsupported contract_version, expected v1*",
-        )
-
-    payload = body.payload
-    _ensure_unique([s.code for s in payload.subjects], label="subjects.code")
-    _ensure_unique([t.code for t in payload.topics], label="topics.code")
-    _ensure_unique(
-        [m.node_id for m in payload.micro_skills], label="micro_skills.node_id"
-    )
-    _ensure_unique([t.external_id for t in payload.tests], label="tests.external_id")
-    for test in payload.tests:
-        _ensure_unique(
-            [q.external_id for q in test.questions],
-            label=f"tests[{test.external_id}].questions.external_id",
-        )
-
-    details: dict[str, int] = {
+def _details_template() -> dict[str, int]:
+    return {
         "subjects_created": 0,
         "subjects_updated": 0,
         "topics_created": 0,
@@ -120,6 +89,271 @@ def import_content(body: ContentImportRequest) -> ContentImportResponse:
         "tests_created": 0,
         "tests_updated": 0,
     }
+
+
+def _issue(code: str, message: str, path: str) -> ContentImportIssue:
+    return ContentImportIssue(code=code, message=message, path=path)
+
+
+def _check_unique(items: list[str], *, label: str) -> list[ContentImportIssue]:
+    if len(items) == len(set(items)):
+        return []
+    return [
+        _issue(
+            "DUPLICATE_IDENTIFIER",
+            f"Duplicate identifiers in import payload: {label}",
+            label,
+        )
+    ]
+
+
+def _detect_payload_cycles(payload: ContentImportRequest) -> list[ContentImportIssue]:
+    payload_nodes = {node.node_id for node in payload.payload.micro_skills}
+    graph: dict[str, list[str]] = {}
+    for node in payload.payload.micro_skills:
+        graph[node.node_id] = [
+            pred for pred in node.predecessor_ids if pred in payload_nodes
+        ]
+
+    cycles: list[ContentImportIssue] = []
+    color: dict[str, int] = {}
+    stack: list[str] = []
+
+    def dfs(node_id: str) -> None:
+        color[node_id] = 1
+        stack.append(node_id)
+        for parent in graph.get(node_id, []):
+            parent_state = color.get(parent, 0)
+            if parent_state == 0:
+                dfs(parent)
+                continue
+            if parent_state == 1:
+                cycle_start = stack.index(parent)
+                cycle_path = stack[cycle_start:] + [parent]
+                cycles.append(
+                    _issue(
+                        "CYCLE_DETECTED",
+                        "Cycle detected in micro-skill predecessor graph: "
+                        + " -> ".join(cycle_path),
+                        f"micro_skills[{node_id}].predecessor_ids",
+                    )
+                )
+        stack.pop()
+        color[node_id] = 2
+
+    for node_id in graph:
+        if color.get(node_id, 0) == 0:
+            dfs(node_id)
+    return cycles
+
+
+def _predict_details(body: ContentImportRequest) -> dict[str, int]:
+    details = _details_template()
+    payload = body.payload
+    for subject in payload.subjects:
+        existing_subject = uow.subjects.get(subject.code)
+        if existing_subject is None:
+            details["subjects_created"] += 1
+        elif existing_subject.name != subject.name:
+            details["subjects_updated"] += 1
+
+    for topic in payload.topics:
+        existing_topic = uow.topics.get(topic.code)
+        if existing_topic is None:
+            details["topics_created"] += 1
+        elif (
+            existing_topic.subject_code != topic.subject_code
+            or existing_topic.grade != topic.grade
+            or existing_topic.name != topic.name
+        ):
+            details["topics_updated"] += 1
+
+    for node in payload.micro_skills:
+        existing_node = uow.micro_skills.get(node.node_id)
+        if existing_node is None:
+            details["micro_skills_created"] += 1
+        elif (
+            existing_node.subject_code != node.subject_code
+            or existing_node.grade != node.grade
+            or existing_node.section_code != node.section_code
+            or existing_node.section_name != node.section_name
+            or existing_node.micro_skill_name != node.micro_skill_name
+            or existing_node.predecessor_ids != node.predecessor_ids
+            or existing_node.criticality.value != node.criticality
+            or existing_node.source_ref != node.source_ref
+        ):
+            details["micro_skills_updated"] += 1
+
+    for test in payload.tests:
+        test_id = uuid5(NAMESPACE_URL, f"{body.source_id}:test:{test.external_id}")
+        existing_test = uow.tests.get(test_id)
+        question_tuples = [
+            (
+                uuid5(
+                    NAMESPACE_URL,
+                    (
+                        f"{body.source_id}:test:{test.external_id}:question:"
+                        f"{question.external_id}"
+                    ),
+                ),
+                question.node_id,
+                question.text,
+                question.answer_key,
+                question.max_score,
+            )
+            for question in test.questions
+        ]
+        if existing_test is None:
+            details["tests_created"] += 1
+            continue
+        existing_question_tuples = [
+            (
+                question.question_id,
+                question.node_id,
+                question.text,
+                question.answer_key,
+                question.max_score,
+            )
+            for question in sorted(
+                existing_test.questions, key=lambda q: str(q.question_id)
+            )
+        ]
+        same_test = (
+            existing_test.subject_code == test.subject_code
+            and existing_test.grade == test.grade
+            and existing_question_tuples == question_tuples
+        )
+        if not same_test:
+            details["tests_updated"] += 1
+    return details
+
+
+@router.post(
+    "/admin/content/import",
+    response_model=ContentImportResponse,
+    status_code=status.HTTP_202_ACCEPTED,
+)
+def import_content(body: ContentImportRequest) -> ContentImportResponse:
+    import_id = str(uuid4())
+    payload = body.payload
+    errors: list[ContentImportIssue] = []
+
+    if not body.contract_version.startswith("v1"):
+        errors.append(
+            _issue(
+                "UNSUPPORTED_CONTRACT_VERSION",
+                "Unsupported contract_version, expected v1*",
+                "contract_version",
+            )
+        )
+
+    errors.extend(
+        _check_unique([s.code for s in payload.subjects], label="subjects.code")
+    )
+    errors.extend(_check_unique([t.code for t in payload.topics], label="topics.code"))
+    errors.extend(
+        _check_unique(
+            [m.node_id for m in payload.micro_skills], label="micro_skills.node_id"
+        )
+    )
+    errors.extend(
+        _check_unique([t.external_id for t in payload.tests], label="tests.external_id")
+    )
+    for test in payload.tests:
+        errors.extend(
+            _check_unique(
+                [q.external_id for q in test.questions],
+                label=f"tests[{test.external_id}].questions.external_id",
+            )
+        )
+
+    existing_subject_codes = {subject.code for subject in uow.subjects.list()}
+    payload_subject_codes = {subject.code for subject in payload.subjects}
+    known_subject_codes = existing_subject_codes | payload_subject_codes
+
+    existing_node_ids = {node.node_id for node in uow.micro_skills.list()}
+    payload_node_ids = {node.node_id for node in payload.micro_skills}
+    known_node_ids = existing_node_ids | payload_node_ids
+
+    for topic in payload.topics:
+        if topic.subject_code not in known_subject_codes:
+            errors.append(
+                _issue(
+                    "UNKNOWN_REFERENCE",
+                    f"Topic references unknown subject_code: {topic.subject_code}",
+                    f"topics[{topic.code}].subject_code",
+                )
+            )
+
+    for node in payload.micro_skills:
+        if node.subject_code not in known_subject_codes:
+            errors.append(
+                _issue(
+                    "UNKNOWN_REFERENCE",
+                    f"Micro-skill references unknown subject_code: {node.subject_code}",
+                    f"micro_skills[{node.node_id}].subject_code",
+                )
+            )
+        for pred in node.predecessor_ids:
+            if pred not in known_node_ids:
+                errors.append(
+                    _issue(
+                        "UNKNOWN_REFERENCE",
+                        f"Unknown predecessor_id: {pred} for node {node.node_id}",
+                        f"micro_skills[{node.node_id}].predecessor_ids",
+                    )
+                )
+
+    errors.extend(_detect_payload_cycles(body))
+
+    for test in payload.tests:
+        if test.subject_code not in known_subject_codes:
+            errors.append(
+                _issue(
+                    "UNKNOWN_REFERENCE",
+                    f"Test references unknown subject_code: {test.subject_code}",
+                    f"tests[{test.external_id}].subject_code",
+                )
+            )
+        for question in test.questions:
+            if question.node_id not in known_node_ids:
+                errors.append(
+                    _issue(
+                        "UNKNOWN_REFERENCE",
+                        f"Question references unknown node_id: {question.node_id}",
+                        (
+                            f"tests[{test.external_id}].questions["
+                            f"{question.external_id}].node_id"
+                        ),
+                    )
+                )
+
+    if errors:
+        if body.error_mode == "fail_fast":
+            errors = [errors[0]]
+        return ContentImportResponse(
+            import_id=import_id,
+            source_id=body.source_id,
+            imported=0,
+            status="failed",
+            errors=errors,
+            warnings=[],
+            details=_details_template(),
+        )
+
+    if body.validate_only:
+        predicted = _predict_details(body)
+        return ContentImportResponse(
+            import_id=import_id,
+            source_id=body.source_id,
+            imported=sum(predicted.values()),
+            status="validated",
+            errors=[],
+            warnings=[],
+            details=predicted,
+        )
+
+    details = _details_template()
 
     for subject in payload.subjects:
         existing_subject = uow.subjects.get(subject.code)
@@ -141,11 +375,6 @@ def import_content(body: ContentImportRequest) -> ContentImportResponse:
         uow.commit()
 
     for topic in payload.topics:
-        if uow.subjects.get(topic.subject_code) is None:
-            raise HTTPException(
-                status_code=422,
-                detail=f"Topic references unknown subject_code: {topic.subject_code}",
-            )
         existing_topic = uow.topics.get(topic.code)
         if existing_topic is None:
             details["topics_created"] += 1
@@ -176,23 +405,7 @@ def import_content(body: ContentImportRequest) -> ContentImportResponse:
         )
         uow.commit()
 
-    seen_nodes: set[str] = {n.node_id for n in uow.micro_skills.list()}
     for node in payload.micro_skills:
-        if uow.subjects.get(node.subject_code) is None:
-            raise HTTPException(
-                status_code=422,
-                detail=(
-                    "Micro-skill references unknown subject_code: "
-                    f"{node.subject_code}"
-                ),
-            )
-        for pred in node.predecessor_ids:
-            if pred not in seen_nodes:
-                raise HTTPException(
-                    status_code=422,
-                    detail=f"Unknown predecessor_id: {pred} for node {node.node_id}",
-                )
-
         existing_node = uow.micro_skills.get(node.node_id)
         if existing_node is None:
             details["micro_skills_created"] += 1
@@ -210,7 +423,6 @@ def import_content(body: ContentImportRequest) -> ContentImportResponse:
                 ),
                 uow=uow,
             )
-            seen_nodes.add(node.node_id)
             continue
 
         changed = (
@@ -239,21 +451,8 @@ def import_content(body: ContentImportRequest) -> ContentImportResponse:
             )
         )
         uow.commit()
-        seen_nodes.add(node.node_id)
 
     for test in payload.tests:
-        if uow.subjects.get(test.subject_code) is None:
-            raise HTTPException(
-                status_code=422,
-                detail=f"Test references unknown subject_code: {test.subject_code}",
-            )
-        for question in test.questions:
-            if uow.micro_skills.get(question.node_id) is None:
-                raise HTTPException(
-                    status_code=422,
-                    detail=f"Question references unknown node_id: {question.node_id}",
-                )
-
         test_id = uuid5(
             NAMESPACE_URL,
             f"{body.source_id}:test:{test.external_id}",
@@ -275,6 +474,7 @@ def import_content(body: ContentImportRequest) -> ContentImportResponse:
             )
             for question in test.questions
         ]
+        should_save = True
         if existing_test is None:
             aggregate = AssessmentTest(
                 test_id=test_id,
@@ -284,27 +484,62 @@ def import_content(body: ContentImportRequest) -> ContentImportResponse:
                 version=1,
             )
         else:
-            aggregate = AssessmentTest(
-                test_id=test_id,
-                subject_code=test.subject_code,
-                grade=test.grade,
-                questions=questions,
-                version=existing_test.version + 1,
-                created_at=existing_test.created_at,
+            existing_question_tuples = [
+                (
+                    question.question_id,
+                    question.node_id,
+                    question.text,
+                    question.answer_key,
+                    question.max_score,
+                )
+                for question in sorted(
+                    existing_test.questions, key=lambda q: str(q.question_id)
+                )
+            ]
+            incoming_question_tuples = [
+                (
+                    question.question_id,
+                    question.node_id,
+                    question.text,
+                    question.answer_key,
+                    question.max_score,
+                )
+                for question in questions
+            ]
+            same_test = (
+                existing_test.subject_code == test.subject_code
+                and existing_test.grade == test.grade
+                and existing_question_tuples == incoming_question_tuples
             )
+            if same_test:
+                should_save = False
+                aggregate = existing_test
+            else:
+                aggregate = AssessmentTest(
+                    test_id=test_id,
+                    subject_code=test.subject_code,
+                    grade=test.grade,
+                    questions=questions,
+                    version=existing_test.version + 1,
+                    created_at=existing_test.created_at,
+                )
         aggregate.validate()
         if existing_test is None:
             details["tests_created"] += 1
-        else:
+        elif should_save:
             details["tests_updated"] += 1
-        uow.tests.save(aggregate)
-        uow.commit()
+        if should_save:
+            uow.tests.save(aggregate)
+            uow.commit()
 
     imported_total = sum(details.values())
     return ContentImportResponse(
+        import_id=import_id,
         source_id=body.source_id,
         imported=imported_total,
         status="completed",
+        errors=[],
+        warnings=[],
         details=details,
     )
 
