@@ -90,6 +90,7 @@
   - `GET /v1/user/attempts/{attempt_id}/result`
   - `GET /v1/admin/diagnostics/children/{child_id}`
   - `POST /v1/admin/content/import`
+  - `POST /v1/admin/fixtures/cleanup`
   - `POST /v1/attempts/start`
   - `POST /v1/attempts/{attempt_id}/submit`
   - `GET /v1/attempts/{attempt_id}`
@@ -176,7 +177,30 @@ python scripts/seed_mvp_content.py --profile demo --confirm-demo
 docker exec -it assessment-service python -m scripts.seed_mvp_content --profile prod-min
 ```
 
+Очистка test fixtures (math_v0xx*, MV0xx*):
+
+```bash
+cd /Users/olegsemenov/Programming/monitoring/assessment-service
+make cleanup-fixtures-dry-run
+make cleanup-fixtures
+```
+
+Через API (dry-run по умолчанию):
+
+```bash
+curl -s -X POST http://localhost:8003/v1/admin/fixtures/cleanup \
+  -H 'Content-Type: application/json' \
+  -d '{"dry_run":true}'
+```
+
 Проверка:
 ```bash
 curl -i http://localhost:8003/healthz
 ```
+
+## CI Nightly Check
+- workflow: `/Users/olegsemenov/Programming/monitoring/assessment-service/.github/workflows/nightly-import-check.yml`
+- запуск:
+  - по расписанию каждый день в `03:10 UTC`
+  - вручную через `workflow_dispatch`
+- проверка: `POST /v1/admin/content/import` с `validate_only=true` и контрактом `v1.1`

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from sqlalchemy import create_engine
-from sqlalchemy.orm import scoped_session, sessionmaker
+from sqlalchemy.orm import Session, scoped_session, sessionmaker
 
 from src.application.ports.unit_of_work import UnitOfWork
 from src.infrastructure.persistence.sqlalchemy.repositories import (
@@ -34,6 +34,9 @@ class SqlAlchemyUnitOfWork(UnitOfWork):
 
     def commit(self) -> None:
         self._session_factory.commit()
+
+    def session(self) -> Session:
+        return self._session_factory()
 
     def close(self) -> None:
         self._session_factory.remove()

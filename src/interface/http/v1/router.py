@@ -44,6 +44,11 @@ from src.domain.entities.subject import Subject
 from src.domain.entities.topic import Topic
 from src.domain.errors import InvariantViolationError, NotFoundError
 from src.domain.value_objects.statuses import CriticalityLevel, MicroSkillStatus
+from src.infrastructure.maintenance import (
+    FixtureCleanupFilters,
+    FixtureCleanupUnsupportedError,
+    run_fixture_cleanup,
+)
 from src.infrastructure.uow import build_uow
 from src.interface.http.v1.schemas import (
     AssignmentListItemResponse,
@@ -56,6 +61,10 @@ from src.interface.http.v1.schemas import (
     ContentImportRequest,
     ContentImportResponse,
     CreateTestRequest,
+    FixtureCleanupCountsResponse,
+    FixtureCleanupFiltersResponse,
+    FixtureCleanupRequest,
+    FixtureCleanupResponse,
     MicroSkillCreateRequest,
     MicroSkillLinkRequest,
     MicroSkillResponse,
@@ -595,6 +604,88 @@ def import_content(body: ContentImportRequest) -> ContentImportResponse:
         errors=[],
         warnings=[],
         details=details,
+    )
+
+
+def _cleanup_counts_response(
+    *,
+    subjects: int,
+    topics: int,
+    micro_skills: int,
+    tests: int,
+    questions: int,
+    assignments: int,
+    attempts: int,
+    answers: int,
+) -> FixtureCleanupCountsResponse:
+    return FixtureCleanupCountsResponse(
+        subjects=subjects,
+        topics=topics,
+        micro_skills=micro_skills,
+        tests=tests,
+        questions=questions,
+        assignments=assignments,
+        attempts=attempts,
+        answers=answers,
+    )
+
+
+@router.post(
+    "/admin/fixtures/cleanup",
+    response_model=FixtureCleanupResponse,
+    status_code=status.HTTP_200_OK,
+)
+def cleanup_fixtures(body: FixtureCleanupRequest) -> FixtureCleanupResponse:
+    filters = FixtureCleanupFilters(
+        subject_code_patterns=tuple(body.subject_code_patterns),
+        topic_code_patterns=tuple(body.topic_code_patterns),
+        node_id_patterns=tuple(body.node_id_patterns),
+    )
+    try:
+        result = run_fixture_cleanup(
+            uow=uow,
+            dry_run=body.dry_run,
+            filters=filters,
+        )
+    except FixtureCleanupUnsupportedError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_501_NOT_IMPLEMENTED,
+            detail=str(exc),
+        ) from exc
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=str(exc),
+        ) from exc
+
+    return FixtureCleanupResponse(
+        status="planned" if result.dry_run else "completed",
+        dry_run=result.dry_run,
+        filters=FixtureCleanupFiltersResponse(
+            subject_code_patterns=list(result.filters.subject_code_patterns),
+            topic_code_patterns=list(result.filters.topic_code_patterns),
+            node_id_patterns=list(result.filters.node_id_patterns),
+        ),
+        matched=_cleanup_counts_response(
+            subjects=result.matched.subjects,
+            topics=result.matched.topics,
+            micro_skills=result.matched.micro_skills,
+            tests=result.matched.tests,
+            questions=result.matched.questions,
+            assignments=result.matched.assignments,
+            attempts=result.matched.attempts,
+            answers=result.matched.answers,
+        ),
+        deleted=_cleanup_counts_response(
+            subjects=result.deleted.subjects,
+            topics=result.deleted.topics,
+            micro_skills=result.deleted.micro_skills,
+            tests=result.deleted.tests,
+            questions=result.deleted.questions,
+            assignments=result.deleted.assignments,
+            attempts=result.deleted.attempts,
+            answers=result.deleted.answers,
+        ),
     )
 
 

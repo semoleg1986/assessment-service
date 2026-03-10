@@ -91,3 +91,27 @@ Known codes:
 - Test and question IDs are deterministic (`uuid5`) from `source_id + external_id`.
 - `details` reports only actual changes (`created/updated`), not scanned entities.
 - For micro-skills, `version`/`created_at`/`updated_at` are server-managed metadata.
+
+## Fixtures Cleanup
+Endpoint: `POST /v1/admin/fixtures/cleanup`
+
+Назначение: очистка тестовых фикстур (`math_v0xx*`, `MV0xx*`) без ручных SQL.
+
+Request:
+```json
+{
+  "dry_run": true,
+  "subject_code_patterns": ["^math_v\\d{2}.*$"],
+  "topic_code_patterns": ["^MV\\d{2}.*$"],
+  "node_id_patterns": ["^MV\\d{2}.*$"]
+}
+```
+
+- `dry_run=true` — только план удаления (`status=planned`).
+- `dry_run=false` — фактическое удаление (`status=completed`).
+- В ответе возвращаются `matched` и `deleted` счётчики по `subjects/topics/micro_skills/tests/questions/assignments/attempts/answers`.
+
+## Nightly Import Check (CI)
+- workflow: `.github/workflows/nightly-import-check.yml`
+- сценарий: nightly `validate_only=true` запрос к `/v1/admin/content/import`
+- цель: ранняя проверка совместимости import-контракта с продовым стендом.

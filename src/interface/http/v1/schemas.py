@@ -137,6 +137,40 @@ class ContentImportResponse(BaseModel):
     details: dict[str, int] | None = None
 
 
+class FixtureCleanupRequest(BaseModel):
+    dry_run: bool = True
+    subject_code_patterns: list[str] = Field(
+        default_factory=lambda: [r"^math_v\d{2}.*$"]
+    )
+    topic_code_patterns: list[str] = Field(default_factory=lambda: [r"^MV\d{2}.*$"])
+    node_id_patterns: list[str] = Field(default_factory=lambda: [r"^MV\d{2}.*$"])
+
+
+class FixtureCleanupFiltersResponse(BaseModel):
+    subject_code_patterns: list[str]
+    topic_code_patterns: list[str]
+    node_id_patterns: list[str]
+
+
+class FixtureCleanupCountsResponse(BaseModel):
+    subjects: int
+    topics: int
+    micro_skills: int
+    tests: int
+    questions: int
+    assignments: int
+    attempts: int
+    answers: int
+
+
+class FixtureCleanupResponse(BaseModel):
+    status: Literal["planned", "completed"]
+    dry_run: bool
+    filters: FixtureCleanupFiltersResponse
+    matched: FixtureCleanupCountsResponse
+    deleted: FixtureCleanupCountsResponse
+
+
 class ContentImportSubjectItem(BaseModel):
     code: str
     name: str

@@ -56,6 +56,31 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+  /v1/admin/fixtures/cleanup:
+    post:
+      tags:
+      - assessment
+      summary: Cleanup Fixtures
+      operationId: cleanup_fixtures_v1_admin_fixtures_cleanup_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FixtureCleanupRequest'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FixtureCleanupResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
   /v1/admin/tests:
     get:
       tags:
@@ -1049,6 +1074,114 @@ components:
       - medium
       - high
       title: CriticalityLevel
+    FixtureCleanupCountsResponse:
+      properties:
+        subjects:
+          type: integer
+          title: Subjects
+        topics:
+          type: integer
+          title: Topics
+        micro_skills:
+          type: integer
+          title: Micro Skills
+        tests:
+          type: integer
+          title: Tests
+        questions:
+          type: integer
+          title: Questions
+        assignments:
+          type: integer
+          title: Assignments
+        attempts:
+          type: integer
+          title: Attempts
+        answers:
+          type: integer
+          title: Answers
+      type: object
+      required:
+      - subjects
+      - topics
+      - micro_skills
+      - tests
+      - questions
+      - assignments
+      - attempts
+      - answers
+      title: FixtureCleanupCountsResponse
+    FixtureCleanupFiltersResponse:
+      properties:
+        subject_code_patterns:
+          items:
+            type: string
+          type: array
+          title: Subject Code Patterns
+        topic_code_patterns:
+          items:
+            type: string
+          type: array
+          title: Topic Code Patterns
+        node_id_patterns:
+          items:
+            type: string
+          type: array
+          title: Node Id Patterns
+      type: object
+      required:
+      - subject_code_patterns
+      - topic_code_patterns
+      - node_id_patterns
+      title: FixtureCleanupFiltersResponse
+    FixtureCleanupRequest:
+      properties:
+        dry_run:
+          type: boolean
+          title: Dry Run
+          default: true
+        subject_code_patterns:
+          items:
+            type: string
+          type: array
+          title: Subject Code Patterns
+        topic_code_patterns:
+          items:
+            type: string
+          type: array
+          title: Topic Code Patterns
+        node_id_patterns:
+          items:
+            type: string
+          type: array
+          title: Node Id Patterns
+      type: object
+      title: FixtureCleanupRequest
+    FixtureCleanupResponse:
+      properties:
+        status:
+          type: string
+          enum:
+          - planned
+          - completed
+          title: Status
+        dry_run:
+          type: boolean
+          title: Dry Run
+        filters:
+          $ref: '#/components/schemas/FixtureCleanupFiltersResponse'
+        matched:
+          $ref: '#/components/schemas/FixtureCleanupCountsResponse'
+        deleted:
+          $ref: '#/components/schemas/FixtureCleanupCountsResponse'
+      type: object
+      required:
+      - status
+      - dry_run
+      - filters
+      - matched
+      - deleted
+      title: FixtureCleanupResponse
     HTTPValidationError:
       properties:
         detail:

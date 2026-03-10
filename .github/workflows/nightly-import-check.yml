@@ -1,0 +1,95 @@
+name: nightly-import-check
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "10 3 * * *"
+
+jobs:
+  validate-import-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate import contract (validate_only)
+        env:
+          E2E_ASSESSMENT_URL: ${{ vars.E2E_ASSESSMENT_URL }}
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          import os
+          import uuid
+          import urllib.request
+
+          base_url = (os.getenv("E2E_ASSESSMENT_URL") or "http://89.168.77.132:8003").rstrip("/")
+          suffix = uuid.uuid4().hex[:8]
+          subject = f"nightly_{suffix}"
+          topic = f"NIGHTLY-T-{suffix}"
+          node = f"NIGHTLY-N-{suffix}"
+
+          body = {
+              "source_id": "nightly-import-check",
+              "contract_version": "v1.1",
+              "validate_only": True,
+              "payload": {
+                  "subjects": [{"code": subject, "name": "Nightly Subject"}],
+                  "topics": [
+                      {
+                          "code": topic,
+                          "subject_code": subject,
+                          "grade": 2,
+                          "name": "Nightly Topic",
+                      }
+                  ],
+                  "micro_skills": [
+                      {
+                          "node_id": node,
+                          "subject_code": subject,
+                          "topic_code": topic,
+                          "grade": 2,
+                          "section_code": "R1",
+                          "section_name": "Numbers",
+                          "micro_skill_name": "Nightly Skill",
+                          "predecessor_ids": [],
+                          "criticality": "medium",
+                          "source_ref": "ci:nightly",
+                          "status": "active",
+                      }
+                  ],
+                  "tests": [
+                      {
+                          "external_id": f"NIGHTLY-TEST-{suffix}",
+                          "subject_code": subject,
+                          "grade": 2,
+                          "questions": [
+                              {
+                                  "external_id": f"NIGHTLY-Q-{suffix}",
+                                  "node_id": node,
+                                  "text": "1+1?",
+                                  "answer_key": "2",
+                                  "max_score": 1,
+                              }
+                          ],
+                      }
+                  ],
+              },
+          }
+
+          req = urllib.request.Request(
+              f"{base_url}/v1/admin/content/import",
+              data=json.dumps(body).encode("utf-8"),
+              headers={"Content-Type": "application/json"},
+              method="POST",
+          )
+          with urllib.request.urlopen(req, timeout=30) as response:
+              payload = json.loads(response.read().decode("utf-8"))
+
+          if payload.get("status") != "validated":
+              raise SystemExit(f"expected status=validated, got: {payload.get('status')}")
+          if payload.get("errors"):
+              raise SystemExit(f"expected errors=[], got: {payload.get('errors')}")
+          if int(payload.get("imported", 0)) <= 0:
+              raise SystemExit(f"expected imported>0, got: {payload.get('imported')}")
+
+          print("nightly-import-check passed")
+          print(json.dumps(payload, ensure_ascii=True))
+          PY

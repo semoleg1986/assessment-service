@@ -54,6 +54,12 @@ seed-mvp: ## Заполнить базовый контент (subjects/topics/m
 seed-demo: ## Заполнить demo-контент (только для dev/local)
 	python scripts/seed_mvp_content.py --profile demo --confirm-demo
 
+cleanup-fixtures-dry-run: ## Посмотреть какие test fixtures будут удалены
+	python -m scripts.cleanup_test_fixtures
+
+cleanup-fixtures: ## Удалить test fixtures (math_v0xx*, MV0xx*)
+	python -m scripts.cleanup_test_fixtures --apply
+
 docker-up: ## Запустить assessment-service через Docker Compose
 	docker compose up --build -d
 
