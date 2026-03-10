@@ -203,4 +203,4 @@ curl -i http://localhost:8003/healthz
 - запуск:
   - по расписанию каждый день в `03:10 UTC`
   - вручную через `workflow_dispatch`
-- проверка: `POST /v1/admin/content/import` с `validate_only=true` и контрактом `v1.1`
+- проверка: `POST /v1/admin/content/import` с `validate_only=true` и контрактом `v1.2`

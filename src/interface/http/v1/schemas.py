@@ -127,6 +127,19 @@ class ContentImportIssue(BaseModel):
     path: str
 
 
+class ContentImportDetails(BaseModel):
+    subjects_created: int = 0
+    subjects_updated: int = 0
+    topics_created: int = 0
+    topics_updated: int = 0
+    micro_skills_created: int = 0
+    micro_skills_updated: int = 0
+    tests_created: int = 0
+    tests_updated: int = 0
+    tests_failed: int = 0
+    questions_failed: int = 0
+
+
 class ContentImportResponse(BaseModel):
     import_id: str
     source_id: str
@@ -134,7 +147,7 @@ class ContentImportResponse(BaseModel):
     status: str
     errors: list[ContentImportIssue] = Field(default_factory=list)
     warnings: list[ContentImportIssue] = Field(default_factory=list)
-    details: dict[str, int] | None = None
+    details: ContentImportDetails | None = None
 
 
 class FixtureCleanupRequest(BaseModel):

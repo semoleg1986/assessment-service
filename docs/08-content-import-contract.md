@@ -1,4 +1,4 @@
-# Content Import Contract v1.1
+# Content Import Contract v1.2
 
 Endpoint: `POST /v1/admin/content/import`
 
@@ -7,7 +7,7 @@ Endpoint: `POST /v1/admin/content/import`
 ```json
 {
   "source_id": "partner-x",
-  "contract_version": "v1.1",
+  "contract_version": "v1.2",
   "validate_only": false,
   "error_mode": "collect",
   "payload": {
@@ -22,6 +22,8 @@ Endpoint: `POST /v1/admin/content/import`
 ### Top-level fields
 - `source_id` (string): source/system identifier for deterministic IDs.
 - `contract_version` (string): must start with `v1`.
+  - `v1.0/v1.1`: strict mode (любой `errors[]` => `status=failed`).
+  - `v1.2`: entity-level isolation for `tests/questions`.
 - `validate_only` (bool, default `false`):
   - `true`: validate and predict changes only, no persistence.
   - `false`: apply upsert changes.
@@ -57,7 +59,9 @@ Endpoint: `POST /v1/admin/content/import`
     "micro_skills_created": 1,
     "micro_skills_updated": 0,
     "tests_created": 1,
-    "tests_updated": 0
+    "tests_updated": 0,
+    "tests_failed": 0,
+    "questions_failed": 0
   }
 }
 ```
@@ -65,7 +69,9 @@ Endpoint: `POST /v1/admin/content/import`
 ### Status values
 - `failed`: validation/domain errors detected, nothing applied.
 - `validated`: `validate_only=true`, payload is valid, nothing applied.
+- `validated_with_errors`: `validate_only=true`, `v1.2`, часть test entities невалидна.
 - `completed`: apply mode succeeded.
+- `completed_with_errors`: apply mode, `v1.2`, валидные entities применены, невалидные пропущены.
 
 ## Error model
 `errors[]` contains:
@@ -79,6 +85,7 @@ Known codes:
 - `UNKNOWN_REFERENCE`
 - `CYCLE_DETECTED`
 - `TOPIC_MISMATCH`
+- `ENTITY_VALIDATION_FAILED`
 
 ## Domain rules currently enforced
 - Unique IDs in payload sections.
@@ -86,10 +93,12 @@ Known codes:
   existing data or current payload.
 - Predecessor graph must be acyclic.
 - Re-import of unchanged entities is idempotent (`imported = 0`).
+- `v1.2`: invalid test/question entities do not abort entire import; reported per-entity in `errors[]`.
 
 ## Notes
 - Test and question IDs are deterministic (`uuid5`) from `source_id + external_id`.
 - `details` reports only actual changes (`created/updated`), not scanned entities.
+- `details.tests_failed` and `details.questions_failed` report skipped invalid entities for `v1.2`.
 - For micro-skills, `version`/`created_at`/`updated_at` are server-managed metadata.
 
 ## Fixtures Cleanup

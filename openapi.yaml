@@ -791,6 +791,50 @@ components:
       - assignments_total
       - attempts_total
       title: ChildDiagnosticsResponse
+    ContentImportDetails:
+      properties:
+        subjects_created:
+          type: integer
+          title: Subjects Created
+          default: 0
+        subjects_updated:
+          type: integer
+          title: Subjects Updated
+          default: 0
+        topics_created:
+          type: integer
+          title: Topics Created
+          default: 0
+        topics_updated:
+          type: integer
+          title: Topics Updated
+          default: 0
+        micro_skills_created:
+          type: integer
+          title: Micro Skills Created
+          default: 0
+        micro_skills_updated:
+          type: integer
+          title: Micro Skills Updated
+          default: 0
+        tests_created:
+          type: integer
+          title: Tests Created
+          default: 0
+        tests_updated:
+          type: integer
+          title: Tests Updated
+          default: 0
+        tests_failed:
+          type: integer
+          title: Tests Failed
+          default: 0
+        questions_failed:
+          type: integer
+          title: Questions Failed
+          default: 0
+      type: object
+      title: ContentImportDetails
     ContentImportIssue:
       properties:
         code:
@@ -972,11 +1016,8 @@ components:
           title: Warnings
         details:
           anyOf:
-          - additionalProperties:
-              type: integer
-            type: object
+          - $ref: '#/components/schemas/ContentImportDetails'
           - type: 'null'
-          title: Details
       type: object
       required:
       - import_id

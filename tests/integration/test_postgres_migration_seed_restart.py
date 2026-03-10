@@ -12,6 +12,10 @@ from pathlib import Path
 import pytest
 from sqlalchemy import create_engine, text
 
+from src.infrastructure.persistence.sqlalchemy.uow import SqlAlchemyUnitOfWork
+from src.interface.http.v1.router import _import_content_with_uow
+from src.interface.http.v1.schemas import ContentImportRequest
+
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 RUN_INTEGRATION_TESTS = os.getenv("RUN_INTEGRATION_TESTS") == "1"
 PSYCOPG_AVAILABLE = find_spec("psycopg") is not None
@@ -153,3 +157,103 @@ def test_migration_seed_and_restart_roundtrip(postgres_url: str) -> None:
 
     counts_after_second_seed = _table_counts(postgres_url)
     assert counts_after_second_seed == counts_after_first_seed
+
+
+def test_content_import_v12_large_payload_is_idempotent_and_fast(
+    postgres_url: str,
+) -> None:
+    if not PSYCOPG_AVAILABLE:
+        pytest.skip("psycopg is not installed in current environment")
+
+    env = os.environ.copy()
+    env["DATABASE_URL"] = postgres_url
+    env["APP_ENV"] = "test"
+
+    upgrade = _run(["alembic", "upgrade", "head"], env=env)
+    assert upgrade.returncode == 0, upgrade.stderr
+
+    tests_count = 80
+    questions_per_test = 5
+    skill_count = 48
+    subject_code = "math_v12_perf"
+    topic_code = "MV12-PERF-T1"
+
+    payload = {
+        "subjects": [{"code": subject_code, "name": "Math Perf"}],
+        "topics": [
+            {
+                "code": topic_code,
+                "subject_code": subject_code,
+                "grade": 2,
+                "name": "Performance Topic",
+            }
+        ],
+        "micro_skills": [
+            {
+                "node_id": f"MV12-PERF-N{i:03d}",
+                "subject_code": subject_code,
+                "topic_code": topic_code,
+                "grade": 2,
+                "section_code": "R1",
+                "section_name": "Numbers",
+                "micro_skill_name": f"Skill {i}",
+                "predecessor_ids": [],
+                "criticality": "medium",
+                "source_ref": "integration:v1.2",
+                "status": "active",
+            }
+            for i in range(skill_count)
+        ],
+        "tests": [
+            {
+                "external_id": f"perf-test-{i:03d}",
+                "subject_code": subject_code,
+                "grade": 2,
+                "questions": [
+                    {
+                        "external_id": f"q-{i:03d}-{q:02d}",
+                        "node_id": f"MV12-PERF-N{(i + q) % skill_count:03d}",
+                        "text": f"{i} + {q} = ?",
+                        "answer_key": str(i + q),
+                        "max_score": 1,
+                    }
+                    for q in range(questions_per_test)
+                ],
+            }
+            for i in range(tests_count)
+        ],
+    }
+
+    request = ContentImportRequest.model_validate(
+        {
+            "source_id": "integration-large-v12",
+            "contract_version": "v1.2",
+            "payload": payload,
+        }
+    )
+
+    uow_first = SqlAlchemyUnitOfWork(postgres_url)
+    started_first = time.perf_counter()
+    first = _import_content_with_uow(body=request, current_uow=uow_first)
+    duration_first = time.perf_counter() - started_first
+    uow_first.close()
+
+    assert first.status == "completed"
+    assert first.errors == []
+    assert first.details is not None
+    assert first.details.tests_created == tests_count
+    assert first.imported > 0
+    assert duration_first < 25.0
+
+    uow_second = SqlAlchemyUnitOfWork(postgres_url)
+    started_second = time.perf_counter()
+    second = _import_content_with_uow(body=request, current_uow=uow_second)
+    duration_second = time.perf_counter() - started_second
+    uow_second.close()
+
+    assert second.status == "completed"
+    assert second.errors == []
+    assert second.imported == 0
+    assert second.details is not None
+    assert second.details.tests_updated == 0
+    assert duration_second < 20.0

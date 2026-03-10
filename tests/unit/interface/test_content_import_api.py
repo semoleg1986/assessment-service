@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from typing import Any, cast
-from uuid import uuid4
+from uuid import NAMESPACE_URL, uuid4, uuid5
 
 from fastapi.testclient import TestClient
 
@@ -219,3 +219,96 @@ def test_import_validate_fails_for_unknown_topic_reference() -> None:
     body = response.json()
     assert body["status"] == "failed"
     assert any(err["path"].endswith(".topic_code") for err in body["errors"])
+
+
+def test_import_v12_apply_supports_entity_level_isolation() -> None:
+    client = TestClient(create_app())
+    prefix = uuid4().hex[:8]
+    source_id = f"test-{prefix}"
+    payload = _payload(prefix)
+    tests = cast(list[dict[str, Any]], payload["tests"])
+    tests.append(
+        {
+            "external_id": f"bad_{prefix}",
+            "subject_code": f"math_{prefix}",
+            "grade": 2,
+            "questions": [
+                {
+                    "external_id": f"bad_q_{prefix}",
+                    "node_id": "UNKNOWN-NODE",
+                    "text": "1 + 1 = ?",
+                    "answer_key": "2",
+                    "max_score": 1,
+                }
+            ],
+        }
+    )
+
+    response = client.post(
+        "/v1/admin/content/import",
+        json={
+            "source_id": source_id,
+            "contract_version": "v1.2",
+            "payload": payload,
+        },
+    )
+    assert response.status_code == 202
+    body = response.json()
+    assert body["status"] == "completed_with_errors"
+    assert body["details"]["tests_created"] == 1
+    assert body["details"]["tests_failed"] == 1
+    assert body["details"]["questions_failed"] == 1
+    assert body["errors"]
+    assert any(".questions[" in err["path"] for err in body["errors"])
+
+    all_tests = cast(list[dict[str, Any]], client.get("/v1/admin/tests").json())
+    test_ids = {item["test_id"] for item in all_tests}
+    good_test_id = str(uuid5(NAMESPACE_URL, f"{source_id}:test:test_{prefix}"))
+    bad_test_id = str(uuid5(NAMESPACE_URL, f"{source_id}:test:bad_{prefix}"))
+    assert good_test_id in test_ids
+    assert bad_test_id not in test_ids
+
+
+def test_import_v12_validate_only_returns_partial_errors_without_persisting() -> None:
+    client = TestClient(create_app())
+    prefix = uuid4().hex[:8]
+    source_id = f"test-{prefix}"
+    payload = _payload(prefix)
+    tests = cast(list[dict[str, Any]], payload["tests"])
+    tests.append(
+        {
+            "external_id": f"bad_{prefix}",
+            "subject_code": f"math_{prefix}",
+            "grade": 2,
+            "questions": [
+                {
+                    "external_id": f"bad_q_{prefix}",
+                    "node_id": "UNKNOWN-NODE",
+                    "text": "1 + 1 = ?",
+                    "answer_key": "2",
+                    "max_score": 1,
+                }
+            ],
+        }
+    )
+
+    response = client.post(
+        "/v1/admin/content/import",
+        json={
+            "source_id": source_id,
+            "contract_version": "v1.2",
+            "validate_only": True,
+            "payload": payload,
+        },
+    )
+    assert response.status_code == 202
+    body = response.json()
+    assert body["status"] == "validated_with_errors"
+    assert body["details"]["tests_failed"] == 1
+    assert body["details"]["questions_failed"] == 1
+    assert body["imported"] > 0
+
+    all_tests = cast(list[dict[str, Any]], client.get("/v1/admin/tests").json())
+    test_ids = {item["test_id"] for item in all_tests}
+    good_test_id = str(uuid5(NAMESPACE_URL, f"{source_id}:test:test_{prefix}"))
+    assert good_test_id not in test_ids
