@@ -1,5 +1,6 @@
 from uuid import UUID
 
+from dishka.integrations.fastapi import DishkaRoute, FromDishka
 from fastapi import APIRouter, HTTPException, status
 
 from src.application.commands import (
@@ -36,7 +37,11 @@ from src.application.handlers import (
     handle_start_attempt,
     handle_submit_attempt,
 )
-from src.application.ports.fixture_cleanup import FixtureCleanupUnsupportedError
+from src.application.ports.fixture_cleanup import (
+    FixtureCleanupService,
+    FixtureCleanupUnsupportedError,
+)
+from src.application.ports.unit_of_work import UnitOfWork
 from src.application.queries import (
     GetAttemptResultQuery,
     GetChildDiagnosticsQuery,
@@ -48,7 +53,6 @@ from src.application.queries import (
     ListTopicsQuery,
 )
 from src.domain.errors import InvariantViolationError, NotFoundError
-from src.interface.http.dependencies import get_fixture_cleanup_service, get_uow
 from src.interface.http.v1.content_import import import_content_with_uow
 from src.interface.http.v1.schemas import (
     AssignmentListItemResponse,
@@ -83,9 +87,7 @@ from src.interface.http.v1.schemas import (
     TopicResponse,
 )
 
-router = APIRouter(prefix="/v1", tags=["assessment"])
-uow = get_uow()
-fixture_cleanup_service = get_fixture_cleanup_service()
+router = APIRouter(prefix="/v1", tags=["assessment"], route_class=DishkaRoute)
 
 
 @router.post(
@@ -93,7 +95,10 @@ fixture_cleanup_service = get_fixture_cleanup_service()
     response_model=ContentImportResponse,
     status_code=status.HTTP_202_ACCEPTED,
 )
-def import_content(body: ContentImportRequest) -> ContentImportResponse:
+def import_content(
+    body: ContentImportRequest,
+    uow: FromDishka[UnitOfWork],
+) -> ContentImportResponse:
     return import_content_with_uow(body=body, current_uow=uow)
 
 
@@ -129,7 +134,11 @@ def _cleanup_counts_response(
     response_model=FixtureCleanupResponse,
     status_code=status.HTTP_200_OK,
 )
-def cleanup_fixtures(body: FixtureCleanupRequest) -> FixtureCleanupResponse:
+def cleanup_fixtures(
+    body: FixtureCleanupRequest,
+    uow: FromDishka[UnitOfWork],
+    fixture_cleanup_service: FromDishka[FixtureCleanupService],
+) -> FixtureCleanupResponse:
     try:
         result = handle_cleanup_fixtures(
             CleanupFixturesCommand(
@@ -189,7 +198,10 @@ def cleanup_fixtures(body: FixtureCleanupRequest) -> FixtureCleanupResponse:
     response_model=TestResponse,
     status_code=status.HTTP_201_CREATED,
 )
-def create_test(body: CreateTestRequest) -> TestResponse:
+def create_test(
+    body: CreateTestRequest,
+    uow: FromDishka[UnitOfWork],
+) -> TestResponse:
     try:
         test = handle_create_test(
             CreateTestCommand(
@@ -231,7 +243,9 @@ def create_test(body: CreateTestRequest) -> TestResponse:
 
 @router.get("/tests", response_model=list[TestResponse])
 @router.get("/admin/tests", response_model=list[TestResponse])
-def list_tests() -> list[TestResponse]:
+def list_tests(
+    uow: FromDishka[UnitOfWork],
+) -> list[TestResponse]:
     tests = handle_list_tests(ListTestsQuery(), uow=uow)
     return [
         TestResponse(
@@ -257,7 +271,10 @@ def list_tests() -> list[TestResponse]:
     "/admin/tests/{test_id}/publish",
     response_model=PublishTestResponse,
 )
-def publish_test(test_id: UUID) -> PublishTestResponse:
+def publish_test(
+    test_id: UUID,
+    uow: FromDishka[UnitOfWork],
+) -> PublishTestResponse:
     if handle_get_test_by_id(GetTestByIdQuery(test_id=test_id), uow=uow) is None:
         raise HTTPException(status_code=404, detail="test not found")
     return PublishTestResponse(test_id=test_id, status="published")
@@ -268,7 +285,10 @@ def publish_test(test_id: UUID) -> PublishTestResponse:
     response_model=SubjectResponse,
     status_code=status.HTTP_201_CREATED,
 )
-def create_subject(body: SubjectCreateRequest) -> SubjectResponse:
+def create_subject(
+    body: SubjectCreateRequest,
+    uow: FromDishka[UnitOfWork],
+) -> SubjectResponse:
     try:
         subject = handle_create_subject(
             CreateSubjectCommand(code=body.code, name=body.name), uow=uow
@@ -279,7 +299,9 @@ def create_subject(body: SubjectCreateRequest) -> SubjectResponse:
 
 
 @router.get("/admin/subjects", response_model=list[SubjectResponse])
-def list_subjects() -> list[SubjectResponse]:
+def list_subjects(
+    uow: FromDishka[UnitOfWork],
+) -> list[SubjectResponse]:
     subjects = handle_list_subjects(ListSubjectsQuery(), uow=uow)
     return [SubjectResponse(code=s.code, name=s.name) for s in subjects]
 
@@ -289,7 +311,10 @@ def list_subjects() -> list[SubjectResponse]:
     response_model=TopicResponse,
     status_code=status.HTTP_201_CREATED,
 )
-def create_topic(body: TopicCreateRequest) -> TopicResponse:
+def create_topic(
+    body: TopicCreateRequest,
+    uow: FromDishka[UnitOfWork],
+) -> TopicResponse:
     try:
         topic = handle_create_topic(
             CreateTopicCommand(
@@ -313,7 +338,9 @@ def create_topic(body: TopicCreateRequest) -> TopicResponse:
 
 
 @router.get("/admin/topics", response_model=list[TopicResponse])
-def list_topics() -> list[TopicResponse]:
+def list_topics(
+    uow: FromDishka[UnitOfWork],
+) -> list[TopicResponse]:
     topics = handle_list_topics(ListTopicsQuery(), uow=uow)
     return [
         TopicResponse(
@@ -331,7 +358,10 @@ def list_topics() -> list[TopicResponse]:
     response_model=MicroSkillResponse,
     status_code=status.HTTP_201_CREATED,
 )
-def create_micro_skill(body: MicroSkillCreateRequest) -> MicroSkillResponse:
+def create_micro_skill(
+    body: MicroSkillCreateRequest,
+    uow: FromDishka[UnitOfWork],
+) -> MicroSkillResponse:
     try:
         node = handle_create_micro_skill(
             CreateMicroSkillCommand(
@@ -382,7 +412,9 @@ def create_micro_skill(body: MicroSkillCreateRequest) -> MicroSkillResponse:
     response_model=MicroSkillResponse,
 )
 def link_micro_skill_predecessors(
-    node_id: str, body: MicroSkillLinkRequest
+    node_id: str,
+    body: MicroSkillLinkRequest,
+    uow: FromDishka[UnitOfWork],
 ) -> MicroSkillResponse:
     try:
         node = handle_link_micro_skill_predecessors(
@@ -426,7 +458,9 @@ def link_micro_skill_predecessors(
 
 
 @router.get("/admin/micro-skills", response_model=list[MicroSkillResponse])
-def list_micro_skills() -> list[MicroSkillResponse]:
+def list_micro_skills(
+    uow: FromDishka[UnitOfWork],
+) -> list[MicroSkillResponse]:
     nodes = handle_list_micro_skills(ListMicroSkillsQuery(), uow=uow)
     return [
         MicroSkillResponse(
@@ -462,7 +496,10 @@ def list_micro_skills() -> list[MicroSkillResponse]:
     response_model=AssignmentResponse,
     status_code=status.HTTP_201_CREATED,
 )
-def assign_test(body: AssignTestRequest) -> AssignmentResponse:
+def assign_test(
+    body: AssignTestRequest,
+    uow: FromDishka[UnitOfWork],
+) -> AssignmentResponse:
     try:
         assignment = handle_assign_test(
             AssignTestCommand(test_id=body.test_id, child_id=body.child_id), uow=uow
@@ -482,7 +519,10 @@ def assign_test(body: AssignTestRequest) -> AssignmentResponse:
     "/user/children/{child_id}/assignments",
     response_model=list[AssignmentListItemResponse],
 )
-def list_assignments_by_child(child_id: UUID) -> list[AssignmentListItemResponse]:
+def list_assignments_by_child(
+    child_id: UUID,
+    uow: FromDishka[UnitOfWork],
+) -> list[AssignmentListItemResponse]:
     assignments = handle_list_assignments_by_child(
         ListAssignmentsByChildQuery(child_id=child_id),
         uow=uow,
@@ -498,7 +538,10 @@ def list_assignments_by_child(child_id: UUID) -> list[AssignmentListItemResponse
 
 
 @router.post("/attempts/start", response_model=StartAttemptResponse)
-def start_attempt(body: StartAttemptRequest) -> StartAttemptResponse:
+def start_attempt(
+    body: StartAttemptRequest,
+    uow: FromDishka[UnitOfWork],
+) -> StartAttemptResponse:
     try:
         attempt = handle_start_attempt(
             StartAttemptCommand(
@@ -524,10 +567,13 @@ def start_attempt(body: StartAttemptRequest) -> StartAttemptResponse:
     response_model=StartAttemptResponse,
 )
 def start_attempt_for_assignment(
-    assignment_id: UUID, body: StartAttemptByAssignmentRequest
+    assignment_id: UUID,
+    body: StartAttemptByAssignmentRequest,
+    uow: FromDishka[UnitOfWork],
 ) -> StartAttemptResponse:
     return start_attempt(
-        StartAttemptRequest(assignment_id=assignment_id, child_id=body.child_id)
+        StartAttemptRequest(assignment_id=assignment_id, child_id=body.child_id),
+        uow=uow,
     )
 
 
@@ -540,7 +586,9 @@ def start_attempt_for_assignment(
     response_model=SubmitAttemptResponse,
 )
 def submit_attempt(
-    attempt_id: UUID, body: SubmitAttemptRequest
+    attempt_id: UUID,
+    body: SubmitAttemptRequest,
+    uow: FromDishka[UnitOfWork],
 ) -> SubmitAttemptResponse:
     try:
         result = handle_submit_attempt(
@@ -566,7 +614,9 @@ def submit_attempt(
     response_model=SaveAttemptAnswersResponse,
 )
 def save_attempt_answers(
-    attempt_id: UUID, body: SaveAttemptAnswersRequest
+    attempt_id: UUID,
+    body: SaveAttemptAnswersRequest,
+    uow: FromDishka[UnitOfWork],
 ) -> SaveAttemptAnswersResponse:
     try:
         result = handle_save_attempt_answers(
@@ -588,7 +638,10 @@ def save_attempt_answers(
 
 
 @router.get("/attempts/{attempt_id}", response_model=AttemptResultResponse)
-def get_attempt_result(attempt_id: UUID) -> AttemptResultResponse:
+def get_attempt_result(
+    attempt_id: UUID,
+    uow: FromDishka[UnitOfWork],
+) -> AttemptResultResponse:
     try:
         result = handle_get_attempt_result(
             GetAttemptResultQuery(attempt_id=attempt_id), uow=uow
@@ -612,15 +665,21 @@ def get_attempt_result(attempt_id: UUID) -> AttemptResultResponse:
 
 
 @router.get("/user/attempts/{attempt_id}/result", response_model=AttemptResultResponse)
-def get_attempt_result_for_user(attempt_id: UUID) -> AttemptResultResponse:
-    return get_attempt_result(attempt_id)
+def get_attempt_result_for_user(
+    attempt_id: UUID,
+    uow: FromDishka[UnitOfWork],
+) -> AttemptResultResponse:
+    return get_attempt_result(attempt_id, uow=uow)
 
 
 @router.get(
     "/admin/diagnostics/children/{child_id}",
     response_model=ChildDiagnosticsResponse,
 )
-def get_child_diagnostics(child_id: UUID) -> ChildDiagnosticsResponse:
+def get_child_diagnostics(
+    child_id: UUID,
+    uow: FromDishka[UnitOfWork],
+) -> ChildDiagnosticsResponse:
     result = handle_get_child_diagnostics(
         GetChildDiagnosticsQuery(child_id=child_id),
         uow=uow,

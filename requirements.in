@@ -1,4 +1,5 @@
 fastapi
+dishka
 uvicorn[standard]
 pydantic
 sqlalchemy

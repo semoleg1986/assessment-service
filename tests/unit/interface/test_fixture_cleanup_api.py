@@ -10,8 +10,8 @@ from src.application.ports.fixture_cleanup import (
     FixtureCleanupService,
 )
 from src.application.ports.unit_of_work import UnitOfWork
+from src.interface.http import dependencies as deps_module
 from src.interface.http.app import create_app
-from src.interface.http.v1 import router as router_module
 
 
 def test_fixture_cleanup_returns_501_without_database_url() -> None:
@@ -64,7 +64,11 @@ def test_fixture_cleanup_maps_execution_result(monkeypatch: MonkeyPatch) -> None
                 ),
             )
 
-    monkeypatch.setattr(router_module, "fixture_cleanup_service", FakeCleanupService())
+    monkeypatch.setattr(
+        deps_module,
+        "get_fixture_cleanup_service",
+        lambda: FakeCleanupService(),
+    )
     client = TestClient(create_app())
     response = client.post("/v1/admin/fixtures/cleanup", json={"dry_run": False})
 
