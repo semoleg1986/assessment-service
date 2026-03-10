@@ -175,6 +175,7 @@ def _predict_details(body: ContentImportRequest) -> dict[str, int]:
             details["micro_skills_created"] += 1
         elif (
             existing_node.subject_code != node.subject_code
+            or existing_node.topic_code != node.topic_code
             or existing_node.grade != node.grade
             or existing_node.section_code != node.section_code
             or existing_node.section_name != node.section_name
@@ -274,6 +275,9 @@ def import_content(body: ContentImportRequest) -> ContentImportResponse:
     existing_subject_codes = {subject.code for subject in uow.subjects.list()}
     payload_subject_codes = {subject.code for subject in payload.subjects}
     known_subject_codes = existing_subject_codes | payload_subject_codes
+    existing_topics = {topic.code: topic for topic in uow.topics.list()}
+    payload_topics = {topic.code: topic for topic in payload.topics}
+    known_topic_codes = set(existing_topics) | set(payload_topics)
 
     existing_node_ids = {node.node_id for node in uow.micro_skills.list()}
     payload_node_ids = {node.node_id for node in payload.micro_skills}
@@ -296,6 +300,31 @@ def import_content(body: ContentImportRequest) -> ContentImportResponse:
                     "UNKNOWN_REFERENCE",
                     f"Micro-skill references unknown subject_code: {node.subject_code}",
                     f"micro_skills[{node.node_id}].subject_code",
+                )
+            )
+        if node.topic_code not in known_topic_codes:
+            errors.append(
+                _issue(
+                    "UNKNOWN_REFERENCE",
+                    f"Micro-skill references unknown topic_code: {node.topic_code}",
+                    f"micro_skills[{node.node_id}].topic_code",
+                )
+            )
+        resolved_topic = payload_topics.get(node.topic_code) or existing_topics.get(
+            node.topic_code
+        )
+        if resolved_topic and (
+            resolved_topic.subject_code != node.subject_code
+            or resolved_topic.grade != node.grade
+        ):
+            errors.append(
+                _issue(
+                    "TOPIC_MISMATCH",
+                    (
+                        "Topic must match micro-skill subject_code and grade: "
+                        f"{node.topic_code}"
+                    ),
+                    f"micro_skills[{node.node_id}].topic_code",
                 )
             )
         for pred in node.predecessor_ids:
@@ -417,6 +446,7 @@ def import_content(body: ContentImportRequest) -> ContentImportResponse:
                 CreateMicroSkillCommand(
                     node_id=node.node_id,
                     subject_code=node.subject_code,
+                    topic_code=node.topic_code,
                     grade=node.grade,
                     section_code=node.section_code,
                     section_name=node.section_name,
@@ -434,6 +464,7 @@ def import_content(body: ContentImportRequest) -> ContentImportResponse:
 
         changed = (
             existing_node.subject_code != node.subject_code
+            or existing_node.topic_code != node.topic_code
             or existing_node.grade != node.grade
             or existing_node.section_code != node.section_code
             or existing_node.section_name != node.section_name
@@ -456,6 +487,7 @@ def import_content(body: ContentImportRequest) -> ContentImportResponse:
             MicroSkillNode(
                 node_id=node.node_id,
                 subject_code=node.subject_code,
+                topic_code=node.topic_code,
                 grade=node.grade,
                 section_code=node.section_code,
                 section_name=node.section_name,
@@ -720,6 +752,7 @@ def create_micro_skill(body: MicroSkillCreateRequest) -> MicroSkillResponse:
             CreateMicroSkillCommand(
                 node_id=body.node_id,
                 subject_code=body.subject_code,
+                topic_code=body.topic_code,
                 grade=body.grade,
                 section_code=body.section_code,
                 section_name=body.section_name,
@@ -741,6 +774,7 @@ def create_micro_skill(body: MicroSkillCreateRequest) -> MicroSkillResponse:
     return MicroSkillResponse(
         node_id=node.node_id,
         subject_code=node.subject_code,
+        topic_code=node.topic_code,
         grade=node.grade,
         section_code=node.section_code,
         section_name=node.section_name,
@@ -788,6 +822,7 @@ def link_micro_skill_predecessors(
     return MicroSkillResponse(
         node_id=node.node_id,
         subject_code=node.subject_code,
+        topic_code=node.topic_code,
         grade=node.grade,
         section_code=node.section_code,
         section_name=node.section_name,
@@ -812,6 +847,7 @@ def list_micro_skills() -> list[MicroSkillResponse]:
         MicroSkillResponse(
             node_id=item["node"].node_id,
             subject_code=item["node"].subject_code,
+            topic_code=item["node"].topic_code,
             grade=item["node"].grade,
             section_code=item["node"].section_code,
             section_name=item["node"].section_name,

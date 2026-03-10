@@ -2,6 +2,7 @@ import pytest
 
 from src.application.commands.create_micro_skill import CreateMicroSkillCommand
 from src.application.commands.create_subject import CreateSubjectCommand
+from src.application.commands.create_topic import CreateTopicCommand
 from src.application.commands.link_micro_skill_predecessors import (
     LinkMicroSkillPredecessorsCommand,
 )
@@ -9,12 +10,13 @@ from src.application.handlers.commands.create_micro_skill import (
     handle_create_micro_skill,
 )
 from src.application.handlers.commands.create_subject import handle_create_subject
+from src.application.handlers.commands.create_topic import handle_create_topic
 from src.application.handlers.commands.link_micro_skill_predecessors import (
     handle_link_micro_skill_predecessors,
 )
 from src.application.handlers.queries.list_micro_skills import handle_list_micro_skills
 from src.application.queries.list_micro_skills import ListMicroSkillsQuery
-from src.domain.errors import InvariantViolationError
+from src.domain.errors import InvariantViolationError, NotFoundError
 from src.domain.value_objects.statuses import CriticalityLevel
 from src.infrastructure.uow import InMemoryUnitOfWork
 
@@ -22,11 +24,16 @@ from src.infrastructure.uow import InMemoryUnitOfWork
 def test_cycle_detection_when_linking_predecessors() -> None:
     uow = InMemoryUnitOfWork()
     handle_create_subject(CreateSubjectCommand(code="math", name="Math"), uow=uow)
+    handle_create_topic(
+        CreateTopicCommand(code="M2-T1", subject_code="math", grade=2, name="Topic 1"),
+        uow=uow,
+    )
 
     handle_create_micro_skill(
         CreateMicroSkillCommand(
             node_id="N1",
             subject_code="math",
+            topic_code="M2-T1",
             grade=2,
             section_code="R1",
             section_name="Section",
@@ -40,6 +47,7 @@ def test_cycle_detection_when_linking_predecessors() -> None:
         CreateMicroSkillCommand(
             node_id="N2",
             subject_code="math",
+            topic_code="M2-T1",
             grade=2,
             section_code="R1",
             section_name="Section",
@@ -60,11 +68,16 @@ def test_cycle_detection_when_linking_predecessors() -> None:
 def test_blocks_count_is_calculated_from_reverse_dependencies() -> None:
     uow = InMemoryUnitOfWork()
     handle_create_subject(CreateSubjectCommand(code="math", name="Math"), uow=uow)
+    handle_create_topic(
+        CreateTopicCommand(code="M2-T1", subject_code="math", grade=2, name="Topic 1"),
+        uow=uow,
+    )
 
     handle_create_micro_skill(
         CreateMicroSkillCommand(
             node_id="N1",
             subject_code="math",
+            topic_code="M2-T1",
             grade=2,
             section_code="R1",
             section_name="Section",
@@ -78,6 +91,7 @@ def test_blocks_count_is_calculated_from_reverse_dependencies() -> None:
         CreateMicroSkillCommand(
             node_id="N2",
             subject_code="math",
+            topic_code="M2-T1",
             grade=2,
             section_code="R1",
             section_name="Section",
@@ -91,6 +105,7 @@ def test_blocks_count_is_calculated_from_reverse_dependencies() -> None:
         CreateMicroSkillCommand(
             node_id="N3",
             subject_code="math",
+            topic_code="M2-T1",
             grade=2,
             section_code="R1",
             section_name="Section",
@@ -112,11 +127,16 @@ def test_blocks_count_is_calculated_from_reverse_dependencies() -> None:
 def test_link_updates_micro_skill_version_and_timestamp() -> None:
     uow = InMemoryUnitOfWork()
     handle_create_subject(CreateSubjectCommand(code="math", name="Math"), uow=uow)
+    handle_create_topic(
+        CreateTopicCommand(code="M2-T1", subject_code="math", grade=2, name="Topic 1"),
+        uow=uow,
+    )
 
     handle_create_micro_skill(
         CreateMicroSkillCommand(
             node_id="N1",
             subject_code="math",
+            topic_code="M2-T1",
             grade=2,
             section_code="R1",
             section_name="Section",
@@ -130,6 +150,7 @@ def test_link_updates_micro_skill_version_and_timestamp() -> None:
         CreateMicroSkillCommand(
             node_id="N2",
             subject_code="math",
+            topic_code="M2-T1",
             grade=2,
             section_code="R1",
             section_name="Section",
@@ -154,3 +175,49 @@ def test_link_updates_micro_skill_version_and_timestamp() -> None:
     )
     assert same_link.version == 2
     assert same_link.updated_at == linked.updated_at
+
+
+def test_create_micro_skill_fails_for_unknown_topic() -> None:
+    uow = InMemoryUnitOfWork()
+    handle_create_subject(CreateSubjectCommand(code="math", name="Math"), uow=uow)
+
+    with pytest.raises(NotFoundError):
+        handle_create_micro_skill(
+            CreateMicroSkillCommand(
+                node_id="N1",
+                subject_code="math",
+                topic_code="M2-TX",
+                grade=2,
+                section_code="R1",
+                section_name="Section",
+                micro_skill_name="Node1",
+                predecessor_ids=[],
+                criticality=CriticalityLevel.HIGH,
+            ),
+            uow=uow,
+        )
+
+
+def test_create_micro_skill_fails_when_topic_mismatch() -> None:
+    uow = InMemoryUnitOfWork()
+    handle_create_subject(CreateSubjectCommand(code="math", name="Math"), uow=uow)
+    handle_create_topic(
+        CreateTopicCommand(code="M3-T1", subject_code="math", grade=3, name="Topic 3"),
+        uow=uow,
+    )
+
+    with pytest.raises(InvariantViolationError):
+        handle_create_micro_skill(
+            CreateMicroSkillCommand(
+                node_id="N1",
+                subject_code="math",
+                topic_code="M3-T1",
+                grade=2,
+                section_code="R1",
+                section_name="Section",
+                micro_skill_name="Node1",
+                predecessor_ids=[],
+                criticality=CriticalityLevel.HIGH,
+            ),
+            uow=uow,
+        )

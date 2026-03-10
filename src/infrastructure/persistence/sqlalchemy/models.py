@@ -43,6 +43,11 @@ class MicroSkillNodeModel(Base):
         ForeignKey("subjects.code", ondelete="CASCADE"),
         nullable=False,
     )
+    topic_code: Mapped[str | None] = mapped_column(
+        String(128),
+        ForeignKey("topics.code", ondelete="SET NULL"),
+        nullable=True,
+    )
     grade: Mapped[int] = mapped_column(Integer, nullable=False)
     section_code: Mapped[str] = mapped_column(String(64), nullable=False)
     section_name: Mapped[str] = mapped_column(String(255), nullable=False)

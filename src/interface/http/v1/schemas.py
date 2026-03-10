@@ -152,6 +152,7 @@ class ContentImportTopicItem(BaseModel):
 class ContentImportMicroSkillItem(BaseModel):
     node_id: str
     subject_code: str
+    topic_code: str
     grade: int = Field(ge=1, le=11)
     section_code: str
     section_name: str
@@ -224,6 +225,7 @@ class TopicResponse(BaseModel):
 class MicroSkillCreateRequest(BaseModel):
     node_id: str
     subject_code: str
+    topic_code: str
     grade: int = Field(ge=1, le=11)
     section_code: str
     section_name: str
@@ -243,6 +245,7 @@ class MicroSkillLinkRequest(BaseModel):
 class MicroSkillResponse(BaseModel):
     node_id: str
     subject_code: str
+    topic_code: str | None
     grade: int
     section_code: str
     section_name: str

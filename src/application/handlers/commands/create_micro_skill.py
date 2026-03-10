@@ -53,6 +53,11 @@ def handle_create_micro_skill(
     """
     if uow.subjects.get(command.subject_code) is None:
         raise NotFoundError("subject not found")
+    topic = uow.topics.get(command.topic_code)
+    if topic is None:
+        raise NotFoundError("topic not found")
+    if topic.subject_code != command.subject_code or topic.grade != command.grade:
+        raise InvariantViolationError("topic does not match subject/grade")
     if uow.micro_skills.get(command.node_id) is not None:
         raise InvariantViolationError("micro skill already exists")
 
@@ -66,6 +71,7 @@ def handle_create_micro_skill(
         node_id=command.node_id,
         subject_code=command.subject_code,
         grade=command.grade,
+        topic_code=command.topic_code,
         section_code=command.section_code,
         section_name=command.section_name,
         micro_skill_name=command.micro_skill_name,

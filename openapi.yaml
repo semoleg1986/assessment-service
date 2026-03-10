@@ -791,6 +791,9 @@ components:
         subject_code:
           type: string
           title: Subject Code
+        topic_code:
+          type: string
+          title: Topic Code
         grade:
           type: integer
           maximum: 11.0
@@ -835,6 +838,7 @@ components:
       required:
       - node_id
       - subject_code
+      - topic_code
       - grade
       - section_code
       - section_name
@@ -1062,6 +1066,9 @@ components:
         subject_code:
           type: string
           title: Subject Code
+        topic_code:
+          type: string
+          title: Topic Code
         grade:
           type: integer
           maximum: 11.0
@@ -1106,6 +1113,7 @@ components:
       required:
       - node_id
       - subject_code
+      - topic_code
       - grade
       - section_code
       - section_name
@@ -1130,6 +1138,11 @@ components:
         subject_code:
           type: string
           title: Subject Code
+        topic_code:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Topic Code
         grade:
           type: integer
           title: Grade
@@ -1184,6 +1197,7 @@ components:
       required:
       - node_id
       - subject_code
+      - topic_code
       - grade
       - section_code
       - section_name

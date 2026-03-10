@@ -26,6 +26,7 @@ def _payload(prefix: str) -> dict[str, Any]:
             {
                 "node_id": node_id,
                 "subject_code": subject_code,
+                "topic_code": topic_code,
                 "grade": 2,
                 "section_code": "R1",
                 "section_name": "Numbers",
@@ -63,11 +64,19 @@ def test_import_validate_detects_cycle() -> None:
     subject_code = f"math_{prefix}"
     payload = {
         "subjects": [{"code": subject_code, "name": "Math"}],
-        "topics": [],
+        "topics": [
+            {
+                "code": f"T_{prefix}",
+                "subject_code": subject_code,
+                "grade": 2,
+                "name": f"Topic {prefix}",
+            }
+        ],
         "micro_skills": [
             {
                 "node_id": f"A_{prefix}",
                 "subject_code": subject_code,
+                "topic_code": f"T_{prefix}",
                 "grade": 2,
                 "section_code": "R1",
                 "section_name": "Numbers",
@@ -79,6 +88,7 @@ def test_import_validate_detects_cycle() -> None:
             {
                 "node_id": f"B_{prefix}",
                 "subject_code": subject_code,
+                "topic_code": f"T_{prefix}",
                 "grade": 2,
                 "section_code": "R1",
                 "section_name": "Numbers",
@@ -187,3 +197,25 @@ def test_import_updates_micro_skill_metadata_and_version() -> None:
     assert target["version"] == 2
     assert target["created_at"]
     assert target["updated_at"]
+
+
+def test_import_validate_fails_for_unknown_topic_reference() -> None:
+    client = TestClient(create_app())
+    prefix = uuid4().hex[:8]
+    payload = _payload(prefix)
+    micro_skills = cast(list[dict[str, Any]], payload["micro_skills"])
+    micro_skills[0]["topic_code"] = "UNKNOWN-TOPIC"
+
+    response = client.post(
+        "/v1/admin/content/import",
+        json={
+            "source_id": f"test-{prefix}",
+            "contract_version": "v1.1",
+            "validate_only": True,
+            "payload": payload,
+        },
+    )
+    assert response.status_code == 202
+    body = response.json()
+    assert body["status"] == "failed"
+    assert any(err["path"].endswith(".topic_code") for err in body["errors"])

@@ -15,6 +15,8 @@ class MicroSkillNode:
     :type subject_code: str
     :param grade: Класс обучения.
     :type grade: int
+    :param topic_code: Код темы.
+    :type topic_code: str | None
     :param section_code: Код раздела в рамках предмета.
     :type section_code: str
     :param section_name: Название раздела.
@@ -44,6 +46,7 @@ class MicroSkillNode:
     node_id: str
     subject_code: str
     grade: int
+    topic_code: str | None
     section_code: str
     section_name: str
     micro_skill_name: str

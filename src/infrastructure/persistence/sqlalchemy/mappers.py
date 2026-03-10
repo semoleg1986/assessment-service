@@ -43,6 +43,7 @@ def micro_skill_from_model(model: MicroSkillNodeModel) -> MicroSkillNode:
         node_id=model.node_id,
         subject_code=model.subject_code,
         grade=model.grade,
+        topic_code=model.topic_code,
         section_code=model.section_code,
         section_name=model.section_name,
         micro_skill_name=model.micro_skill_name,

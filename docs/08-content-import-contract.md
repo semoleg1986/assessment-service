@@ -34,7 +34,7 @@ Endpoint: `POST /v1/admin/content/import`
 - `subjects[]`: `code`, `name`
 - `topics[]`: `code`, `subject_code`, `grade`, `name`
 - `micro_skills[]`: `node_id`, `subject_code`, `grade`, `section_code`, `section_name`,
-  `micro_skill_name`, `predecessor_ids[]`, `criticality`, `source_ref`,
+  `topic_code`, `micro_skill_name`, `predecessor_ids[]`, `criticality`, `source_ref`,
   `description?`, `status?`, `external_ref?`
 - `tests[]`: `external_id`, `subject_code`, `grade`, `questions[]`
 - `questions[]`: `external_id`, `node_id`, `text`, `answer_key`, `max_score`
@@ -78,6 +78,7 @@ Known codes:
 - `DUPLICATE_IDENTIFIER`
 - `UNKNOWN_REFERENCE`
 - `CYCLE_DETECTED`
+- `TOPIC_MISMATCH`
 
 ## Domain rules currently enforced
 - Unique IDs in payload sections.

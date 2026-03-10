@@ -38,6 +38,7 @@ def test_create_assign_start_submit_flow() -> None:
         CreateMicroSkillCommand(
             node_id="M2-S-01-N1",
             subject_code="math",
+            topic_code="M2-S-01",
             grade=1,
             section_code="R1",
             section_name="Section 1",

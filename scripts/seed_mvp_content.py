@@ -31,6 +31,7 @@ class TopicSeed:
 class MicroSkillSeed:
     node_id: str
     subject_code: str
+    topic_code: str
     grade: int
     section_code: str
     section_name: str
@@ -55,6 +56,7 @@ PROD_MIN_MICRO_SKILLS: tuple[MicroSkillSeed, ...] = (
     MicroSkillSeed(
         node_id="M2-ADD-01",
         subject_code="math",
+        topic_code="M2-ADD",
         grade=2,
         section_code="R1",
         section_name="Числа и операции",
@@ -66,6 +68,7 @@ PROD_MIN_MICRO_SKILLS: tuple[MicroSkillSeed, ...] = (
     MicroSkillSeed(
         node_id="M2-ADD-02",
         subject_code="math",
+        topic_code="M2-ADD",
         grade=2,
         section_code="R1",
         section_name="Числа и операции",
@@ -77,6 +80,7 @@ PROD_MIN_MICRO_SKILLS: tuple[MicroSkillSeed, ...] = (
     MicroSkillSeed(
         node_id="M2-SUB-01",
         subject_code="math",
+        topic_code="M2-SUB",
         grade=2,
         section_code="R1",
         section_name="Числа и операции",
@@ -88,6 +92,7 @@ PROD_MIN_MICRO_SKILLS: tuple[MicroSkillSeed, ...] = (
     MicroSkillSeed(
         node_id="R2-ORTH-01",
         subject_code="ru",
+        topic_code="R2-ORTH",
         grade=2,
         section_code="R1",
         section_name="Правописание",
@@ -110,6 +115,7 @@ DEMO_MICRO_SKILLS: tuple[MicroSkillSeed, ...] = PROD_MIN_MICRO_SKILLS + (
     MicroSkillSeed(
         node_id="D2-WORLD-01",
         subject_code="demo_science",
+        topic_code="D2-WORLD-01",
         grade=2,
         section_code="D1",
         section_name="Demo section",
@@ -203,6 +209,7 @@ def main() -> None:
             CreateMicroSkillCommand(
                 node_id=node.node_id,
                 subject_code=node.subject_code,
+                topic_code=node.topic_code,
                 grade=node.grade,
                 section_code=node.section_code,
                 section_name=node.section_name,

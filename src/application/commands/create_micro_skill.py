@@ -7,6 +7,7 @@ from src.domain.value_objects.statuses import CriticalityLevel, MicroSkillStatus
 class CreateMicroSkillCommand:
     node_id: str
     subject_code: str
+    topic_code: str
     grade: int
     section_code: str
     section_name: str

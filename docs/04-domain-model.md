@@ -69,6 +69,7 @@
 - `node_id: str`
 - `subject_code: str`
 - `grade: int`
+- `topic_code: str | None`
 - `section_code: str`
 - `section_name: str`
 - `micro_skill_name: str`
@@ -109,3 +110,5 @@
 - Assignment ссылается на существующие `child_id` и `test_id` (проверка в application/integration).
 - Для одного assignment только одна активная attempt.
 - Итоговый `score` детерминированно считается как сумма `awarded_score` ответов.
+- `MicroSkillNode.topic_code` должен ссылаться на существующую `Topic` того же
+  `subject_code` и `grade`.

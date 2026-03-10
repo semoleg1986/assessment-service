@@ -62,6 +62,7 @@ class MicroSkillNode {
   node_id: str
   subject_code: str
   grade: int
+  topic_code: str?
   section_code: str
   section_name: str
   micro_skill_name: str

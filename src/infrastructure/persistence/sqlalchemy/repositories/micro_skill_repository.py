@@ -20,6 +20,7 @@ class SqlAlchemyMicroSkillNodeRepository(MicroSkillNodeRepository):
                 node_id=node.node_id,
                 subject_code=node.subject_code,
                 grade=node.grade,
+                topic_code=node.topic_code,
                 section_code=node.section_code,
                 section_name=node.section_name,
                 micro_skill_name=node.micro_skill_name,
@@ -38,6 +39,7 @@ class SqlAlchemyMicroSkillNodeRepository(MicroSkillNodeRepository):
 
         model.subject_code = node.subject_code
         model.grade = node.grade
+        model.topic_code = node.topic_code
         model.section_code = node.section_code
         model.section_name = node.section_name
         model.micro_skill_name = node.micro_skill_name
