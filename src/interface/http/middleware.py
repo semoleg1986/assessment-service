@@ -8,8 +8,9 @@ from fastapi import Request
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.responses import Response
 
-logger = logging.getLogger("assessment.request")
-logger.setLevel(logging.INFO)
+# Use uvicorn logger so records go to container stdout
+# with default uvicorn logging config.
+logger = logging.getLogger("uvicorn.error")
 
 
 class RequestIdLoggingMiddleware(BaseHTTPMiddleware):
