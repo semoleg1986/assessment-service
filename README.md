@@ -34,6 +34,7 @@
   - `/Users/olegsemenov/Programming/monitoring/assessment-service/docs/05-invariants-and-policies.md`
   - `/Users/olegsemenov/Programming/monitoring/assessment-service/docs/06-application-layer.md`
   - `/Users/olegsemenov/Programming/monitoring/assessment-service/docs/07-error-format.md`
+  - `/Users/olegsemenov/Programming/monitoring/assessment-service/docs/08-content-import-contract.md`
 
 - Диаграммы (PlantUML):
   - `/Users/olegsemenov/Programming/monitoring/assessment-service/docs/diagrams/context.puml`
