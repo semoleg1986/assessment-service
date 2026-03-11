@@ -35,6 +35,7 @@
   - `/Users/olegsemenov/Programming/monitoring/assessment-service/docs/06-application-layer.md`
   - `/Users/olegsemenov/Programming/monitoring/assessment-service/docs/07-error-format.md`
   - `/Users/olegsemenov/Programming/monitoring/assessment-service/docs/08-content-import-contract.md`
+  - `/Users/olegsemenov/Programming/monitoring/assessment-service/docs/09-methodist-runbook.md`
 
 - Диаграммы (PlantUML):
   - `/Users/olegsemenov/Programming/monitoring/assessment-service/docs/diagrams/context.puml`
@@ -65,6 +66,20 @@
 - `auth-service`: идентификация актора и роли.
 - `user-children-service`: проверка ребенка и принадлежности.
 - `user-web`/`admin-web`: чтение/запись через BFF API.
+
+## Для методиста
+
+Операционный сценарий (validate/apply/idempotency/cleanup) описан в:
+
+- `/Users/olegsemenov/Programming/monitoring/assessment-service/docs/09-methodist-runbook.md`
+
+Ключевые статусы import API (`v1.2`):
+
+- `validated`
+- `validated_with_errors`
+- `completed`
+- `completed_with_errors`
+- `failed`
 
 ## Статус
 - Домен и архитектурные документы готовы.
