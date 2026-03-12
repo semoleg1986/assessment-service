@@ -1,12 +1,12 @@
 openapi: 3.1.0
 info:
   title: assessment-service
-  version: 0.1.0
+  version: v0.3.1
 paths:
   /healthz:
     get:
       summary: Healthz
-      operationId: healthz_healthz_get
+      operationId: getHealthz
       responses:
         '200':
           description: Successful Response
@@ -17,10 +17,13 @@ paths:
                   type: string
                 type: object
                 title: Response Healthz Healthz Get
+              example:
+                key: string
+      security: []
   /readyz:
     get:
       summary: Readyz
-      operationId: readyz_readyz_get
+      operationId: getReadyz
       responses:
         '200':
           description: Successful Response
@@ -31,17 +34,30 @@ paths:
                   type: string
                 type: object
                 title: Response Readyz Readyz Get
+              example:
+                key: string
+      security: []
   /v1/admin/content/import:
     post:
       tags:
       - assessment
       summary: Import Content
-      operationId: import_content_v1_admin_content_import_post
+      operationId: postAdminContentImport
       requestBody:
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/ContentImportRequest'
+            example:
+              source_id: string
+              contract_version: string
+              validate_only: true
+              error_mode: collect
+              payload:
+                subjects: []
+                topics: []
+                micro_skills: []
+                tests: []
         required: true
       responses:
         '202':
@@ -50,23 +66,48 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ContentImportResponse'
+              example:
+                import_id: string
+                source_id: string
+                imported: 1
+                status: string
+                errors:
+                - code: string
+                  message: string
+                  path: string
         '422':
           description: Validation Error
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      security:
+      - bearerAuth: []
   /v1/admin/fixtures/cleanup:
     post:
       tags:
       - assessment
       summary: Cleanup Fixtures
-      operationId: cleanup_fixtures_v1_admin_fixtures_cleanup_post
+      operationId: postAdminFixturesCleanup
       requestBody:
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/FixtureCleanupRequest'
+            example:
+              dry_run: true
+              subject_code_patterns:
+              - string
+              topic_code_patterns:
+              - string
+              node_id_patterns:
+              - string
         required: true
       responses:
         '200':
@@ -75,18 +116,54 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/FixtureCleanupResponse'
+              example:
+                status: planned
+                dry_run: true
+                filters:
+                  subject_code_patterns:
+                  - string
+                  topic_code_patterns:
+                  - string
+                  node_id_patterns:
+                  - string
+                matched:
+                  subjects: 1
+                  topics: 1
+                  micro_skills: 1
+                  tests: 1
+                  questions: 1
+                  assignments: 1
+                  attempts: 1
+                  answers: 1
+                deleted:
+                  subjects: 1
+                  topics: 1
+                  micro_skills: 1
+                  tests: 1
+                  questions: 1
+                  assignments: 1
+                  attempts: 1
+                  answers: 1
         '422':
           description: Validation Error
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      security:
+      - bearerAuth: []
   /v1/admin/tests:
     get:
       tags:
       - assessment
       summary: List Tests
-      operationId: list_tests_v1_admin_tests_get
+      operationId: getAdminTests
       responses:
         '200':
           description: Successful Response
@@ -97,16 +174,39 @@ paths:
                   $ref: '#/components/schemas/TestResponse'
                 type: array
                 title: Response List Tests V1 Admin Tests Get
+              example:
+              - test_id: 00000000-0000-4000-8000-000000000000
+                subject_code: string
+                grade: 1
+                version: 1
+                questions:
+                - {}
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      security:
+      - bearerAuth: []
     post:
       tags:
       - assessment
       summary: Create Test
-      operationId: create_test_v1_admin_tests_post
+      operationId: postAdminTests
       requestBody:
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/CreateTestRequest'
+            example:
+              subject_code: string
+              grade: 1
+              questions:
+              - node_id: string
+                text: string
+                answer_key: string
+                max_score: 1
         required: true
       responses:
         '201':
@@ -115,18 +215,36 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/TestResponse'
+              example:
+                test_id: 00000000-0000-4000-8000-000000000000
+                subject_code: string
+                grade: 1
+                version: 1
+                questions:
+                - question_id: 00000000-0000-4000-8000-000000000000
+                  node_id: string
+                  text: string
+                  max_score: 1
         '422':
           description: Validation Error
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      security:
+      - bearerAuth: []
   /v1/tests:
     get:
       tags:
       - assessment
       summary: List Tests
-      operationId: list_tests_v1_tests_get
+      operationId: getTests
       responses:
         '200':
           description: Successful Response
@@ -137,16 +255,39 @@ paths:
                   $ref: '#/components/schemas/TestResponse'
                 type: array
                 title: Response List Tests V1 Tests Get
+              example:
+              - test_id: 00000000-0000-4000-8000-000000000000
+                subject_code: string
+                grade: 1
+                version: 1
+                questions:
+                - {}
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      security:
+      - bearerAuth: []
     post:
       tags:
       - assessment
       summary: Create Test
-      operationId: create_test_v1_tests_post
+      operationId: postTests
       requestBody:
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/CreateTestRequest'
+            example:
+              subject_code: string
+              grade: 1
+              questions:
+              - node_id: string
+                text: string
+                answer_key: string
+                max_score: 1
         required: true
       responses:
         '201':
@@ -155,18 +296,36 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/TestResponse'
+              example:
+                test_id: 00000000-0000-4000-8000-000000000000
+                subject_code: string
+                grade: 1
+                version: 1
+                questions:
+                - question_id: 00000000-0000-4000-8000-000000000000
+                  node_id: string
+                  text: string
+                  max_score: 1
         '422':
           description: Validation Error
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      security:
+      - bearerAuth: []
   /v1/admin/tests/{test_id}/publish:
     post:
       tags:
       - assessment
       summary: Publish Test
-      operationId: publish_test_v1_admin_tests__test_id__publish_post
+      operationId: postAdminTestsPublishByTestId
       parameters:
       - name: test_id
         in: path
@@ -182,18 +341,29 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PublishTestResponse'
+              example:
+                test_id: 00000000-0000-4000-8000-000000000000
+                status: string
         '422':
           description: Validation Error
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      security:
+      - bearerAuth: []
   /v1/admin/subjects:
     get:
       tags:
       - assessment
       summary: List Subjects
-      operationId: list_subjects_v1_admin_subjects_get
+      operationId: getAdminSubjects
       responses:
         '200':
           description: Successful Response
@@ -204,16 +374,30 @@ paths:
                   $ref: '#/components/schemas/SubjectResponse'
                 type: array
                 title: Response List Subjects V1 Admin Subjects Get
+              example:
+              - code: string
+                name: string
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      security:
+      - bearerAuth: []
     post:
       tags:
       - assessment
       summary: Create Subject
-      operationId: create_subject_v1_admin_subjects_post
+      operationId: postAdminSubjects
       requestBody:
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/SubjectCreateRequest'
+            example:
+              code: string
+              name: string
         required: true
       responses:
         '201':
@@ -222,18 +406,29 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/SubjectResponse'
+              example:
+                code: string
+                name: string
         '422':
           description: Validation Error
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      security:
+      - bearerAuth: []
   /v1/admin/topics:
     get:
       tags:
       - assessment
       summary: List Topics
-      operationId: list_topics_v1_admin_topics_get
+      operationId: getAdminTopics
       responses:
         '200':
           description: Successful Response
@@ -244,16 +439,34 @@ paths:
                   $ref: '#/components/schemas/TopicResponse'
                 type: array
                 title: Response List Topics V1 Admin Topics Get
+              example:
+              - code: string
+                subject_code: string
+                grade: 1
+                name: string
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      security:
+      - bearerAuth: []
     post:
       tags:
       - assessment
       summary: Create Topic
-      operationId: create_topic_v1_admin_topics_post
+      operationId: postAdminTopics
       requestBody:
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/TopicCreateRequest'
+            example:
+              code: string
+              subject_code: string
+              grade: 1
+              name: string
         required: true
       responses:
         '201':
@@ -262,18 +475,31 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/TopicResponse'
+              example:
+                code: string
+                subject_code: string
+                grade: 1
+                name: string
         '422':
           description: Validation Error
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      security:
+      - bearerAuth: []
   /v1/admin/micro-skills:
     get:
       tags:
       - assessment
       summary: List Micro Skills
-      operationId: list_micro_skills_v1_admin_micro_skills_get
+      operationId: getAdminMicroSkills
       responses:
         '200':
           description: Successful Response
@@ -284,16 +510,51 @@ paths:
                   $ref: '#/components/schemas/MicroSkillResponse'
                 type: array
                 title: Response List Micro Skills V1 Admin Micro Skills Get
+              example:
+              - node_id: string
+                subject_code: string
+                topic_code: string
+                grade: 1
+                section_code: string
+                section_name: string
+                micro_skill_name: string
+                predecessor_ids:
+                - string
+                criticality: low
+                source_ref: string
+                description: string
+                status: draft
+                external_ref: string
+                version: 1
+                created_at: '2026-03-13T00:00:00Z'
+                updated_at: '2026-03-13T00:00:00Z'
+                blocks_count: 1
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      security:
+      - bearerAuth: []
     post:
       tags:
       - assessment
       summary: Create Micro Skill
-      operationId: create_micro_skill_v1_admin_micro_skills_post
+      operationId: postAdminMicroSkills
       requestBody:
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/MicroSkillCreateRequest'
+            example:
+              node_id: string
+              subject_code: string
+              topic_code: string
+              grade: 1
+              section_code: string
+              section_name: string
+              micro_skill_name: string
         required: true
       responses:
         '201':
@@ -302,18 +563,45 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/MicroSkillResponse'
+              example:
+                node_id: string
+                subject_code: string
+                topic_code: string
+                grade: 1
+                section_code: string
+                section_name: string
+                micro_skill_name: string
+                predecessor_ids:
+                - string
+                criticality: low
+                source_ref: string
+                description: string
+                status: draft
+                external_ref: string
+                version: 1
+                created_at: '2026-03-13T00:00:00Z'
+                updated_at: '2026-03-13T00:00:00Z'
+                blocks_count: 1
         '422':
           description: Validation Error
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      security:
+      - bearerAuth: []
   /v1/admin/micro-skills/{node_id}/links:
     post:
       tags:
       - assessment
       summary: Link Micro Skill Predecessors
-      operationId: link_micro_skill_predecessors_v1_admin_micro_skills__node_id__links_post
+      operationId: postAdminMicroSkillsLinksByNodeId
       parameters:
       - name: node_id
         in: path
@@ -327,6 +615,9 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/MicroSkillLinkRequest'
+            example:
+              predecessor_ids:
+              - string
       responses:
         '200':
           description: Successful Response
@@ -334,23 +625,53 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/MicroSkillResponse'
+              example:
+                node_id: string
+                subject_code: string
+                topic_code: string
+                grade: 1
+                section_code: string
+                section_name: string
+                micro_skill_name: string
+                predecessor_ids:
+                - string
+                criticality: low
+                source_ref: string
+                description: string
+                status: draft
+                external_ref: string
+                version: 1
+                created_at: '2026-03-13T00:00:00Z'
+                updated_at: '2026-03-13T00:00:00Z'
+                blocks_count: 1
         '422':
           description: Validation Error
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      security:
+      - bearerAuth: []
   /v1/admin/assignments:
     post:
       tags:
       - assessment
       summary: Assign Test
-      operationId: assign_test_v1_admin_assignments_post
+      operationId: postAdminAssignments
       requestBody:
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/AssignTestRequest'
+            example:
+              test_id: 00000000-0000-4000-8000-000000000000
+              child_id: 00000000-0000-4000-8000-000000000000
         required: true
       responses:
         '201':
@@ -359,23 +680,39 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AssignmentResponse'
+              example:
+                assignment_id: 00000000-0000-4000-8000-000000000000
+                test_id: 00000000-0000-4000-8000-000000000000
+                child_id: 00000000-0000-4000-8000-000000000000
+                status: string
         '422':
           description: Validation Error
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      security:
+      - bearerAuth: []
   /v1/assignments:
     post:
       tags:
       - assessment
       summary: Assign Test
-      operationId: assign_test_v1_assignments_post
+      operationId: postAssignments
       requestBody:
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/AssignTestRequest'
+            example:
+              test_id: 00000000-0000-4000-8000-000000000000
+              child_id: 00000000-0000-4000-8000-000000000000
         required: true
       responses:
         '201':
@@ -384,18 +721,31 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AssignmentResponse'
+              example:
+                assignment_id: 00000000-0000-4000-8000-000000000000
+                test_id: 00000000-0000-4000-8000-000000000000
+                child_id: 00000000-0000-4000-8000-000000000000
+                status: string
         '422':
           description: Validation Error
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      security:
+      - bearerAuth: []
   /v1/user/children/{child_id}/assignments:
     get:
       tags:
       - assessment
       summary: List Assignments By Child
-      operationId: list_assignments_by_child_v1_user_children__child_id__assignments_get
+      operationId: getUserChildrenAssignmentsByChildId
       parameters:
       - name: child_id
         in: path
@@ -415,23 +765,40 @@ paths:
                   $ref: '#/components/schemas/AssignmentListItemResponse'
                 title: Response List Assignments By Child V1 User Children  Child
                   Id  Assignments Get
+              example:
+              - assignment_id: 00000000-0000-4000-8000-000000000000
+                test_id: 00000000-0000-4000-8000-000000000000
+                test_title: string
+                status: string
+                due_at: string
         '422':
           description: Validation Error
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      security:
+      - bearerAuth: []
   /v1/attempts/start:
     post:
       tags:
       - assessment
       summary: Start Attempt
-      operationId: start_attempt_v1_attempts_start_post
+      operationId: postAttemptsStart
       requestBody:
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/StartAttemptRequest'
+            example:
+              assignment_id: 00000000-0000-4000-8000-000000000000
+              child_id: 00000000-0000-4000-8000-000000000000
         required: true
       responses:
         '200':
@@ -440,18 +807,31 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/StartAttemptResponse'
+              example:
+                attempt_id: 00000000-0000-4000-8000-000000000000
+                assignment_id: 00000000-0000-4000-8000-000000000000
+                child_id: 00000000-0000-4000-8000-000000000000
+                status: string
         '422':
           description: Validation Error
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      security:
+      - bearerAuth: []
   /v1/user/assignments/{assignment_id}/start:
     post:
       tags:
       - assessment
       summary: Start Attempt For Assignment
-      operationId: start_attempt_for_assignment_v1_user_assignments__assignment_id__start_post
+      operationId: postUserAssignmentsStartByAssignmentId
       parameters:
       - name: assignment_id
         in: path
@@ -466,6 +846,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/StartAttemptByAssignmentRequest'
+            example:
+              child_id: 00000000-0000-4000-8000-000000000000
       responses:
         '200':
           description: Successful Response
@@ -473,18 +855,31 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/StartAttemptResponse'
+              example:
+                attempt_id: 00000000-0000-4000-8000-000000000000
+                assignment_id: 00000000-0000-4000-8000-000000000000
+                child_id: 00000000-0000-4000-8000-000000000000
+                status: string
         '422':
           description: Validation Error
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      security:
+      - bearerAuth: []
   /v1/user/attempts/{attempt_id}/submit:
     post:
       tags:
       - assessment
       summary: Submit Attempt
-      operationId: submit_attempt_v1_user_attempts__attempt_id__submit_post
+      operationId: postUserAttemptsSubmitByAttemptId
       parameters:
       - name: attempt_id
         in: path
@@ -499,6 +894,10 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/SubmitAttemptRequest'
+            example:
+              answers:
+              - question_id: 00000000-0000-4000-8000-000000000000
+                value: string
       responses:
         '200':
           description: Successful Response
@@ -506,18 +905,32 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/SubmitAttemptResponse'
+              example:
+                attempt_id: string
+                status: string
+                score: 1
+                max_score: 1
+                signal: string
         '422':
           description: Validation Error
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      security:
+      - bearerAuth: []
   /v1/attempts/{attempt_id}/submit:
     post:
       tags:
       - assessment
       summary: Submit Attempt
-      operationId: submit_attempt_v1_attempts__attempt_id__submit_post
+      operationId: postAttemptsSubmitByAttemptId
       parameters:
       - name: attempt_id
         in: path
@@ -532,6 +945,10 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/SubmitAttemptRequest'
+            example:
+              answers:
+              - question_id: 00000000-0000-4000-8000-000000000000
+                value: string
       responses:
         '200':
           description: Successful Response
@@ -539,18 +956,32 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/SubmitAttemptResponse'
+              example:
+                attempt_id: string
+                status: string
+                score: 1
+                max_score: 1
+                signal: string
         '422':
           description: Validation Error
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      security:
+      - bearerAuth: []
   /v1/user/attempts/{attempt_id}/answers:
     post:
       tags:
       - assessment
       summary: Save Attempt Answers
-      operationId: save_attempt_answers_v1_user_attempts__attempt_id__answers_post
+      operationId: postUserAttemptsAnswersByAttemptId
       parameters:
       - name: attempt_id
         in: path
@@ -565,6 +996,10 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/SaveAttemptAnswersRequest'
+            example:
+              answers:
+              - question_id: 00000000-0000-4000-8000-000000000000
+                value: string
       responses:
         '200':
           description: Successful Response
@@ -572,18 +1007,29 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/SaveAttemptAnswersResponse'
+              example:
+                attempt_id: string
+                saved_answers: 1
         '422':
           description: Validation Error
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      security:
+      - bearerAuth: []
   /v1/attempts/{attempt_id}:
     get:
       tags:
       - assessment
       summary: Get Attempt Result
-      operationId: get_attempt_result_v1_attempts__attempt_id__get
+      operationId: getAttemptsByAttemptId
       parameters:
       - name: attempt_id
         in: path
@@ -599,18 +1045,35 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AttemptResultResponse'
+              example:
+                attempt_id: string
+                status: string
+                score: 1
+                answers:
+                - question_id: string
+                  value: string
+                  is_correct: true
+                  awarded_score: 1
         '422':
           description: Validation Error
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      security:
+      - bearerAuth: []
   /v1/user/attempts/{attempt_id}/result:
     get:
       tags:
       - assessment
       summary: Get Attempt Result For User
-      operationId: get_attempt_result_for_user_v1_user_attempts__attempt_id__result_get
+      operationId: getUserAttemptsResultByAttemptId
       parameters:
       - name: attempt_id
         in: path
@@ -626,18 +1089,35 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AttemptResultResponse'
+              example:
+                attempt_id: string
+                status: string
+                score: 1
+                answers:
+                - question_id: string
+                  value: string
+                  is_correct: true
+                  awarded_score: 1
         '422':
           description: Validation Error
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      security:
+      - bearerAuth: []
   /v1/admin/diagnostics/children/{child_id}:
     get:
       tags:
       - assessment
       summary: Get Child Diagnostics
-      operationId: get_child_diagnostics_v1_admin_diagnostics_children__child_id__get
+      operationId: getAdminDiagnosticsChildrenByChildId
       parameters:
       - name: child_id
         in: path
@@ -653,12 +1133,24 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ChildDiagnosticsResponse'
+              example:
+                child_id: 00000000-0000-4000-8000-000000000000
+                assignments_total: 1
+                attempts_total: 1
         '422':
           description: Validation Error
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      security:
+      - bearerAuth: []
 components:
   schemas:
     AssignTestRequest:
@@ -1687,9 +2179,88 @@ components:
         type:
           type: string
           title: Error Type
+        input:
+          title: Input
+        ctx:
+          type: object
+          title: Context
       type: object
       required:
       - loc
       - msg
       - type
       title: ValidationError
+    ProblemDetails:
+      type: object
+      title: ProblemDetails
+      required:
+      - type
+      - title
+      - status
+      properties:
+        type:
+          type: string
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
+        instance:
+          type: string
+        request_id:
+          type: string
+        code:
+          type: string
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  responses:
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            type: https://example.com/problems/authentication
+            title: Unauthorized
+            status: 401
+            detail: Bearer access token is required
+            code: UNAUTHORIZED
+            request_id: 00000000-0000-4000-8000-000000000000
+    Forbidden:
+      description: Forbidden
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            type: https://example.com/problems/access-denied
+            title: Forbidden
+            status: 403
+            detail: Access denied
+            code: FORBIDDEN
+            request_id: 00000000-0000-4000-8000-000000000000
+    TooManyRequests:
+      description: Too Many Requests
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            type: https://example.com/problems/too-many-requests
+            title: Too Many Requests
+            status: 429
+            detail: Rate limit exceeded
+            code: RATE_LIMITED
+            request_id: 00000000-0000-4000-8000-000000000000
+servers:
+- url: http://localhost:8003
+  description: Local
+- url: https://api.monitoring.example
+  description: Production
+security:
+- bearerAuth: []
