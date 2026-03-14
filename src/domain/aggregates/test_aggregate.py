@@ -38,3 +38,5 @@ class AssessmentTest:
             raise InvariantViolationError("test must contain at least one question")
         if self.grade not in {1, 2, 3, 4}:
             raise InvariantViolationError("grade must be in [1..4]")
+        for question in self.questions:
+            question.validate()

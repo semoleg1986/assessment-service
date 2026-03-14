@@ -2,7 +2,12 @@ from src.application.commands.assign_test import AssignTestCommand
 from src.application.commands.cleanup_fixtures import CleanupFixturesCommand
 from src.application.commands.create_micro_skill import CreateMicroSkillCommand
 from src.application.commands.create_subject import CreateSubjectCommand
-from src.application.commands.create_test import CreateTestCommand, QuestionInput
+from src.application.commands.create_test import (
+    CreateTestCommand,
+    QuestionInput,
+    QuestionOptionInput,
+    TextDistractorInput,
+)
 from src.application.commands.create_topic import CreateTopicCommand
 from src.application.commands.import_content import (
     ImportContentCommand,
@@ -12,8 +17,10 @@ from src.application.commands.import_content import (
     ImportContentResult,
     ImportMicroSkillInput,
     ImportQuestionInput,
+    ImportQuestionOptionInput,
     ImportSubjectInput,
     ImportTestInput,
+    ImportTextDistractorInput,
     ImportTopicInput,
 )
 from src.application.commands.link_micro_skill_predecessors import (
@@ -40,13 +47,17 @@ __all__ = [
     "ImportContentResult",
     "ImportMicroSkillInput",
     "ImportQuestionInput",
+    "ImportQuestionOptionInput",
     "ImportSubjectInput",
     "ImportTestInput",
+    "ImportTextDistractorInput",
     "ImportTopicInput",
     "LinkMicroSkillPredecessorsCommand",
     "QuestionInput",
+    "QuestionOptionInput",
     "SaveAttemptAnswersCommand",
     "StartAttemptCommand",
     "SubmitAttemptCommand",
     "SubmittedAnswerInput",
+    "TextDistractorInput",
 ]

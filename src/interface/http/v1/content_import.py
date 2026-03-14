@@ -7,8 +7,10 @@ from src.application.commands.import_content import (
     ImportContentResult,
     ImportMicroSkillInput,
     ImportQuestionInput,
+    ImportQuestionOptionInput,
     ImportSubjectInput,
     ImportTestInput,
+    ImportTextDistractorInput,
     ImportTopicInput,
 )
 from src.application.handlers.commands.import_content import handle_import_content
@@ -69,7 +71,26 @@ def _to_command(body: ContentImportRequest) -> ImportContentCommand:
                             external_id=question.external_id,
                             node_id=question.node_id,
                             text=question.text,
+                            question_type=question.question_type,
                             answer_key=question.answer_key,
+                            correct_option_id=question.correct_option_id,
+                            options=[
+                                ImportQuestionOptionInput(
+                                    option_id=option.option_id,
+                                    text=option.text,
+                                    position=option.position,
+                                    diagnostic_tag=option.diagnostic_tag,
+                                )
+                                for option in question.options
+                            ],
+                            text_distractors=[
+                                ImportTextDistractorInput(
+                                    pattern=distractor.pattern,
+                                    match_mode=distractor.match_mode,
+                                    diagnostic_tag=distractor.diagnostic_tag,
+                                )
+                                for distractor in question.text_distractors
+                            ],
                             max_score=question.max_score,
                         )
                         for question in item.questions

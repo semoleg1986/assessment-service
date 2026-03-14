@@ -1,3 +1,4 @@
+from collections import deque
 from datetime import UTC, datetime
 
 from src.application.commands.link_micro_skill_predecessors import (
@@ -24,9 +25,9 @@ def _has_path(uow: UnitOfWork, src: str, target: str) -> bool:
     if src == target:
         return True
     visited: set[str] = set()
-    stack = [src]
-    while stack:
-        node_id = stack.pop()
+    queue = deque([src])
+    while queue:
+        node_id = queue.popleft()
         if node_id in visited:
             continue
         visited.add(node_id)
@@ -37,7 +38,7 @@ def _has_path(uow: UnitOfWork, src: str, target: str) -> bool:
             if pred == target:
                 return True
             if pred not in visited:
-                stack.append(pred)
+                queue.append(pred)
     return False
 
 

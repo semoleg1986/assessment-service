@@ -6,13 +6,35 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field
 
+from src.domain.value_objects.questions import (
+    DiagnosticTag,
+    QuestionType,
+    TextMatchMode,
+)
 from src.domain.value_objects.statuses import CriticalityLevel, MicroSkillStatus
+
+
+class QuestionOptionCreateRequest(BaseModel):
+    option_id: str
+    text: str
+    position: int = Field(ge=1)
+    diagnostic_tag: DiagnosticTag | None = None
+
+
+class TextDistractorCreateRequest(BaseModel):
+    pattern: str
+    match_mode: TextMatchMode = TextMatchMode.EXACT
+    diagnostic_tag: DiagnosticTag = DiagnosticTag.OTHER
 
 
 class QuestionCreateRequest(BaseModel):
     node_id: str
     text: str
-    answer_key: str
+    question_type: QuestionType = QuestionType.TEXT
+    answer_key: str | None = None
+    correct_option_id: str | None = None
+    options: list[QuestionOptionCreateRequest] = Field(default_factory=list)
+    text_distractors: list[TextDistractorCreateRequest] = Field(default_factory=list)
     max_score: int = 1
 
 
@@ -26,7 +48,15 @@ class QuestionResponse(BaseModel):
     question_id: UUID
     node_id: str
     text: str
+    question_type: QuestionType
     max_score: int
+    options: list[QuestionOptionResponse] = Field(default_factory=list)
+
+
+class QuestionOptionResponse(BaseModel):
+    option_id: str
+    text: str
+    position: int
 
 
 class TestResponse(BaseModel):
@@ -71,7 +101,8 @@ class StartAttemptResponse(BaseModel):
 
 class SubmittedAnswerRequest(BaseModel):
     question_id: UUID
-    value: str
+    value: str | None = None
+    selected_option_id: str | None = None
 
 
 class SubmitAttemptRequest(BaseModel):
@@ -97,7 +128,9 @@ class SaveAttemptAnswersResponse(BaseModel):
 
 class AttemptAnswerResponse(BaseModel):
     question_id: str
-    value: str
+    value: str | None
+    selected_option_id: str | None
+    resolved_diagnostic_tag: DiagnosticTag | None
     is_correct: bool
     awarded_score: int
 
@@ -216,7 +249,11 @@ class ContentImportQuestionItem(BaseModel):
     external_id: str
     node_id: str
     text: str
-    answer_key: str
+    question_type: QuestionType = QuestionType.TEXT
+    answer_key: str | None = None
+    correct_option_id: str | None = None
+    options: list[QuestionOptionCreateRequest] = Field(default_factory=list)
+    text_distractors: list[TextDistractorCreateRequest] = Field(default_factory=list)
     max_score: int = Field(default=1, ge=1)
 
 

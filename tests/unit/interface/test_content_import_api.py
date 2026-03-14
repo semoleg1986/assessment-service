@@ -312,3 +312,62 @@ def test_import_v12_validate_only_returns_partial_errors_without_persisting() ->
     test_ids = {item["test_id"] for item in all_tests}
     good_test_id = str(uuid5(NAMESPACE_URL, f"{source_id}:test:test_{prefix}"))
     assert good_test_id not in test_ids
+
+
+def test_import_v13_accepts_single_choice_with_diagnostics() -> None:
+    client = TestClient(create_app())
+    prefix = uuid4().hex[:8]
+    source_id = f"test-{prefix}"
+    payload = _payload(prefix)
+    question = cast(
+        dict[str, Any],
+        cast(list[dict[str, Any]], payload["tests"])[0]["questions"][0],
+    )
+    question["question_type"] = "single_choice"
+    question["answer_key"] = None
+    question["correct_option_id"] = "B"
+    question["options"] = [
+        {
+            "option_id": "A",
+            "text": "3",
+            "position": 1,
+            "diagnostic_tag": "calc_error",
+        },
+        {"option_id": "B", "text": "4", "position": 2, "diagnostic_tag": None},
+    ]
+
+    validated = client.post(
+        "/v1/admin/content/import",
+        json={
+            "source_id": source_id,
+            "contract_version": "v1.3",
+            "validate_only": True,
+            "payload": payload,
+        },
+    )
+    assert validated.status_code == 202
+    validated_body = validated.json()
+    assert validated_body["status"] == "validated"
+    assert validated_body["errors"] == []
+
+    applied = client.post(
+        "/v1/admin/content/import",
+        json={
+            "source_id": source_id,
+            "contract_version": "v1.3",
+            "payload": payload,
+        },
+    )
+    assert applied.status_code == 202
+    applied_body = applied.json()
+    assert applied_body["status"] == "completed"
+    assert applied_body["errors"] == []
+
+    all_tests = cast(list[dict[str, Any]], client.get("/v1/admin/tests").json())
+    test_id = str(uuid5(NAMESPACE_URL, f"{source_id}:test:test_{prefix}"))
+    target = next(item for item in all_tests if item["test_id"] == test_id)
+    assert target["questions"][0]["question_type"] == "single_choice"
+    assert target["questions"][0]["options"] == [
+        {"option_id": "A", "text": "3", "position": 1},
+        {"option_id": "B", "text": "4", "position": 2},
+    ]

@@ -11,6 +11,8 @@ from src.application.commands.import_content import (
     ImportContentDetails,
     ImportContentIssue,
     ImportContentResult,
+    ImportQuestionOptionInput,
+    ImportTextDistractorInput,
 )
 from src.application.handlers.commands.create_micro_skill import (
     handle_create_micro_skill,
@@ -21,9 +23,12 @@ from src.application.ports.unit_of_work import UnitOfWork
 from src.domain.aggregates.test_aggregate import AssessmentTest
 from src.domain.entities.micro_skill_node import MicroSkillNode
 from src.domain.entities.question import Question
+from src.domain.entities.question_option import QuestionOption
 from src.domain.entities.subject import Subject
+from src.domain.entities.text_distractor import TextDistractor
 from src.domain.entities.topic import Topic
 from src.domain.errors import InvariantViolationError, NotFoundError
+from src.domain.value_objects.questions import QuestionType
 
 
 def _details_template() -> dict[str, int]:
@@ -114,6 +119,104 @@ def _detect_payload_cycles(command: ImportContentCommand) -> list[ImportContentI
     return cycles
 
 
+def _options_tuple(
+    options: list[QuestionOption],
+) -> tuple[tuple[str, str, int, str | None], ...]:
+    return tuple(
+        sorted(
+            (
+                (
+                    option.option_id,
+                    option.text,
+                    option.position,
+                    (
+                        option.diagnostic_tag.value
+                        if option.diagnostic_tag is not None
+                        else None
+                    ),
+                )
+                for option in options
+            ),
+            key=lambda item: item[2],
+        )
+    )
+
+
+def _text_distractors_tuple(
+    distractors: list[TextDistractor],
+) -> tuple[tuple[str, str, str], ...]:
+    return tuple(
+        (
+            distractor.pattern,
+            distractor.match_mode.value,
+            distractor.diagnostic_tag.value,
+        )
+        for distractor in distractors
+    )
+
+
+def _entity_question_tuple(question: Question) -> tuple[object, ...]:
+    return (
+        question.question_id,
+        question.node_id,
+        question.text,
+        question.question_type.value,
+        question.answer_key,
+        question.correct_option_id,
+        _options_tuple(question.options),
+        _text_distractors_tuple(question.text_distractors),
+        question.max_score,
+    )
+
+
+def _build_question_entity(
+    *,
+    source_id: str,
+    test_external_id: str,
+    question_external_id: str,
+    node_id: str,
+    text: str,
+    question_type: QuestionType,
+    answer_key: str | None,
+    correct_option_id: str | None,
+    max_score: int,
+    options: list[ImportQuestionOptionInput],
+    text_distractors: list[ImportTextDistractorInput],
+) -> Question:
+    return Question(
+        question_id=uuid5(
+            NAMESPACE_URL,
+            (
+                f"{source_id}:test:{test_external_id}:question:"
+                f"{question_external_id}"
+            ),
+        ),
+        node_id=node_id,
+        text=text,
+        question_type=question_type,
+        answer_key=answer_key,
+        correct_option_id=correct_option_id,
+        options=[
+            QuestionOption(
+                option_id=option.option_id,
+                text=option.text,
+                position=option.position,
+                diagnostic_tag=option.diagnostic_tag,
+            )
+            for option in options
+        ],
+        text_distractors=[
+            TextDistractor(
+                pattern=distractor.pattern,
+                match_mode=distractor.match_mode,
+                diagnostic_tag=distractor.diagnostic_tag,
+            )
+            for distractor in text_distractors
+        ],
+        max_score=max_score,
+    )
+
+
 def _predict_details(
     command: ImportContentCommand,
     *,
@@ -166,18 +269,20 @@ def _predict_details(
         test_id = uuid5(NAMESPACE_URL, f"{command.source_id}:test:{test.external_id}")
         existing_test = current_uow.tests.get(test_id)
         question_tuples = [
-            (
-                uuid5(
-                    NAMESPACE_URL,
-                    (
-                        f"{command.source_id}:test:{test.external_id}:question:"
-                        f"{question.external_id}"
-                    ),
-                ),
-                question.node_id,
-                question.text,
-                question.answer_key,
-                question.max_score,
+            _entity_question_tuple(
+                _build_question_entity(
+                    source_id=command.source_id,
+                    test_external_id=test.external_id,
+                    question_external_id=question.external_id,
+                    node_id=question.node_id,
+                    text=question.text,
+                    question_type=question.question_type,
+                    answer_key=question.answer_key,
+                    correct_option_id=question.correct_option_id,
+                    max_score=question.max_score,
+                    options=question.options,
+                    text_distractors=question.text_distractors,
+                )
             )
             for question in test.questions
         ]
@@ -185,13 +290,7 @@ def _predict_details(
             details["tests_created"] += 1
             continue
         existing_question_tuples = [
-            (
-                question.question_id,
-                question.node_id,
-                question.text,
-                question.answer_key,
-                question.max_score,
-            )
+            _entity_question_tuple(question)
             for question in sorted(
                 existing_test.questions, key=lambda q: str(q.question_id)
             )
@@ -236,6 +335,32 @@ def _collect_test_entity_errors(
                         ),
                     )
                 )
+                continue
+            try:
+                _build_question_entity(
+                    source_id=command.source_id,
+                    test_external_id=test.external_id,
+                    question_external_id=question.external_id,
+                    node_id=question.node_id,
+                    text=question.text,
+                    question_type=question.question_type,
+                    answer_key=question.answer_key,
+                    correct_option_id=question.correct_option_id,
+                    max_score=question.max_score,
+                    options=question.options,
+                    text_distractors=question.text_distractors,
+                ).validate()
+            except InvariantViolationError as exc:
+                test_errors.append(
+                    _issue(
+                        "ENTITY_VALIDATION_FAILED",
+                        str(exc),
+                        (
+                            f"tests[{test.external_id}].questions["
+                            f"{question.external_id}]"
+                        ),
+                    )
+                )
         if test_errors:
             errors_by_test[test.external_id] = test_errors
     return errors_by_test
@@ -261,7 +386,7 @@ def handle_import_content(
 ) -> ImportContentResult:
     import_id = str(uuid4())
     payload = command.payload
-    is_v12 = command.contract_version.startswith("v1.2")
+    has_entity_level_isolation = command.contract_version.startswith(("v1.2", "v1.3"))
     errors: list[ImportContentIssue] = []
 
     if not command.contract_version.startswith("v1"):
@@ -367,7 +492,7 @@ def handle_import_content(
     )
     test_errors = _flatten_test_errors(test_errors_by_entity)
 
-    if not is_v12:
+    if not has_entity_level_isolation:
         errors.extend(test_errors)
 
     if errors:
@@ -387,11 +512,13 @@ def handle_import_content(
         predicted = _predict_details(
             command,
             current_uow=uow,
-            skipped_test_ids=set(test_errors_by_entity) if is_v12 else None,
+            skipped_test_ids=(
+                set(test_errors_by_entity) if has_entity_level_isolation else None
+            ),
         )
         status_value = "validated"
         validation_errors: list[ImportContentIssue] = []
-        if is_v12 and test_errors:
+        if has_entity_level_isolation and test_errors:
             predicted["tests_failed"] = len(test_errors_by_entity)
             predicted["questions_failed"] = _count_question_errors(test_errors)
             status_value = "validated_with_errors"
@@ -527,7 +654,7 @@ def handle_import_content(
     apply_errors: list[ImportContentIssue] = []
     for test in payload.tests:
         test_entity_errors = test_errors_by_entity.get(test.external_id, [])
-        if is_v12 and test_entity_errors:
+        if has_entity_level_isolation and test_entity_errors:
             details["tests_failed"] += 1
             details["questions_failed"] += _count_question_errors(test_entity_errors)
             apply_errors.extend(test_entity_errors)
@@ -536,18 +663,18 @@ def handle_import_content(
         test_id = uuid5(NAMESPACE_URL, f"{command.source_id}:test:{test.external_id}")
         existing_test = uow.tests.get(test_id)
         questions = [
-            Question(
-                question_id=uuid5(
-                    NAMESPACE_URL,
-                    (
-                        f"{command.source_id}:test:{test.external_id}:question:"
-                        f"{question.external_id}"
-                    ),
-                ),
+            _build_question_entity(
+                source_id=command.source_id,
+                test_external_id=test.external_id,
+                question_external_id=question.external_id,
                 node_id=question.node_id,
                 text=question.text,
+                question_type=question.question_type,
                 answer_key=question.answer_key,
+                correct_option_id=question.correct_option_id,
                 max_score=question.max_score,
+                options=question.options,
+                text_distractors=question.text_distractors,
             )
             for question in test.questions
         ]
@@ -563,27 +690,14 @@ def handle_import_content(
                 )
             else:
                 existing_question_tuples = [
-                    (
-                        question.question_id,
-                        question.node_id,
-                        question.text,
-                        question.answer_key,
-                        question.max_score,
-                    )
+                    _entity_question_tuple(question)
                     for question in sorted(
                         existing_test.questions,
                         key=lambda q: str(q.question_id),
                     )
                 ]
                 incoming_question_tuples = [
-                    (
-                        question.question_id,
-                        question.node_id,
-                        question.text,
-                        question.answer_key,
-                        question.max_score,
-                    )
-                    for question in questions
+                    _entity_question_tuple(question) for question in questions
                 ]
                 same_test = (
                     existing_test.subject_code == test.subject_code
@@ -611,7 +725,7 @@ def handle_import_content(
                 uow.tests.save(aggregate)
                 uow.commit()
         except (InvariantViolationError, NotFoundError) as exc:
-            if not is_v12:
+            if not has_entity_level_isolation:
                 raise
             details["tests_failed"] += 1
             details["questions_failed"] += len(test.questions)
@@ -626,7 +740,7 @@ def handle_import_content(
     imported_total = _imported_total(details)
     status_value = "completed"
     response_errors: list[ImportContentIssue] = []
-    if is_v12 and apply_errors:
+    if has_entity_level_isolation and apply_errors:
         status_value = "completed_with_errors"
         response_errors = apply_errors
         if command.error_mode == "fail_fast":

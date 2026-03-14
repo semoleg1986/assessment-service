@@ -12,10 +12,12 @@ from src.application.commands import (
     CreateTopicCommand,
     LinkMicroSkillPredecessorsCommand,
     QuestionInput,
+    QuestionOptionInput,
     SaveAttemptAnswersCommand,
     StartAttemptCommand,
     SubmitAttemptCommand,
     SubmittedAnswerInput,
+    TextDistractorInput,
 )
 from src.application.handlers import (
     handle_assign_test,
@@ -53,6 +55,7 @@ from src.application.queries import (
     ListTopicsQuery,
 )
 from src.domain.errors import InvariantViolationError, NotFoundError
+from src.domain.value_objects.questions import DiagnosticTag
 from src.interface.http.v1.content_import import import_content_with_uow
 from src.interface.http.v1.schemas import (
     AssignmentListItemResponse,
@@ -72,6 +75,7 @@ from src.interface.http.v1.schemas import (
     MicroSkillLinkRequest,
     MicroSkillResponse,
     PublishTestResponse,
+    QuestionOptionResponse,
     QuestionResponse,
     SaveAttemptAnswersRequest,
     SaveAttemptAnswersResponse,
@@ -211,7 +215,26 @@ def create_test(
                     QuestionInput(
                         node_id=q.node_id,
                         text=q.text,
+                        question_type=q.question_type,
                         answer_key=q.answer_key,
+                        correct_option_id=q.correct_option_id,
+                        options=[
+                            QuestionOptionInput(
+                                option_id=option.option_id,
+                                text=option.text,
+                                position=option.position,
+                                diagnostic_tag=option.diagnostic_tag,
+                            )
+                            for option in q.options
+                        ],
+                        text_distractors=[
+                            TextDistractorInput(
+                                pattern=distractor.pattern,
+                                match_mode=distractor.match_mode,
+                                diagnostic_tag=distractor.diagnostic_tag,
+                            )
+                            for distractor in q.text_distractors
+                        ],
                         max_score=q.max_score,
                     )
                     for q in body.questions
@@ -234,7 +257,16 @@ def create_test(
                 question_id=q.question_id,
                 node_id=q.node_id,
                 text=q.text,
+                question_type=q.question_type,
                 max_score=q.max_score,
+                options=[
+                    QuestionOptionResponse(
+                        option_id=option.option_id,
+                        text=option.text,
+                        position=option.position,
+                    )
+                    for option in sorted(q.options, key=lambda item: item.position)
+                ],
             )
             for q in test.questions
         ],
@@ -258,7 +290,16 @@ def list_tests(
                     question_id=q.question_id,
                     node_id=q.node_id,
                     text=q.text,
+                    question_type=q.question_type,
                     max_score=q.max_score,
+                    options=[
+                        QuestionOptionResponse(
+                            option_id=option.option_id,
+                            text=option.text,
+                            position=option.position,
+                        )
+                        for option in sorted(q.options, key=lambda item: item.position)
+                    ],
                 )
                 for q in t.questions
             ],
@@ -595,7 +636,11 @@ def submit_attempt(
             SubmitAttemptCommand(
                 attempt_id=attempt_id,
                 answers=[
-                    SubmittedAnswerInput(question_id=a.question_id, value=a.value)
+                    SubmittedAnswerInput(
+                        question_id=a.question_id,
+                        value=a.value,
+                        selected_option_id=a.selected_option_id,
+                    )
                     for a in body.answers
                 ],
             ),
@@ -623,7 +668,11 @@ def save_attempt_answers(
             SaveAttemptAnswersCommand(
                 attempt_id=attempt_id,
                 answers=[
-                    SubmittedAnswerInput(question_id=a.question_id, value=a.value)
+                    SubmittedAnswerInput(
+                        question_id=a.question_id,
+                        value=a.value,
+                        selected_option_id=a.selected_option_id,
+                    )
                     for a in body.answers
                 ],
             ),
@@ -656,6 +705,12 @@ def get_attempt_result(
             AttemptAnswerResponse(
                 question_id=a["question_id"],
                 value=a["value"],
+                selected_option_id=a["selected_option_id"],
+                resolved_diagnostic_tag=(
+                    DiagnosticTag(a["resolved_diagnostic_tag"])
+                    if a["resolved_diagnostic_tag"] is not None
+                    else None
+                ),
                 is_correct=a["is_correct"],
                 awarded_score=a["awarded_score"],
             )

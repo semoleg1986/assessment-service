@@ -3,6 +3,11 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Literal
 
+from src.domain.value_objects.questions import (
+    DiagnosticTag,
+    QuestionType,
+    TextMatchMode,
+)
 from src.domain.value_objects.statuses import CriticalityLevel, MicroSkillStatus
 
 
@@ -42,8 +47,27 @@ class ImportQuestionInput:
     external_id: str
     node_id: str
     text: str
-    answer_key: str
+    question_type: QuestionType = QuestionType.TEXT
+    answer_key: str | None = None
+    correct_option_id: str | None = None
+    options: list[ImportQuestionOptionInput] = field(default_factory=list)
+    text_distractors: list[ImportTextDistractorInput] = field(default_factory=list)
     max_score: int = 1
+
+
+@dataclass(slots=True)
+class ImportQuestionOptionInput:
+    option_id: str
+    text: str
+    position: int
+    diagnostic_tag: DiagnosticTag | None = None
+
+
+@dataclass(slots=True)
+class ImportTextDistractorInput:
+    pattern: str
+    match_mode: TextMatchMode = TextMatchMode.EXACT
+    diagnostic_tag: DiagnosticTag = DiagnosticTag.OTHER
 
 
 @dataclass(slots=True)

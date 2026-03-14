@@ -1,3 +1,4 @@
+from collections import deque
 from typing import TypedDict
 
 from src.application.ports.unit_of_work import UnitOfWork
@@ -22,14 +23,14 @@ def _collect_dependents_count(node_id: str, reverse_edges: dict[str, set[str]]) 
     :rtype: int
     """
     visited: set[str] = set()
-    stack = [node_id]
-    while stack:
-        current = stack.pop()
+    queue = deque([node_id])
+    while queue:
+        current = queue.popleft()
         for dep in reverse_edges.get(current, set()):
             if dep in visited:
                 continue
             visited.add(dep)
-            stack.append(dep)
+            queue.append(dep)
     return len(visited)
 
 

@@ -7,7 +7,9 @@ from src.domain.errors import NotFoundError
 
 class AttemptAnswerResult(TypedDict):
     question_id: str
-    value: str
+    value: str | None
+    selected_option_id: str | None
+    resolved_diagnostic_tag: str | None
     is_correct: bool
     awarded_score: int
 
@@ -43,6 +45,12 @@ def handle_get_attempt_result(
             {
                 "question_id": str(a.question_id),
                 "value": a.value,
+                "selected_option_id": a.selected_option_id,
+                "resolved_diagnostic_tag": (
+                    a.resolved_diagnostic_tag.value
+                    if a.resolved_diagnostic_tag is not None
+                    else None
+                ),
                 "is_correct": a.is_correct,
                 "awarded_score": a.awarded_score,
             }

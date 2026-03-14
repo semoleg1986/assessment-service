@@ -6,8 +6,15 @@ from src.domain.aggregates.test_aggregate import AssessmentTest
 from src.domain.entities.answer import Answer
 from src.domain.entities.micro_skill_node import MicroSkillNode
 from src.domain.entities.question import Question
+from src.domain.entities.question_option import QuestionOption
 from src.domain.entities.subject import Subject
+from src.domain.entities.text_distractor import TextDistractor
 from src.domain.entities.topic import Topic
+from src.domain.value_objects.questions import (
+    DiagnosticTag,
+    QuestionType,
+    TextMatchMode,
+)
 from src.domain.value_objects.statuses import (
     AssignmentStatus,
     AttemptStatus,
@@ -23,6 +30,17 @@ from src.infrastructure.persistence.sqlalchemy.models import (
     TestModel,
     TopicModel,
 )
+
+
+def _to_int(value: object, *, default: int = 0) -> int:
+    if isinstance(value, int):
+        return value
+    if isinstance(value, str):
+        try:
+            return int(value)
+        except ValueError:
+            return default
+    return default
 
 
 def subject_from_model(model: SubjectModel) -> Subject:
@@ -60,11 +78,36 @@ def micro_skill_from_model(model: MicroSkillNodeModel) -> MicroSkillNode:
 
 
 def question_from_model(model: QuestionModel) -> Question:
+    options = [
+        QuestionOption(
+            option_id=str(item.get("option_id", "")),
+            text=str(item.get("text", "")),
+            position=_to_int(item.get("position", 0), default=0),
+            diagnostic_tag=(
+                DiagnosticTag(str(item.get("diagnostic_tag")))
+                if item.get("diagnostic_tag")
+                else None
+            ),
+        )
+        for item in (model.options or [])
+    ]
+    text_distractors = [
+        TextDistractor(
+            pattern=str(item.get("pattern", "")),
+            match_mode=TextMatchMode(str(item.get("match_mode", "exact"))),
+            diagnostic_tag=DiagnosticTag(str(item.get("diagnostic_tag", "other"))),
+        )
+        for item in (model.text_distractors or [])
+    ]
     return Question(
         question_id=model.question_id,
         node_id=model.node_id,
         text=model.text,
+        question_type=QuestionType(model.question_type),
         answer_key=model.answer_key,
+        correct_option_id=model.correct_option_id,
+        options=options,
+        text_distractors=text_distractors,
         max_score=model.max_score,
     )
 
@@ -100,6 +143,12 @@ def answers_from_attempt_model(model: AttemptModel) -> list[Answer]:
         Answer(
             question_id=a.question_id,
             value=a.value,
+            selected_option_id=a.selected_option_id,
+            resolved_diagnostic_tag=(
+                DiagnosticTag(a.resolved_diagnostic_tag)
+                if a.resolved_diagnostic_tag is not None
+                else None
+            ),
             is_correct=a.is_correct,
             awarded_score=a.awarded_score,
         )

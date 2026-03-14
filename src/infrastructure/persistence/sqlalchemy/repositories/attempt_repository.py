@@ -48,6 +48,12 @@ class SqlAlchemyAttemptRepository(AttemptRepository):
                     attempt_id=attempt.attempt_id,
                     question_id=answer.question_id,
                     value=answer.value,
+                    selected_option_id=answer.selected_option_id,
+                    resolved_diagnostic_tag=(
+                        answer.resolved_diagnostic_tag.value
+                        if answer.resolved_diagnostic_tag is not None
+                        else None
+                    ),
                     is_correct=answer.is_correct,
                     awarded_score=answer.awarded_score,
                 )

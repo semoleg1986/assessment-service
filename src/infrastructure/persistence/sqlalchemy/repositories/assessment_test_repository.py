@@ -41,7 +41,30 @@ class SqlAlchemyTestRepository(TestRepository):
                     test_id=test.test_id,
                     node_id=question.node_id,
                     text=question.text,
+                    question_type=question.question_type.value,
                     answer_key=question.answer_key,
+                    correct_option_id=question.correct_option_id,
+                    options=[
+                        {
+                            "option_id": option.option_id,
+                            "text": option.text,
+                            "position": option.position,
+                            "diagnostic_tag": (
+                                option.diagnostic_tag.value
+                                if option.diagnostic_tag is not None
+                                else None
+                            ),
+                        }
+                        for option in question.options
+                    ],
+                    text_distractors=[
+                        {
+                            "pattern": distractor.pattern,
+                            "match_mode": distractor.match_mode.value,
+                            "diagnostic_tag": distractor.diagnostic_tag.value,
+                        }
+                        for distractor in question.text_distractors
+                    ],
                     max_score=question.max_score,
                 )
             )

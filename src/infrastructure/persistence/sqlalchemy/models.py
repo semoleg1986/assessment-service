@@ -106,7 +106,17 @@ class QuestionModel(Base):
     )
     node_id: Mapped[str] = mapped_column(String(128), nullable=False)
     text: Mapped[str] = mapped_column(Text, nullable=False)
-    answer_key: Mapped[str] = mapped_column(Text, nullable=False)
+    question_type: Mapped[str] = mapped_column(
+        String(32), nullable=False, default="text", server_default="text"
+    )
+    answer_key: Mapped[str | None] = mapped_column(Text, nullable=True)
+    correct_option_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    options: Mapped[list[dict[str, object]]] = mapped_column(
+        JSONB, nullable=False, default=list
+    )
+    text_distractors: Mapped[list[dict[str, object]]] = mapped_column(
+        JSONB, nullable=False, default=list
+    )
     max_score: Mapped[int] = mapped_column(Integer, nullable=False)
 
     test: Mapped[TestModel] = relationship(back_populates="questions")
@@ -170,7 +180,11 @@ class AnswerModel(Base):
         nullable=False,
     )
     question_id: Mapped[UUID] = mapped_column(Uuid, nullable=False)
-    value: Mapped[str] = mapped_column(Text, nullable=False)
+    value: Mapped[str | None] = mapped_column(Text, nullable=True)
+    selected_option_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    resolved_diagnostic_tag: Mapped[str | None] = mapped_column(
+        String(64), nullable=True
+    )
     is_correct: Mapped[bool] = mapped_column(nullable=False)
     awarded_score: Mapped[int] = mapped_column(Integer, nullable=False)
 

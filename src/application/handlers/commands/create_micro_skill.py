@@ -1,3 +1,5 @@
+from collections import deque
+
 from src.application.commands.create_micro_skill import CreateMicroSkillCommand
 from src.application.ports.unit_of_work import UnitOfWork
 from src.domain.entities.micro_skill_node import MicroSkillNode
@@ -20,9 +22,9 @@ def _has_path(uow: UnitOfWork, src: str, target: str) -> bool:
     if src == target:
         return True
     visited: set[str] = set()
-    stack = [src]
-    while stack:
-        node_id = stack.pop()
+    queue = deque([src])
+    while queue:
+        node_id = queue.popleft()
         if node_id in visited:
             continue
         visited.add(node_id)
@@ -33,7 +35,7 @@ def _has_path(uow: UnitOfWork, src: str, target: str) -> bool:
             if pred == target:
                 return True
             if pred not in visited:
-                stack.append(pred)
+                queue.append(pred)
     return False
 
 

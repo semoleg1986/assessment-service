@@ -206,7 +206,8 @@ paths:
               - node_id: string
                 text: string
                 answer_key: string
-                max_score: 1
+                correct_option_id: string
+                options: []
         required: true
       responses:
         '201':
@@ -225,6 +226,7 @@ paths:
                   node_id: string
                   text: string
                   max_score: 1
+                  options: []
         '422':
           description: Validation Error
           content:
@@ -287,7 +289,8 @@ paths:
               - node_id: string
                 text: string
                 answer_key: string
-                max_score: 1
+                correct_option_id: string
+                options: []
         required: true
       responses:
         '201':
@@ -306,6 +309,7 @@ paths:
                   node_id: string
                   text: string
                   max_score: 1
+                  options: []
         '422':
           description: Validation Error
           content:
@@ -898,6 +902,7 @@ paths:
               answers:
               - question_id: 00000000-0000-4000-8000-000000000000
                 value: string
+                selected_option_id: string
       responses:
         '200':
           description: Successful Response
@@ -949,6 +954,7 @@ paths:
               answers:
               - question_id: 00000000-0000-4000-8000-000000000000
                 value: string
+                selected_option_id: string
       responses:
         '200':
           description: Successful Response
@@ -1000,6 +1006,7 @@ paths:
               answers:
               - question_id: 00000000-0000-4000-8000-000000000000
                 value: string
+                selected_option_id: string
       responses:
         '200':
           description: Successful Response
@@ -1052,6 +1059,8 @@ paths:
                 answers:
                 - question_id: string
                   value: string
+                  selected_option_id: string
+                  resolved_diagnostic_tag: string
                   is_correct: true
                   awarded_score: 1
         '422':
@@ -1096,6 +1105,8 @@ paths:
                 answers:
                 - question_id: string
                   value: string
+                  selected_option_id: string
+                  resolved_diagnostic_tag: string
                   is_correct: true
                   awarded_score: 1
         '422':
@@ -1227,8 +1238,19 @@ components:
           type: string
           title: Question Id
         value:
-          type: string
+          anyOf:
+          - type: string
+          - type: 'null'
           title: Value
+        selected_option_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Selected Option Id
+        resolved_diagnostic_tag:
+          anyOf:
+          - $ref: '#/components/schemas/DiagnosticTag'
+          - type: 'null'
         is_correct:
           type: boolean
           title: Is Correct
@@ -1239,6 +1261,8 @@ components:
       required:
       - question_id
       - value
+      - selected_option_id
+      - resolved_diagnostic_tag
       - is_correct
       - awarded_score
       title: AttemptAnswerResponse
@@ -1440,9 +1464,29 @@ components:
         text:
           type: string
           title: Text
+        question_type:
+          $ref: '#/components/schemas/QuestionType'
+          default: text
         answer_key:
-          type: string
+          anyOf:
+          - type: string
+          - type: 'null'
           title: Answer Key
+        correct_option_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Correct Option Id
+        options:
+          items:
+            $ref: '#/components/schemas/QuestionOptionCreateRequest'
+          type: array
+          title: Options
+        text_distractors:
+          items:
+            $ref: '#/components/schemas/TextDistractorCreateRequest'
+          type: array
+          title: Text Distractors
         max_score:
           type: integer
           minimum: 1.0
@@ -1453,7 +1497,6 @@ components:
       - external_id
       - node_id
       - text
-      - answer_key
       title: ContentImportQuestionItem
     ContentImportRequest:
       properties:
@@ -1607,6 +1650,16 @@ components:
       - medium
       - high
       title: CriticalityLevel
+    DiagnosticTag:
+      type: string
+      enum:
+      - inattention
+      - misread_condition
+      - calc_error
+      - concept_gap
+      - guessing
+      - other
+      title: DiagnosticTag
     FixtureCleanupCountsResponse:
       properties:
         subjects:
@@ -1908,9 +1961,29 @@ components:
         text:
           type: string
           title: Text
+        question_type:
+          $ref: '#/components/schemas/QuestionType'
+          default: text
         answer_key:
-          type: string
+          anyOf:
+          - type: string
+          - type: 'null'
           title: Answer Key
+        correct_option_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Correct Option Id
+        options:
+          items:
+            $ref: '#/components/schemas/QuestionOptionCreateRequest'
+          type: array
+          title: Options
+        text_distractors:
+          items:
+            $ref: '#/components/schemas/TextDistractorCreateRequest'
+          type: array
+          title: Text Distractors
         max_score:
           type: integer
           title: Max Score
@@ -1919,8 +1992,46 @@ components:
       required:
       - node_id
       - text
-      - answer_key
       title: QuestionCreateRequest
+    QuestionOptionCreateRequest:
+      properties:
+        option_id:
+          type: string
+          title: Option Id
+        text:
+          type: string
+          title: Text
+        position:
+          type: integer
+          minimum: 1.0
+          title: Position
+        diagnostic_tag:
+          anyOf:
+          - $ref: '#/components/schemas/DiagnosticTag'
+          - type: 'null'
+      type: object
+      required:
+      - option_id
+      - text
+      - position
+      title: QuestionOptionCreateRequest
+    QuestionOptionResponse:
+      properties:
+        option_id:
+          type: string
+          title: Option Id
+        text:
+          type: string
+          title: Text
+        position:
+          type: integer
+          title: Position
+      type: object
+      required:
+      - option_id
+      - text
+      - position
+      title: QuestionOptionResponse
     QuestionResponse:
       properties:
         question_id:
@@ -1933,16 +2044,30 @@ components:
         text:
           type: string
           title: Text
+        question_type:
+          $ref: '#/components/schemas/QuestionType'
         max_score:
           type: integer
           title: Max Score
+        options:
+          items:
+            $ref: '#/components/schemas/QuestionOptionResponse'
+          type: array
+          title: Options
       type: object
       required:
       - question_id
       - node_id
       - text
+      - question_type
       - max_score
       title: QuestionResponse
+    QuestionType:
+      type: string
+      enum:
+      - text
+      - single_choice
+      title: QuestionType
     SaveAttemptAnswersRequest:
       properties:
         answers:
@@ -2085,12 +2210,18 @@ components:
           format: uuid
           title: Question Id
         value:
-          type: string
+          anyOf:
+          - type: string
+          - type: 'null'
           title: Value
+        selected_option_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Selected Option Id
       type: object
       required:
       - question_id
-      - value
       title: SubmittedAnswerRequest
     TestResponse:
       properties:
@@ -2120,6 +2251,28 @@ components:
       - version
       - questions
       title: TestResponse
+    TextDistractorCreateRequest:
+      properties:
+        pattern:
+          type: string
+          title: Pattern
+        match_mode:
+          $ref: '#/components/schemas/TextMatchMode'
+          default: exact
+        diagnostic_tag:
+          $ref: '#/components/schemas/DiagnosticTag'
+          default: other
+      type: object
+      required:
+      - pattern
+      title: TextDistractorCreateRequest
+    TextMatchMode:
+      type: string
+      enum:
+      - exact
+      - normalized
+      - regex
+      title: TextMatchMode
     TopicCreateRequest:
       properties:
         code:
