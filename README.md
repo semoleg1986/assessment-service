@@ -81,6 +81,27 @@
 - `completed_with_errors`
 - `failed`
 
+## Типы вопросов и диагностика
+
+Поддерживаются два типа вопросов:
+
+- `text`
+  - обязательный `answer_key`
+  - опциональные `text_distractors[]` с `match_mode`:
+    - `exact`
+    - `normalized`
+    - `regex`
+- `single_choice`
+  - `options[]` (минимум 2)
+  - `correct_option_id`
+  - `diagnostic_tag` у дистракторов; у правильной опции должен быть `null`
+
+В результатах попытки для каждого ответа доступны:
+
+- `value`
+- `selected_option_id`
+- `resolved_diagnostic_tag`
+
 ## Статус
 - Домен и архитектурные документы готовы.
 - Реализован MVP-каркас сервиса (in-memory + Postgres persistence при наличии `DATABASE_URL`):
@@ -109,7 +130,7 @@
   - `POST /v1/attempts/start`
   - `POST /v1/attempts/{attempt_id}/submit`
   - `GET /v1/attempts/{attempt_id}`
-- Тесты: `6 passed`.
+- Тесты: актуальный набор проверяется через `make test`.
 
 ## Локальный запуск MVP
 ```bash

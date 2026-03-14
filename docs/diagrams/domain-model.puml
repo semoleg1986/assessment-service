@@ -15,8 +15,23 @@ class Question {
   question_id: UUID
   node_id: str
   text: str
-  answer_key: str
+  question_type: text|single_choice
+  answer_key: str?
+  correct_option_id: str?
   max_score: int
+}
+
+class QuestionOption {
+  option_id: str
+  text: str
+  position: int
+  diagnostic_tag: DiagnosticTag?
+}
+
+class TextDistractor {
+  pattern: str
+  match_mode: exact|normalized|regex
+  diagnostic_tag: DiagnosticTag
 }
 
 class AssignmentAggregate {
@@ -41,7 +56,9 @@ class AttemptAggregate {
 
 class Answer {
   question_id: UUID
-  value: str
+  value: str?
+  selected_option_id: str?
+  resolved_diagnostic_tag: DiagnosticTag?
   is_correct: bool
   awarded_score: int
 }
@@ -78,6 +95,8 @@ class MicroSkillNode {
 }
 
 AssessmentTest "1" o-- "1..*" Question
+Question "1" o-- "0..*" QuestionOption
+Question "1" o-- "0..*" TextDistractor
 AssignmentAggregate "1" --> "1" AssessmentTest
 AttemptAggregate "1" --> "1" AssignmentAggregate
 AttemptAggregate "1" o-- "0..*" Answer
