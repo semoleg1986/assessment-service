@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from uuid import UUID
 
-from src.domain.delivery.attempt.entities.answer import Answer
+from src.domain.delivery.attempt.answer.entity import Answer
 from src.domain.errors import InvariantViolationError
 from src.domain.shared.statuses import AttemptStatus
 

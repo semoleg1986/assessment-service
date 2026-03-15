@@ -8,7 +8,7 @@ from src.domain.content.test.entities.text_distractor import TextDistractor
 from src.domain.content.test.entity import AssessmentTest
 from src.domain.content.topic.entity import Topic
 from src.domain.delivery.assignment.entity import AssignmentAggregate
-from src.domain.delivery.attempt.entities.answer import Answer
+from src.domain.delivery.attempt.answer.entity import Answer
 from src.domain.delivery.attempt.entity import AttemptAggregate
 from src.domain.shared.questions import DiagnosticTag, QuestionType, TextMatchMode
 from src.domain.shared.statuses import (

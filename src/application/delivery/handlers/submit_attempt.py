@@ -2,7 +2,7 @@ from typing import TypedDict
 
 from src.application.delivery.commands.submit_attempt import SubmitAttemptCommand
 from src.application.ports.unit_of_work import UnitOfWork
-from src.domain.delivery.attempt.entities.answer import Answer
+from src.domain.delivery.attempt.answer.entity import Answer
 from src.domain.errors import NotFoundError
 from src.domain.shared.questions import QuestionType
 from src.domain.shared.statuses import AttemptStatus
