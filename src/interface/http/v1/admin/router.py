@@ -23,6 +23,7 @@ from src.application.handlers import (
     handle_create_test,
     handle_create_topic,
     handle_get_child_diagnostics,
+    handle_get_child_results,
     handle_get_test_by_id,
     handle_link_micro_skill_predecessors,
     handle_list_micro_skills,
@@ -37,6 +38,7 @@ from src.application.ports.fixture_cleanup import (
 from src.application.ports.unit_of_work import UnitOfWork
 from src.application.queries import (
     GetChildDiagnosticsQuery,
+    GetChildResultsQuery,
     GetTestByIdQuery,
     ListMicroSkillsQuery,
     ListSubjectsQuery,
@@ -44,11 +46,16 @@ from src.application.queries import (
     ListTopicsQuery,
 )
 from src.domain.errors import InvariantViolationError, NotFoundError
+from src.domain.value_objects.questions import DiagnosticTag
 from src.interface.http.v1.content_import import import_content_with_uow
 from src.interface.http.v1.schemas import (
     AssignmentResponse,
     AssignTestRequest,
     ChildDiagnosticsResponse,
+    ChildResultsAttemptResponse,
+    ChildResultsDiagnosticTagCountResponse,
+    ChildResultsResponse,
+    ChildResultsSummaryResponse,
     ContentImportRequest,
     ContentImportResponse,
     CreateTestRequest,
@@ -70,6 +77,18 @@ from src.interface.http.v1.schemas import (
 )
 
 router = APIRouter(tags=["assessment"], route_class=DishkaRoute)
+
+
+def _sorted_diagnostic_tag_counts(
+    counts: dict[str, int],
+) -> list[ChildResultsDiagnosticTagCountResponse]:
+    return [
+        ChildResultsDiagnosticTagCountResponse(tag=DiagnosticTag(tag), count=count)
+        for tag, count in sorted(
+            counts.items(),
+            key=lambda item: (-item[1], item[0]),
+        )
+    ]
 
 
 @router.post(
@@ -548,4 +567,44 @@ def get_child_diagnostics(
         child_id=child_id,
         assignments_total=result["assignments_total"],
         attempts_total=result["attempts_total"],
+    )
+
+
+@router.get(
+    "/admin/results/children/{child_id}",
+    response_model=ChildResultsResponse,
+)
+def get_child_results(
+    child_id: UUID,
+    uow: FromDishka[UnitOfWork],
+) -> ChildResultsResponse:
+    result = handle_get_child_results(
+        GetChildResultsQuery(child_id=child_id),
+        uow=uow,
+    )
+    return ChildResultsResponse(
+        child_id=child_id,
+        summary=ChildResultsSummaryResponse(
+            attempts_total=result["summary"]["attempts_total"],
+            submitted_attempts_total=result["summary"]["submitted_attempts_total"],
+            resolved_diagnostic_tags=_sorted_diagnostic_tag_counts(
+                result["summary"]["resolved_diagnostic_tags"]
+            ),
+        ),
+        attempts=[
+            ChildResultsAttemptResponse(
+                attempt_id=item["attempt_id"],
+                assignment_id=item["assignment_id"],
+                status=item["status"],
+                score=item["score"],
+                started_at=item["started_at"],
+                submitted_at=item["submitted_at"],
+                answers_total=item["answers_total"],
+                correct_answers=item["correct_answers"],
+                resolved_diagnostic_tags=_sorted_diagnostic_tag_counts(
+                    item["resolved_diagnostic_tags"]
+                ),
+            )
+            for item in result["attempts"]
+        ],
     )

@@ -744,6 +744,95 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
       security:
       - bearerAuth: []
+  /v1/admin/diagnostics/children/{child_id}:
+    get:
+      tags:
+      - assessment
+      summary: Get Child Diagnostics
+      operationId: getAdminDiagnosticsChildrenByChildId
+      parameters:
+      - name: child_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Child Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChildDiagnosticsResponse'
+              example:
+                child_id: 00000000-0000-4000-8000-000000000000
+                assignments_total: 1
+                attempts_total: 1
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      security:
+      - bearerAuth: []
+  /v1/admin/results/children/{child_id}:
+    get:
+      tags:
+      - assessment
+      summary: Get Child Results
+      operationId: getAdminResultsChildrenByChildId
+      parameters:
+      - name: child_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Child Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChildResultsResponse'
+              example:
+                child_id: 00000000-0000-4000-8000-000000000000
+                summary:
+                  attempts_total: 1
+                  submitted_attempts_total: 1
+                  resolved_diagnostic_tags: []
+                attempts:
+                - attempt_id: string
+                  assignment_id: string
+                  status: string
+                  score: 1
+                  started_at: '2026-03-13T00:00:00Z'
+                  submitted_at: string
+                  answers_total: 1
+                  correct_answers: 1
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      security:
+      - bearerAuth: []
   /v1/user/children/{child_id}/assignments:
     get:
       tags:
@@ -1123,45 +1212,6 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
       security:
       - bearerAuth: []
-  /v1/admin/diagnostics/children/{child_id}:
-    get:
-      tags:
-      - assessment
-      summary: Get Child Diagnostics
-      operationId: getAdminDiagnosticsChildrenByChildId
-      parameters:
-      - name: child_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-          title: Child Id
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ChildDiagnosticsResponse'
-              example:
-                child_id: 00000000-0000-4000-8000-000000000000
-                assignments_total: 1
-                attempts_total: 1
-        '422':
-          description: Validation Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '429':
-          $ref: '#/components/responses/TooManyRequests'
-      security:
-      - bearerAuth: []
 components:
   schemas:
     AssignTestRequest:
@@ -1307,6 +1357,100 @@ components:
       - assignments_total
       - attempts_total
       title: ChildDiagnosticsResponse
+    ChildResultsAttemptResponse:
+      properties:
+        attempt_id:
+          type: string
+          title: Attempt Id
+        assignment_id:
+          type: string
+          title: Assignment Id
+        status:
+          type: string
+          title: Status
+        score:
+          type: integer
+          title: Score
+        started_at:
+          type: string
+          format: date-time
+          title: Started At
+        submitted_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Submitted At
+        answers_total:
+          type: integer
+          title: Answers Total
+        correct_answers:
+          type: integer
+          title: Correct Answers
+        resolved_diagnostic_tags:
+          items:
+            $ref: '#/components/schemas/ChildResultsDiagnosticTagCountResponse'
+          type: array
+          title: Resolved Diagnostic Tags
+      type: object
+      required:
+      - attempt_id
+      - assignment_id
+      - status
+      - score
+      - started_at
+      - submitted_at
+      - answers_total
+      - correct_answers
+      title: ChildResultsAttemptResponse
+    ChildResultsDiagnosticTagCountResponse:
+      properties:
+        tag:
+          $ref: '#/components/schemas/DiagnosticTag'
+        count:
+          type: integer
+          title: Count
+      type: object
+      required:
+      - tag
+      - count
+      title: ChildResultsDiagnosticTagCountResponse
+    ChildResultsResponse:
+      properties:
+        child_id:
+          type: string
+          format: uuid
+          title: Child Id
+        summary:
+          $ref: '#/components/schemas/ChildResultsSummaryResponse'
+        attempts:
+          items:
+            $ref: '#/components/schemas/ChildResultsAttemptResponse'
+          type: array
+          title: Attempts
+      type: object
+      required:
+      - child_id
+      - summary
+      title: ChildResultsResponse
+    ChildResultsSummaryResponse:
+      properties:
+        attempts_total:
+          type: integer
+          title: Attempts Total
+        submitted_attempts_total:
+          type: integer
+          title: Submitted Attempts Total
+        resolved_diagnostic_tags:
+          items:
+            $ref: '#/components/schemas/ChildResultsDiagnosticTagCountResponse'
+          type: array
+          title: Resolved Diagnostic Tags
+      type: object
+      required:
+      - attempts_total
+      - submitted_attempts_total
+      title: ChildResultsSummaryResponse
     ContentImportDetails:
       properties:
         subjects_created:

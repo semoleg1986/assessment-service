@@ -14,6 +14,7 @@ from src.application.handlers.commands import (
 from src.application.handlers.queries import (
     handle_get_attempt_result,
     handle_get_child_diagnostics,
+    handle_get_child_results,
     handle_get_test_by_id,
     handle_list_assignments_by_child,
     handle_list_micro_skills,
@@ -31,6 +32,7 @@ __all__ = [
     "handle_create_topic",
     "handle_get_attempt_result",
     "handle_get_child_diagnostics",
+    "handle_get_child_results",
     "handle_get_test_by_id",
     "handle_import_content",
     "handle_link_micro_skill_predecessors",

@@ -282,6 +282,39 @@ class ChildDiagnosticsResponse(BaseModel):
     attempts_total: int
 
 
+class ChildResultsDiagnosticTagCountResponse(BaseModel):
+    tag: DiagnosticTag
+    count: int
+
+
+class ChildResultsAttemptResponse(BaseModel):
+    attempt_id: str
+    assignment_id: str
+    status: str
+    score: int
+    started_at: datetime
+    submitted_at: datetime | None
+    answers_total: int
+    correct_answers: int
+    resolved_diagnostic_tags: list[ChildResultsDiagnosticTagCountResponse] = Field(
+        default_factory=list
+    )
+
+
+class ChildResultsSummaryResponse(BaseModel):
+    attempts_total: int
+    submitted_attempts_total: int
+    resolved_diagnostic_tags: list[ChildResultsDiagnosticTagCountResponse] = Field(
+        default_factory=list
+    )
+
+
+class ChildResultsResponse(BaseModel):
+    child_id: UUID
+    summary: ChildResultsSummaryResponse
+    attempts: list[ChildResultsAttemptResponse] = Field(default_factory=list)
+
+
 class SubjectCreateRequest(BaseModel):
     code: str
     name: str
