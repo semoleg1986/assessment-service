@@ -24,6 +24,7 @@ from src.application.handlers import (
     handle_create_topic,
     handle_get_child_diagnostics,
     handle_get_child_results,
+    handle_get_child_skill_results,
     handle_get_test_by_id,
     handle_link_micro_skill_predecessors,
     handle_list_micro_skills,
@@ -39,6 +40,7 @@ from src.application.ports.unit_of_work import UnitOfWork
 from src.application.queries import (
     GetChildDiagnosticsQuery,
     GetChildResultsQuery,
+    GetChildSkillResultsQuery,
     GetTestByIdQuery,
     ListMicroSkillsQuery,
     ListSubjectsQuery,
@@ -56,6 +58,9 @@ from src.interface.http.v1.schemas import (
     ChildResultsDiagnosticTagCountResponse,
     ChildResultsResponse,
     ChildResultsSummaryResponse,
+    ChildSkillResultResponse,
+    ChildSkillResultsResponse,
+    ChildSkillResultsSummaryResponse,
     ContentImportRequest,
     ContentImportResponse,
     CreateTestRequest,
@@ -623,5 +628,48 @@ def get_child_results(
                 ),
             )
             for item in result["attempts"]
+        ],
+    )
+
+
+@router.get(
+    "/admin/results/children/{child_id}/skills",
+    response_model=ChildSkillResultsResponse,
+)
+def get_child_skill_results(
+    child_id: UUID,
+    uow: FromDishka[UnitOfWork],
+) -> ChildSkillResultsResponse:
+    result = handle_get_child_skill_results(
+        GetChildSkillResultsQuery(child_id=child_id),
+        uow=uow,
+    )
+    return ChildSkillResultsResponse(
+        child_id=child_id,
+        summary=ChildSkillResultsSummaryResponse(
+            total_skills=result["summary"]["total_skills"],
+            high_gap_total=result["summary"]["high_gap_total"],
+            medium_gap_total=result["summary"]["medium_gap_total"],
+            low_gap_total=result["summary"]["low_gap_total"],
+            insufficient_data_total=result["summary"]["insufficient_data_total"],
+        ),
+        skills=[
+            ChildSkillResultResponse(
+                node_id=item["node_id"],
+                topic_code=item["topic_code"],
+                skill_name=item["skill_name"],
+                attempted_questions=item["attempted_questions"],
+                correct_answers=item["correct_answers"],
+                accuracy_percent=item["accuracy_percent"],
+                avg_time_per_answer_ms=item["avg_time_per_answer_ms"],
+                wilson_low=item["wilson_low"],
+                wilson_high=item["wilson_high"],
+                gap_level=item["gap_level"],
+                resolved_diagnostic_tags=_sorted_diagnostic_tag_counts(
+                    item["resolved_diagnostic_tags"]
+                ),
+                recommendation=item["recommendation"],
+            )
+            for item in result["skills"]
         ],
     )

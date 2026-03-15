@@ -847,6 +847,61 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
       security:
       - bearerAuth: []
+  /v1/admin/results/children/{child_id}/skills:
+    get:
+      tags:
+      - assessment
+      summary: Get Child Skill Results
+      operationId: getAdminResultsChildrenSkillsByChildId
+      parameters:
+      - name: child_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Child Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChildSkillResultsResponse'
+              example:
+                child_id: 00000000-0000-4000-8000-000000000000
+                summary:
+                  total_skills: 1
+                  high_gap_total: 1
+                  medium_gap_total: 1
+                  low_gap_total: 1
+                  insufficient_data_total: 1
+                skills:
+                - node_id: string
+                  topic_code: string
+                  skill_name: string
+                  attempted_questions: 1
+                  correct_answers: 1
+                  accuracy_percent: 1
+                  avg_time_per_answer_ms: string
+                  wilson_low: 1
+                  wilson_high: 1
+                  gap_level: insufficient_data
+                  recommendation: string
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      security:
+      - bearerAuth: []
   /v1/user/children/{child_id}/assignments:
     get:
       tags:
@@ -1541,6 +1596,112 @@ components:
       - time_spent_ms_total
       - avg_time_per_answer_ms
       title: ChildResultsSummaryResponse
+    ChildSkillResultResponse:
+      properties:
+        node_id:
+          type: string
+          title: Node Id
+        topic_code:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Topic Code
+        skill_name:
+          type: string
+          title: Skill Name
+        attempted_questions:
+          type: integer
+          title: Attempted Questions
+        correct_answers:
+          type: integer
+          title: Correct Answers
+        accuracy_percent:
+          type: number
+          title: Accuracy Percent
+        avg_time_per_answer_ms:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Avg Time Per Answer Ms
+        wilson_low:
+          type: number
+          title: Wilson Low
+        wilson_high:
+          type: number
+          title: Wilson High
+        gap_level:
+          type: string
+          enum:
+          - insufficient_data
+          - high
+          - medium
+          - low
+          title: Gap Level
+        resolved_diagnostic_tags:
+          items:
+            $ref: '#/components/schemas/ChildResultsDiagnosticTagCountResponse'
+          type: array
+          title: Resolved Diagnostic Tags
+        recommendation:
+          type: string
+          title: Recommendation
+      type: object
+      required:
+      - node_id
+      - topic_code
+      - skill_name
+      - attempted_questions
+      - correct_answers
+      - accuracy_percent
+      - avg_time_per_answer_ms
+      - wilson_low
+      - wilson_high
+      - gap_level
+      - recommendation
+      title: ChildSkillResultResponse
+    ChildSkillResultsResponse:
+      properties:
+        child_id:
+          type: string
+          format: uuid
+          title: Child Id
+        summary:
+          $ref: '#/components/schemas/ChildSkillResultsSummaryResponse'
+        skills:
+          items:
+            $ref: '#/components/schemas/ChildSkillResultResponse'
+          type: array
+          title: Skills
+      type: object
+      required:
+      - child_id
+      - summary
+      title: ChildSkillResultsResponse
+    ChildSkillResultsSummaryResponse:
+      properties:
+        total_skills:
+          type: integer
+          title: Total Skills
+        high_gap_total:
+          type: integer
+          title: High Gap Total
+        medium_gap_total:
+          type: integer
+          title: Medium Gap Total
+        low_gap_total:
+          type: integer
+          title: Low Gap Total
+        insufficient_data_total:
+          type: integer
+          title: Insufficient Data Total
+      type: object
+      required:
+      - total_skills
+      - high_gap_total
+      - medium_gap_total
+      - low_gap_total
+      - insufficient_data_total
+      title: ChildSkillResultsSummaryResponse
     ContentImportDetails:
       properties:
         subjects_created:

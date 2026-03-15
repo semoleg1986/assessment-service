@@ -332,6 +332,37 @@ class ChildResultsResponse(BaseModel):
     attempts: list[ChildResultsAttemptResponse] = Field(default_factory=list)
 
 
+class ChildSkillResultResponse(BaseModel):
+    node_id: str
+    topic_code: str | None
+    skill_name: str
+    attempted_questions: int
+    correct_answers: int
+    accuracy_percent: float
+    avg_time_per_answer_ms: int | None
+    wilson_low: float
+    wilson_high: float
+    gap_level: Literal["insufficient_data", "high", "medium", "low"]
+    resolved_diagnostic_tags: list[ChildResultsDiagnosticTagCountResponse] = Field(
+        default_factory=list
+    )
+    recommendation: str
+
+
+class ChildSkillResultsSummaryResponse(BaseModel):
+    total_skills: int
+    high_gap_total: int
+    medium_gap_total: int
+    low_gap_total: int
+    insufficient_data_total: int
+
+
+class ChildSkillResultsResponse(BaseModel):
+    child_id: UUID
+    summary: ChildSkillResultsSummaryResponse
+    skills: list[ChildSkillResultResponse] = Field(default_factory=list)
+
+
 class SubjectCreateRequest(BaseModel):
     code: str
     name: str
