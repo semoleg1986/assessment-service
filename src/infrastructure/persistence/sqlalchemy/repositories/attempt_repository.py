@@ -54,6 +54,7 @@ class SqlAlchemyAttemptRepository(AttemptRepository):
                         if answer.resolved_diagnostic_tag is not None
                         else None
                     ),
+                    time_spent_ms=answer.time_spent_ms,
                     is_correct=answer.is_correct,
                     awarded_score=answer.awarded_score,
                 )

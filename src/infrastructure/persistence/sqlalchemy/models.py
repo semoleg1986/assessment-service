@@ -185,6 +185,7 @@ class AnswerModel(Base):
     resolved_diagnostic_tag: Mapped[str | None] = mapped_column(
         String(64), nullable=True
     )
+    time_spent_ms: Mapped[int | None] = mapped_column(Integer, nullable=True)
     is_correct: Mapped[bool] = mapped_column(nullable=False)
     awarded_score: Mapped[int] = mapped_column(Integer, nullable=False)
 

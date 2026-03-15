@@ -79,6 +79,7 @@ def handle_submit_attempt(
                 value=value,
                 selected_option_id=selected_option_id,
                 resolved_diagnostic_tag=resolved_diagnostic_tag,
+                time_spent_ms=a.time_spent_ms,
                 is_correct=is_correct,
                 awarded_score=q.max_score if is_correct else 0,
             )

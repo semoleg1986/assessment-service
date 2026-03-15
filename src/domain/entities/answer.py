@@ -17,6 +17,8 @@ class Answer:
     :type selected_option_id: str | None
     :param resolved_diagnostic_tag: Рассчитанная классификация ошибки.
     :type resolved_diagnostic_tag: DiagnosticTag | None
+    :param time_spent_ms: Время решения вопроса в миллисекундах.
+    :type time_spent_ms: int | None
     :param is_correct: Признак корректности ответа.
     :type is_correct: bool
     :param awarded_score: Начисленный балл за ответ.
@@ -29,3 +31,4 @@ class Answer:
     value: str | None = None
     selected_option_id: str | None = None
     resolved_diagnostic_tag: DiagnosticTag | None = None
+    time_spent_ms: int | None = None

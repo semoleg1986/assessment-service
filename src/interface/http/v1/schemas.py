@@ -103,6 +103,7 @@ class SubmittedAnswerRequest(BaseModel):
     question_id: UUID
     value: str | None = None
     selected_option_id: str | None = None
+    time_spent_ms: int | None = Field(default=None, ge=0)
 
 
 class SubmitAttemptRequest(BaseModel):
@@ -131,6 +132,7 @@ class AttemptAnswerResponse(BaseModel):
     value: str | None
     selected_option_id: str | None
     resolved_diagnostic_tag: DiagnosticTag | None
+    time_spent_ms: int | None = None
     is_correct: bool
     awarded_score: int
 

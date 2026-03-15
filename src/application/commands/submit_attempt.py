@@ -7,6 +7,7 @@ class SubmittedAnswerInput:
     question_id: UUID
     value: str | None = None
     selected_option_id: str | None = None
+    time_spent_ms: int | None = None
 
 
 @dataclass(slots=True)

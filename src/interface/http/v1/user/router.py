@@ -121,6 +121,7 @@ def submit_attempt(
                         question_id=a.question_id,
                         value=a.value,
                         selected_option_id=a.selected_option_id,
+                        time_spent_ms=a.time_spent_ms,
                     )
                     for a in body.answers
                 ],
@@ -153,6 +154,7 @@ def save_attempt_answers(
                         question_id=a.question_id,
                         value=a.value,
                         selected_option_id=a.selected_option_id,
+                        time_spent_ms=a.time_spent_ms,
                     )
                     for a in body.answers
                 ],
@@ -193,6 +195,7 @@ def get_attempt_result(
                     if a["resolved_diagnostic_tag"] is not None
                     else None
                 ),
+                time_spent_ms=a["time_spent_ms"],
                 is_correct=a["is_correct"],
                 awarded_score=a["awarded_score"],
             )

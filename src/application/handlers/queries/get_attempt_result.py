@@ -10,6 +10,7 @@ class AttemptAnswerResult(TypedDict):
     value: str | None
     selected_option_id: str | None
     resolved_diagnostic_tag: str | None
+    time_spent_ms: int | None
     is_correct: bool
     awarded_score: int
 
@@ -51,6 +52,7 @@ def handle_get_attempt_result(
                     if a.resolved_diagnostic_tag is not None
                     else None
                 ),
+                "time_spent_ms": a.time_spent_ms,
                 "is_correct": a.is_correct,
                 "awarded_score": a.awarded_score,
             }

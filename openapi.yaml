@@ -992,6 +992,7 @@ paths:
               - question_id: 00000000-0000-4000-8000-000000000000
                 value: string
                 selected_option_id: string
+                time_spent_ms: string
       responses:
         '200':
           description: Successful Response
@@ -1044,6 +1045,7 @@ paths:
               - question_id: 00000000-0000-4000-8000-000000000000
                 value: string
                 selected_option_id: string
+                time_spent_ms: string
       responses:
         '200':
           description: Successful Response
@@ -1096,6 +1098,7 @@ paths:
               - question_id: 00000000-0000-4000-8000-000000000000
                 value: string
                 selected_option_id: string
+                time_spent_ms: string
       responses:
         '200':
           description: Successful Response
@@ -1150,6 +1153,7 @@ paths:
                   value: string
                   selected_option_id: string
                   resolved_diagnostic_tag: string
+                  time_spent_ms: string
                   is_correct: true
                   awarded_score: 1
         '422':
@@ -1196,6 +1200,7 @@ paths:
                   value: string
                   selected_option_id: string
                   resolved_diagnostic_tag: string
+                  time_spent_ms: string
                   is_correct: true
                   awarded_score: 1
         '422':
@@ -1301,6 +1306,11 @@ components:
           anyOf:
           - $ref: '#/components/schemas/DiagnosticTag'
           - type: 'null'
+        time_spent_ms:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Time Spent Ms
         is_correct:
           type: boolean
           title: Is Correct
@@ -2363,6 +2373,12 @@ components:
           - type: string
           - type: 'null'
           title: Selected Option Id
+        time_spent_ms:
+          anyOf:
+          - type: integer
+            minimum: 0.0
+          - type: 'null'
+          title: Time Spent Ms
       type: object
       required:
       - question_id

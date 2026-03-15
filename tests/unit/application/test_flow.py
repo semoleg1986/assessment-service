@@ -22,7 +22,7 @@ from src.application.handlers import (
     handle_start_attempt,
     handle_submit_attempt,
 )
-from src.domain.errors import NotFoundError
+from src.domain.errors import InvariantViolationError, NotFoundError
 from src.domain.value_objects.questions import (
     DiagnosticTag,
     QuestionType,
@@ -263,3 +263,158 @@ def test_submit_attempt_resolves_diagnostic_for_text_distractor() -> None:
     assert saved_attempt is not None
     assert saved_attempt.answers[0].resolved_diagnostic_tag == DiagnosticTag.INATTENTION
     assert saved_attempt.answers[0].is_correct is False
+
+
+def test_start_attempt_returns_existing_started_attempt() -> None:
+    uow = InMemoryUnitOfWork()
+    _prepare_basic_catalog(uow)
+
+    test = handle_create_test(
+        CreateTestCommand(
+            subject_code="math",
+            grade=1,
+            questions=[
+                QuestionInput(
+                    node_id="M2-S-01-N1",
+                    text="1+1",
+                    answer_key="2",
+                    max_score=1,
+                )
+            ],
+        ),
+        uow=uow,
+    )
+
+    assignment = handle_assign_test(
+        AssignTestCommand(test_id=test.test_id, child_id=uuid4()),
+        uow=uow,
+    )
+
+    first = handle_start_attempt(
+        StartAttemptCommand(
+            assignment_id=assignment.assignment_id,
+            child_id=assignment.child_id,
+        ),
+        uow=uow,
+    )
+    second = handle_start_attempt(
+        StartAttemptCommand(
+            assignment_id=assignment.assignment_id,
+            child_id=assignment.child_id,
+        ),
+        uow=uow,
+    )
+
+    assert second.attempt_id == first.attempt_id
+
+
+def test_one_attempt_per_test_for_child() -> None:
+    uow = InMemoryUnitOfWork()
+    _prepare_basic_catalog(uow)
+
+    test = handle_create_test(
+        CreateTestCommand(
+            subject_code="math",
+            grade=1,
+            questions=[
+                QuestionInput(
+                    node_id="M2-S-01-N1",
+                    text="5-2",
+                    answer_key="3",
+                    max_score=1,
+                )
+            ],
+        ),
+        uow=uow,
+    )
+    child_id = uuid4()
+    first_assignment = handle_assign_test(
+        AssignTestCommand(test_id=test.test_id, child_id=child_id),
+        uow=uow,
+    )
+    second_assignment = handle_assign_test(
+        AssignTestCommand(test_id=test.test_id, child_id=child_id),
+        uow=uow,
+    )
+
+    attempt = handle_start_attempt(
+        StartAttemptCommand(
+            assignment_id=first_assignment.assignment_id,
+            child_id=child_id,
+        ),
+        uow=uow,
+    )
+    handle_submit_attempt(
+        SubmitAttemptCommand(
+            attempt_id=attempt.attempt_id,
+            answers=[
+                SubmittedAnswerInput(
+                    question_id=test.questions[0].question_id,
+                    value="3",
+                )
+            ],
+        ),
+        uow=uow,
+    )
+
+    try:
+        handle_start_attempt(
+            StartAttemptCommand(
+                assignment_id=second_assignment.assignment_id,
+                child_id=child_id,
+            ),
+            uow=uow,
+        )
+        assert False, "expected InvariantViolationError"
+    except InvariantViolationError as exc:
+        assert str(exc) == "attempt for this test already exists"
+
+
+def test_submit_attempt_stores_time_spent_ms() -> None:
+    uow = InMemoryUnitOfWork()
+    _prepare_basic_catalog(uow)
+
+    test = handle_create_test(
+        CreateTestCommand(
+            subject_code="math",
+            grade=1,
+            questions=[
+                QuestionInput(
+                    node_id="M2-S-01-N1",
+                    text="4+1",
+                    answer_key="5",
+                    max_score=1,
+                )
+            ],
+        ),
+        uow=uow,
+    )
+    assignment = handle_assign_test(
+        AssignTestCommand(test_id=test.test_id, child_id=uuid4()),
+        uow=uow,
+    )
+    attempt = handle_start_attempt(
+        StartAttemptCommand(
+            assignment_id=assignment.assignment_id,
+            child_id=assignment.child_id,
+        ),
+        uow=uow,
+    )
+
+    handle_submit_attempt(
+        SubmitAttemptCommand(
+            attempt_id=attempt.attempt_id,
+            answers=[
+                SubmittedAnswerInput(
+                    question_id=test.questions[0].question_id,
+                    value="5",
+                    time_spent_ms=3210,
+                )
+            ],
+        ),
+        uow=uow,
+    )
+
+    saved_attempt = uow.attempts.get(attempt.attempt_id)
+    assert saved_attempt is not None
+    assert saved_attempt.answers[0].time_spent_ms == 3210
