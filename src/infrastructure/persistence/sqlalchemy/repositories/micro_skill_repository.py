@@ -64,3 +64,8 @@ class SqlAlchemyMicroSkillNodeRepository(MicroSkillNodeRepository):
             select(MicroSkillNodeModel).order_by(MicroSkillNodeModel.node_id)
         ).all()
         return [micro_skill_from_model(r) for r in rows]
+
+    def delete(self, node_id: str) -> None:
+        model = self._session.get(MicroSkillNodeModel, node_id)
+        if model is not None:
+            self._session.delete(model)

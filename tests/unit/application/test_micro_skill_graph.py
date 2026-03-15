@@ -2,17 +2,27 @@ import pytest
 
 from src.application.commands.create_micro_skill import CreateMicroSkillCommand
 from src.application.commands.create_subject import CreateSubjectCommand
+from src.application.commands.create_test import CreateTestCommand, QuestionInput
 from src.application.commands.create_topic import CreateTopicCommand
+from src.application.commands.delete_micro_skill import DeleteMicroSkillCommand
 from src.application.commands.link_micro_skill_predecessors import (
     LinkMicroSkillPredecessorsCommand,
 )
+from src.application.commands.update_micro_skill import UpdateMicroSkillCommand
 from src.application.handlers.commands.create_micro_skill import (
     handle_create_micro_skill,
 )
 from src.application.handlers.commands.create_subject import handle_create_subject
+from src.application.handlers.commands.create_test import handle_create_test
 from src.application.handlers.commands.create_topic import handle_create_topic
+from src.application.handlers.commands.delete_micro_skill import (
+    handle_delete_micro_skill,
+)
 from src.application.handlers.commands.link_micro_skill_predecessors import (
     handle_link_micro_skill_predecessors,
+)
+from src.application.handlers.commands.update_micro_skill import (
+    handle_update_micro_skill,
 )
 from src.application.handlers.queries.list_micro_skills import handle_list_micro_skills
 from src.application.queries.list_micro_skills import ListMicroSkillsQuery
@@ -21,13 +31,17 @@ from src.domain.value_objects.statuses import CriticalityLevel
 from src.infrastructure.uow import InMemoryUnitOfWork
 
 
-def test_cycle_detection_when_linking_predecessors() -> None:
-    uow = InMemoryUnitOfWork()
+def _seed_math_topic(uow: InMemoryUnitOfWork) -> None:
     handle_create_subject(CreateSubjectCommand(code="math", name="Math"), uow=uow)
     handle_create_topic(
         CreateTopicCommand(code="M2-T1", subject_code="math", grade=2, name="Topic 1"),
         uow=uow,
     )
+
+
+def test_cycle_detection_when_linking_predecessors() -> None:
+    uow = InMemoryUnitOfWork()
+    _seed_math_topic(uow)
 
     handle_create_micro_skill(
         CreateMicroSkillCommand(
@@ -67,11 +81,7 @@ def test_cycle_detection_when_linking_predecessors() -> None:
 
 def test_blocks_count_is_calculated_from_reverse_dependencies() -> None:
     uow = InMemoryUnitOfWork()
-    handle_create_subject(CreateSubjectCommand(code="math", name="Math"), uow=uow)
-    handle_create_topic(
-        CreateTopicCommand(code="M2-T1", subject_code="math", grade=2, name="Topic 1"),
-        uow=uow,
-    )
+    _seed_math_topic(uow)
 
     handle_create_micro_skill(
         CreateMicroSkillCommand(
@@ -126,11 +136,7 @@ def test_blocks_count_is_calculated_from_reverse_dependencies() -> None:
 
 def test_link_updates_micro_skill_version_and_timestamp() -> None:
     uow = InMemoryUnitOfWork()
-    handle_create_subject(CreateSubjectCommand(code="math", name="Math"), uow=uow)
-    handle_create_topic(
-        CreateTopicCommand(code="M2-T1", subject_code="math", grade=2, name="Topic 1"),
-        uow=uow,
-    )
+    _seed_math_topic(uow)
 
     handle_create_micro_skill(
         CreateMicroSkillCommand(
@@ -221,3 +227,174 @@ def test_create_micro_skill_fails_when_topic_mismatch() -> None:
             ),
             uow=uow,
         )
+
+
+def test_update_micro_skill_updates_version_metadata_and_links() -> None:
+    uow = InMemoryUnitOfWork()
+    _seed_math_topic(uow)
+    handle_create_micro_skill(
+        CreateMicroSkillCommand(
+            node_id="N1",
+            subject_code="math",
+            topic_code="M2-T1",
+            grade=2,
+            section_code="R1",
+            section_name="Section",
+            micro_skill_name="Node1",
+            predecessor_ids=[],
+            criticality=CriticalityLevel.HIGH,
+        ),
+        uow=uow,
+    )
+    created = handle_create_micro_skill(
+        CreateMicroSkillCommand(
+            node_id="N2",
+            subject_code="math",
+            topic_code="M2-T1",
+            grade=2,
+            section_code="R1",
+            section_name="Section",
+            micro_skill_name="Node2",
+            predecessor_ids=[],
+            criticality=CriticalityLevel.MEDIUM,
+            description="Initial",
+        ),
+        uow=uow,
+    )
+
+    updated = handle_update_micro_skill(
+        UpdateMicroSkillCommand(
+            node_id="N2",
+            subject_code="math",
+            topic_code="M2-T1",
+            grade=2,
+            section_code="R2",
+            section_name="Section 2",
+            micro_skill_name="Node2 updated",
+            predecessor_ids=["N1"],
+            criticality=CriticalityLevel.LOW,
+            description="Updated",
+            status=created.status,
+            source_ref="manual",
+            external_ref="ref-2",
+        ),
+        uow=uow,
+    )
+
+    assert updated.version == 2
+    assert updated.section_code == "R2"
+    assert updated.micro_skill_name == "Node2 updated"
+    assert updated.predecessor_ids == ["N1"]
+    assert updated.description == "Updated"
+    assert updated.source_ref == "manual"
+    assert updated.external_ref == "ref-2"
+
+
+def test_delete_micro_skill_fails_when_referenced_as_predecessor() -> None:
+    uow = InMemoryUnitOfWork()
+    _seed_math_topic(uow)
+    handle_create_micro_skill(
+        CreateMicroSkillCommand(
+            node_id="N1",
+            subject_code="math",
+            topic_code="M2-T1",
+            grade=2,
+            section_code="R1",
+            section_name="Section",
+            micro_skill_name="Node1",
+            predecessor_ids=[],
+            criticality=CriticalityLevel.HIGH,
+        ),
+        uow=uow,
+    )
+    handle_create_micro_skill(
+        CreateMicroSkillCommand(
+            node_id="N2",
+            subject_code="math",
+            topic_code="M2-T1",
+            grade=2,
+            section_code="R1",
+            section_name="Section",
+            micro_skill_name="Node2",
+            predecessor_ids=["N1"],
+            criticality=CriticalityLevel.MEDIUM,
+        ),
+        uow=uow,
+    )
+
+    with pytest.raises(InvariantViolationError, match="referenced as predecessor"):
+        handle_delete_micro_skill(DeleteMicroSkillCommand(node_id="N1"), uow=uow)
+
+
+def test_delete_micro_skill_fails_when_referenced_by_test_question() -> None:
+    uow = InMemoryUnitOfWork()
+    _seed_math_topic(uow)
+    handle_create_micro_skill(
+        CreateMicroSkillCommand(
+            node_id="N1",
+            subject_code="math",
+            topic_code="M2-T1",
+            grade=2,
+            section_code="R1",
+            section_name="Section",
+            micro_skill_name="Node1",
+            predecessor_ids=[],
+            criticality=CriticalityLevel.HIGH,
+        ),
+        uow=uow,
+    )
+    handle_create_test(
+        CreateTestCommand(
+            subject_code="math",
+            grade=2,
+            questions=[
+                QuestionInput(
+                    node_id="N1",
+                    text="1+1?",
+                    answer_key="2",
+                    max_score=1,
+                )
+            ],
+        ),
+        uow=uow,
+    )
+
+    with pytest.raises(InvariantViolationError, match="referenced by test"):
+        handle_delete_micro_skill(DeleteMicroSkillCommand(node_id="N1"), uow=uow)
+
+
+def test_delete_micro_skill_removes_unreferenced_node() -> None:
+    uow = InMemoryUnitOfWork()
+    _seed_math_topic(uow)
+    handle_create_micro_skill(
+        CreateMicroSkillCommand(
+            node_id="N1",
+            subject_code="math",
+            topic_code="M2-T1",
+            grade=2,
+            section_code="R1",
+            section_name="Section",
+            micro_skill_name="Node1",
+            predecessor_ids=[],
+            criticality=CriticalityLevel.HIGH,
+        ),
+        uow=uow,
+    )
+    handle_create_micro_skill(
+        CreateMicroSkillCommand(
+            node_id="N2",
+            subject_code="math",
+            topic_code="M2-T1",
+            grade=2,
+            section_code="R1",
+            section_name="Section",
+            micro_skill_name="Node2",
+            predecessor_ids=[],
+            criticality=CriticalityLevel.MEDIUM,
+        ),
+        uow=uow,
+    )
+
+    handle_delete_micro_skill(DeleteMicroSkillCommand(node_id="N2"), uow=uow)
+
+    assert uow.micro_skills.get("N2") is None

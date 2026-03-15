@@ -10,10 +10,12 @@ from src.application.commands import (
     CreateSubjectCommand,
     CreateTestCommand,
     CreateTopicCommand,
+    DeleteMicroSkillCommand,
     LinkMicroSkillPredecessorsCommand,
     QuestionInput,
     QuestionOptionInput,
     TextDistractorInput,
+    UpdateMicroSkillCommand,
 )
 from src.application.handlers import (
     handle_assign_test,
@@ -22,6 +24,7 @@ from src.application.handlers import (
     handle_create_subject,
     handle_create_test,
     handle_create_topic,
+    handle_delete_micro_skill,
     handle_get_child_diagnostics,
     handle_get_child_results,
     handle_get_child_skill_results,
@@ -31,6 +34,7 @@ from src.application.handlers import (
     handle_list_subjects,
     handle_list_tests,
     handle_list_topics,
+    handle_update_micro_skill,
 )
 from src.application.ports.fixture_cleanup import (
     FixtureCleanupService,
@@ -71,6 +75,7 @@ from src.interface.http.v1.schemas import (
     MicroSkillCreateRequest,
     MicroSkillLinkRequest,
     MicroSkillResponse,
+    MicroSkillUpdateRequest,
     PublishTestResponse,
     QuestionOptionResponse,
     QuestionResponse,
@@ -444,6 +449,87 @@ def create_micro_skill(
         updated_at=node.updated_at,
         blocks_count=0,
     )
+
+
+@router.put(
+    "/admin/micro-skills/{node_id}",
+    response_model=MicroSkillResponse,
+)
+def update_micro_skill(
+    node_id: str,
+    body: MicroSkillUpdateRequest,
+    uow: FromDishka[UnitOfWork],
+) -> MicroSkillResponse:
+    try:
+        node = handle_update_micro_skill(
+            UpdateMicroSkillCommand(
+                node_id=node_id,
+                subject_code=body.subject_code,
+                topic_code=body.topic_code,
+                grade=body.grade,
+                section_code=body.section_code,
+                section_name=body.section_name,
+                micro_skill_name=body.micro_skill_name,
+                predecessor_ids=body.predecessor_ids,
+                criticality=body.criticality,
+                source_ref=body.source_ref,
+                description=body.description,
+                status=body.status,
+                external_ref=body.external_ref,
+            ),
+            uow=uow,
+        )
+    except NotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except InvariantViolationError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+    blocks_count = next(
+        (
+            x["blocks_count"]
+            for x in handle_list_micro_skills(ListMicroSkillsQuery(), uow=uow)
+            if x["node"].node_id == node.node_id
+        ),
+        0,
+    )
+    return MicroSkillResponse(
+        node_id=node.node_id,
+        subject_code=node.subject_code,
+        topic_code=node.topic_code,
+        grade=node.grade,
+        section_code=node.section_code,
+        section_name=node.section_name,
+        micro_skill_name=node.micro_skill_name,
+        predecessor_ids=node.predecessor_ids,
+        criticality=node.criticality,
+        source_ref=node.source_ref,
+        description=node.description,
+        status=node.status,
+        external_ref=node.external_ref,
+        version=node.version,
+        created_at=node.created_at,
+        updated_at=node.updated_at,
+        blocks_count=blocks_count,
+    )
+
+
+@router.delete(
+    "/admin/micro-skills/{node_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+def delete_micro_skill(
+    node_id: str,
+    uow: FromDishka[UnitOfWork],
+) -> None:
+    try:
+        handle_delete_micro_skill(
+            DeleteMicroSkillCommand(node_id=node_id),
+            uow=uow,
+        )
+    except NotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except InvariantViolationError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
 
 
 @router.post(

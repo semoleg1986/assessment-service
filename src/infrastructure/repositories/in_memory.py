@@ -108,3 +108,6 @@ class InMemoryMicroSkillNodeRepository(MicroSkillNodeRepository):
 
     def list(self) -> list[MicroSkillNode]:
         return list(self._store.values())
+
+    def delete(self, node_id: str) -> None:
+        self._store.pop(node_id, None)

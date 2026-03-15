@@ -78,3 +78,6 @@ class MicroSkillNodeRepository(ABC):
 
     @abstractmethod
     def list(self) -> list[MicroSkillNode]: ...
+
+    @abstractmethod
+    def delete(self, node_id: str) -> None: ...

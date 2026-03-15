@@ -406,6 +406,21 @@ class MicroSkillCreateRequest(BaseModel):
     external_ref: str | None = None
 
 
+class MicroSkillUpdateRequest(BaseModel):
+    subject_code: str
+    topic_code: str
+    grade: int = Field(ge=1, le=11)
+    section_code: str
+    section_name: str
+    micro_skill_name: str
+    predecessor_ids: list[str] = Field(default_factory=list)
+    criticality: CriticalityLevel = CriticalityLevel.MEDIUM
+    source_ref: str | None = None
+    description: str | None = None
+    status: MicroSkillStatus = MicroSkillStatus.ACTIVE
+    external_ref: str | None = None
+
+
 class MicroSkillLinkRequest(BaseModel):
     predecessor_ids: list[str]
 

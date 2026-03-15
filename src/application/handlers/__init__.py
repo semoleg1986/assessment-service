@@ -5,11 +5,13 @@ from src.application.handlers.commands import (
     handle_create_subject,
     handle_create_test,
     handle_create_topic,
+    handle_delete_micro_skill,
     handle_import_content,
     handle_link_micro_skill_predecessors,
     handle_save_attempt_answers,
     handle_start_attempt,
     handle_submit_attempt,
+    handle_update_micro_skill,
 )
 from src.application.handlers.queries import (
     handle_get_attempt_result,
@@ -31,6 +33,7 @@ __all__ = [
     "handle_create_subject",
     "handle_create_test",
     "handle_create_topic",
+    "handle_delete_micro_skill",
     "handle_get_attempt_result",
     "handle_get_child_diagnostics",
     "handle_get_child_results",
@@ -46,4 +49,5 @@ __all__ = [
     "handle_save_attempt_answers",
     "handle_start_attempt",
     "handle_submit_attempt",
+    "handle_update_micro_skill",
 ]

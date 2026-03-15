@@ -9,6 +9,7 @@ from src.application.commands.create_test import (
     TextDistractorInput,
 )
 from src.application.commands.create_topic import CreateTopicCommand
+from src.application.commands.delete_micro_skill import DeleteMicroSkillCommand
 from src.application.commands.import_content import (
     ImportContentCommand,
     ImportContentDetails,
@@ -32,6 +33,7 @@ from src.application.commands.submit_attempt import (
     SubmitAttemptCommand,
     SubmittedAnswerInput,
 )
+from src.application.commands.update_micro_skill import UpdateMicroSkillCommand
 
 __all__ = [
     "AssignTestCommand",
@@ -40,6 +42,7 @@ __all__ = [
     "CreateSubjectCommand",
     "CreateTestCommand",
     "CreateTopicCommand",
+    "DeleteMicroSkillCommand",
     "ImportContentCommand",
     "ImportContentDetails",
     "ImportContentIssue",
@@ -60,4 +63,5 @@ __all__ = [
     "SubmitAttemptCommand",
     "SubmittedAnswerInput",
     "TextDistractorInput",
+    "UpdateMicroSkillCommand",
 ]
