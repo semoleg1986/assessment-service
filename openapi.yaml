@@ -41,6 +41,7 @@ paths:
     post:
       tags:
       - assessment
+      - assessment
       summary: Import Content
       operationId: postAdminContentImport
       requestBody:
@@ -92,6 +93,7 @@ paths:
   /v1/admin/fixtures/cleanup:
     post:
       tags:
+      - assessment
       - assessment
       summary: Cleanup Fixtures
       operationId: postAdminFixturesCleanup
@@ -158,213 +160,10 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
       security:
       - bearerAuth: []
-  /v1/admin/tests:
-    get:
-      tags:
-      - assessment
-      summary: List Tests
-      operationId: getAdminTests
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema:
-                items:
-                  $ref: '#/components/schemas/TestResponse'
-                type: array
-                title: Response List Tests V1 Admin Tests Get
-              example:
-              - test_id: 00000000-0000-4000-8000-000000000000
-                subject_code: string
-                grade: 1
-                version: 1
-                questions:
-                - {}
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '429':
-          $ref: '#/components/responses/TooManyRequests'
-      security:
-      - bearerAuth: []
-    post:
-      tags:
-      - assessment
-      summary: Create Test
-      operationId: postAdminTests
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CreateTestRequest'
-            example:
-              subject_code: string
-              grade: 1
-              questions:
-              - node_id: string
-                text: string
-                answer_key: string
-                correct_option_id: string
-                options: []
-        required: true
-      responses:
-        '201':
-          description: Successful Response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TestResponse'
-              example:
-                test_id: 00000000-0000-4000-8000-000000000000
-                subject_code: string
-                grade: 1
-                version: 1
-                questions:
-                - question_id: 00000000-0000-4000-8000-000000000000
-                  node_id: string
-                  text: string
-                  max_score: 1
-                  options: []
-        '422':
-          description: Validation Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '429':
-          $ref: '#/components/responses/TooManyRequests'
-      security:
-      - bearerAuth: []
-  /v1/tests:
-    get:
-      tags:
-      - assessment
-      summary: List Tests
-      operationId: getTests
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema:
-                items:
-                  $ref: '#/components/schemas/TestResponse'
-                type: array
-                title: Response List Tests V1 Tests Get
-              example:
-              - test_id: 00000000-0000-4000-8000-000000000000
-                subject_code: string
-                grade: 1
-                version: 1
-                questions:
-                - {}
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '429':
-          $ref: '#/components/responses/TooManyRequests'
-      security:
-      - bearerAuth: []
-    post:
-      tags:
-      - assessment
-      summary: Create Test
-      operationId: postTests
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CreateTestRequest'
-            example:
-              subject_code: string
-              grade: 1
-              questions:
-              - node_id: string
-                text: string
-                answer_key: string
-                correct_option_id: string
-                options: []
-        required: true
-      responses:
-        '201':
-          description: Successful Response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TestResponse'
-              example:
-                test_id: 00000000-0000-4000-8000-000000000000
-                subject_code: string
-                grade: 1
-                version: 1
-                questions:
-                - question_id: 00000000-0000-4000-8000-000000000000
-                  node_id: string
-                  text: string
-                  max_score: 1
-                  options: []
-        '422':
-          description: Validation Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '429':
-          $ref: '#/components/responses/TooManyRequests'
-      security:
-      - bearerAuth: []
-  /v1/admin/tests/{test_id}/publish:
-    post:
-      tags:
-      - assessment
-      summary: Publish Test
-      operationId: postAdminTestsPublishByTestId
-      parameters:
-      - name: test_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-          title: Test Id
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PublishTestResponse'
-              example:
-                test_id: 00000000-0000-4000-8000-000000000000
-                status: string
-        '422':
-          description: Validation Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '429':
-          $ref: '#/components/responses/TooManyRequests'
-      security:
-      - bearerAuth: []
   /v1/admin/subjects:
     get:
       tags:
+      - assessment
       - assessment
       summary: List Subjects
       operationId: getAdminSubjects
@@ -391,6 +190,7 @@ paths:
       - bearerAuth: []
     post:
       tags:
+      - assessment
       - assessment
       summary: Create Subject
       operationId: postAdminSubjects
@@ -431,6 +231,7 @@ paths:
     get:
       tags:
       - assessment
+      - assessment
       summary: List Topics
       operationId: getAdminTopics
       responses:
@@ -458,6 +259,7 @@ paths:
       - bearerAuth: []
     post:
       tags:
+      - assessment
       - assessment
       summary: Create Topic
       operationId: postAdminTopics
@@ -502,6 +304,7 @@ paths:
     get:
       tags:
       - assessment
+      - assessment
       summary: List Micro Skills
       operationId: getAdminMicroSkills
       responses:
@@ -543,6 +346,7 @@ paths:
       - bearerAuth: []
     post:
       tags:
+      - assessment
       - assessment
       summary: Create Micro Skill
       operationId: postAdminMicroSkills
@@ -603,6 +407,7 @@ paths:
   /v1/admin/micro-skills/{node_id}:
     put:
       tags:
+      - assessment
       - assessment
       summary: Update Micro Skill
       operationId: putAdminMicroSkillsByNodeId
@@ -669,6 +474,7 @@ paths:
     delete:
       tags:
       - assessment
+      - assessment
       summary: Delete Micro Skill
       operationId: deleteAdminMicroSkillsByNodeId
       parameters:
@@ -698,6 +504,7 @@ paths:
   /v1/admin/micro-skills/{node_id}/links:
     post:
       tags:
+      - assessment
       - assessment
       summary: Link Micro Skill Predecessors
       operationId: postAdminMicroSkillsLinksByNodeId
@@ -757,9 +564,219 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
       security:
       - bearerAuth: []
+  /v1/admin/tests:
+    get:
+      tags:
+      - assessment
+      - assessment
+      summary: List Tests
+      operationId: getAdminTests
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/TestResponse'
+                type: array
+                title: Response List Tests V1 Admin Tests Get
+              example:
+              - test_id: 00000000-0000-4000-8000-000000000000
+                subject_code: string
+                grade: 1
+                version: 1
+                questions:
+                - {}
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      security:
+      - bearerAuth: []
+    post:
+      tags:
+      - assessment
+      - assessment
+      summary: Create Test
+      operationId: postAdminTests
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTestRequest'
+            example:
+              subject_code: string
+              grade: 1
+              questions:
+              - node_id: string
+                text: string
+                answer_key: string
+                correct_option_id: string
+                options: []
+        required: true
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TestResponse'
+              example:
+                test_id: 00000000-0000-4000-8000-000000000000
+                subject_code: string
+                grade: 1
+                version: 1
+                questions:
+                - question_id: 00000000-0000-4000-8000-000000000000
+                  node_id: string
+                  text: string
+                  max_score: 1
+                  options: []
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      security:
+      - bearerAuth: []
+  /v1/tests:
+    get:
+      tags:
+      - assessment
+      - assessment
+      summary: List Tests
+      operationId: getTests
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/TestResponse'
+                type: array
+                title: Response List Tests V1 Tests Get
+              example:
+              - test_id: 00000000-0000-4000-8000-000000000000
+                subject_code: string
+                grade: 1
+                version: 1
+                questions:
+                - {}
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      security:
+      - bearerAuth: []
+    post:
+      tags:
+      - assessment
+      - assessment
+      summary: Create Test
+      operationId: postTests
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTestRequest'
+            example:
+              subject_code: string
+              grade: 1
+              questions:
+              - node_id: string
+                text: string
+                answer_key: string
+                correct_option_id: string
+                options: []
+        required: true
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TestResponse'
+              example:
+                test_id: 00000000-0000-4000-8000-000000000000
+                subject_code: string
+                grade: 1
+                version: 1
+                questions:
+                - question_id: 00000000-0000-4000-8000-000000000000
+                  node_id: string
+                  text: string
+                  max_score: 1
+                  options: []
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      security:
+      - bearerAuth: []
+  /v1/admin/tests/{test_id}/publish:
+    post:
+      tags:
+      - assessment
+      - assessment
+      summary: Publish Test
+      operationId: postAdminTestsPublishByTestId
+      parameters:
+      - name: test_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Test Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublishTestResponse'
+              example:
+                test_id: 00000000-0000-4000-8000-000000000000
+                status: string
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      security:
+      - bearerAuth: []
   /v1/admin/assignments:
     post:
       tags:
+      - assessment
       - assessment
       summary: Assign Test
       operationId: postAdminAssignments
@@ -804,6 +821,7 @@ paths:
     post:
       tags:
       - assessment
+      - assessment
       summary: Assign Test
       operationId: postAssignments
       requestBody:
@@ -847,6 +865,7 @@ paths:
     get:
       tags:
       - assessment
+      - assessment
       summary: Get Child Diagnostics
       operationId: getAdminDiagnosticsChildrenByChildId
       parameters:
@@ -885,6 +904,7 @@ paths:
   /v1/admin/results/children/{child_id}:
     get:
       tags:
+      - assessment
       - assessment
       summary: Get Child Results
       operationId: getAdminResultsChildrenByChildId
@@ -949,6 +969,7 @@ paths:
   /v1/admin/results/children/{child_id}/skills:
     get:
       tags:
+      - assessment
       - assessment
       summary: Get Child Skill Results
       operationId: getAdminResultsChildrenSkillsByChildId
