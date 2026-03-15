@@ -5,7 +5,7 @@ from uuid import UUID
 from sqlalchemy import select
 
 from src.domain.delivery.assignment.entity import AssignmentAggregate
-from src.domain.repositories import AssignmentRepository
+from src.domain.delivery.assignment.repository import AssignmentRepository
 from src.infrastructure.persistence.sqlalchemy.mappers import assignment_from_model
 from src.infrastructure.persistence.sqlalchemy.models import AssignmentModel
 from src.infrastructure.persistence.sqlalchemy.session_types import SessionLike

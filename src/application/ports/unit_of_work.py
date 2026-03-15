@@ -1,13 +1,11 @@
 from abc import ABC, abstractmethod
 
-from src.domain.repositories import (
-    AssignmentRepository,
-    AttemptRepository,
-    MicroSkillNodeRepository,
-    SubjectRepository,
-    TestRepository,
-    TopicRepository,
-)
+from src.domain.content.micro_skill.repository import MicroSkillNodeRepository
+from src.domain.content.subject.repository import SubjectRepository
+from src.domain.content.test.repository import TestRepository
+from src.domain.content.topic.repository import TopicRepository
+from src.domain.delivery.assignment.repository import AssignmentRepository
+from src.domain.delivery.attempt.repository import AttemptRepository
 
 
 class UnitOfWork(ABC):

@@ -3,7 +3,7 @@ from __future__ import annotations
 from sqlalchemy import select
 
 from src.domain.content.subject.entity import Subject
-from src.domain.repositories import SubjectRepository
+from src.domain.content.subject.repository import SubjectRepository
 from src.infrastructure.persistence.sqlalchemy.mappers import subject_from_model
 from src.infrastructure.persistence.sqlalchemy.models import SubjectModel
 from src.infrastructure.persistence.sqlalchemy.session_types import SessionLike

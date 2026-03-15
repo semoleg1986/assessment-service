@@ -1,19 +1,17 @@
 from uuid import UUID
 
 from src.domain.content.micro_skill.entity import MicroSkillNode
+from src.domain.content.micro_skill.repository import MicroSkillNodeRepository
 from src.domain.content.subject.entity import Subject
+from src.domain.content.subject.repository import SubjectRepository
 from src.domain.content.test.entity import AssessmentTest
+from src.domain.content.test.repository import TestRepository
 from src.domain.content.topic.entity import Topic
+from src.domain.content.topic.repository import TopicRepository
 from src.domain.delivery.assignment.entity import AssignmentAggregate
+from src.domain.delivery.assignment.repository import AssignmentRepository
 from src.domain.delivery.attempt.entity import AttemptAggregate
-from src.domain.repositories import (
-    AssignmentRepository,
-    AttemptRepository,
-    MicroSkillNodeRepository,
-    SubjectRepository,
-    TestRepository,
-    TopicRepository,
-)
+from src.domain.delivery.attempt.repository import AttemptRepository
 from src.domain.shared.statuses import AttemptStatus
 
 
