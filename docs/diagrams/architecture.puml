@@ -3,36 +3,50 @@
 skinparam shadowing false
 skinparam packageStyle rectangle
 
-package "Interface" {
-  [HTTP API]
+package "Interface (HTTP)" {
+  [App / Middleware / DI]
+  [v1 Admin Router (modular)]
+  [v1 User Router]
+  [Schemas: content|delivery|imports|reporting]
 }
 
 package "Application" {
-  [Command Handlers]
-  [Query Handlers]
-  [Ports]
+  [content context]
+  [delivery context]
+  [reporting context]
+  [ports: unit_of_work + fixture_cleanup]
 }
 
 package "Domain" {
-  [Test Aggregate]
-  [Assignment Aggregate]
-  [Attempt Aggregate]
-  [Scoring Rules]
+  [content]
+  [delivery]
+  [shared]
 }
 
 package "Infrastructure" {
-  [Repositories]
-  [DB]
-  [External Clients]
+  [db.repositories + db.uow + mappers]
+  [maintenance.fixture_cleanup]
 }
 
-[HTTP API] --> [Command Handlers]
-[HTTP API] --> [Query Handlers]
-[Command Handlers] --> [Test Aggregate]
-[Command Handlers] --> [Assignment Aggregate]
-[Command Handlers] --> [Attempt Aggregate]
-[Query Handlers] --> [Ports]
-[Ports] --> [Repositories]
-[Repositories] --> [DB]
-[External Clients] --> [Ports]
+[App / Middleware / DI] --> [v1 Admin Router (modular)]
+[App / Middleware / DI] --> [v1 User Router]
+[v1 Admin Router (modular)] --> [Schemas: content|delivery|imports|reporting]
+[v1 User Router] --> [Schemas: content|delivery|imports|reporting]
+
+[v1 Admin Router (modular)] --> [content context]
+[v1 Admin Router (modular)] --> [delivery context]
+[v1 Admin Router (modular)] --> [reporting context]
+[v1 User Router] --> [delivery context]
+[v1 User Router] --> [reporting context]
+
+[content context] --> [content]
+[delivery context] --> [delivery]
+[reporting context] --> [delivery]
+
+[content context] --> [ports: unit_of_work + fixture_cleanup]
+[delivery context] --> [ports: unit_of_work + fixture_cleanup]
+[reporting context] --> [ports: unit_of_work + fixture_cleanup]
+
+[db.repositories + db.uow + mappers] ..> [ports: unit_of_work + fixture_cleanup]
+[maintenance.fixture_cleanup] ..> [ports: unit_of_work + fixture_cleanup]
 @enduml
