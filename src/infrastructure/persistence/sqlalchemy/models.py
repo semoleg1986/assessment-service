@@ -137,6 +137,9 @@ class AssignmentModel(Base):
         DateTime(timezone=True), nullable=False
     )
     version: Mapped[int] = mapped_column(Integer, nullable=False)
+    attempt_no: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=1, server_default="1"
+    )
 
 
 class AttemptModel(Base):

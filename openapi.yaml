@@ -676,6 +676,7 @@ paths:
             example:
               test_id: 00000000-0000-4000-8000-000000000000
               child_id: 00000000-0000-4000-8000-000000000000
+              retake: true
         required: true
       responses:
         '201':
@@ -689,6 +690,7 @@ paths:
                 test_id: 00000000-0000-4000-8000-000000000000
                 child_id: 00000000-0000-4000-8000-000000000000
                 status: string
+                attempt_no: 1
         '422':
           description: Validation Error
           content:
@@ -717,6 +719,7 @@ paths:
             example:
               test_id: 00000000-0000-4000-8000-000000000000
               child_id: 00000000-0000-4000-8000-000000000000
+              retake: true
         required: true
       responses:
         '201':
@@ -730,6 +733,7 @@ paths:
                 test_id: 00000000-0000-4000-8000-000000000000
                 child_id: 00000000-0000-4000-8000-000000000000
                 status: string
+                attempt_no: 1
         '422':
           description: Validation Error
           content:
@@ -932,7 +936,7 @@ paths:
                 test_id: 00000000-0000-4000-8000-000000000000
                 test_title: string
                 status: string
-                due_at: string
+                attempt_no: 1
         '422':
           description: Validation Error
           content:
@@ -1298,6 +1302,10 @@ components:
           type: string
           format: uuid
           title: Child Id
+        retake:
+          type: boolean
+          title: Retake
+          default: false
       type: object
       required:
       - test_id
@@ -1321,6 +1329,9 @@ components:
         status:
           type: string
           title: Status
+        attempt_no:
+          type: integer
+          title: Attempt No
         due_at:
           anyOf:
           - type: string
@@ -1331,6 +1342,7 @@ components:
       - assignment_id
       - test_id
       - status
+      - attempt_no
       title: AssignmentListItemResponse
     AssignmentResponse:
       properties:
@@ -1349,12 +1361,16 @@ components:
         status:
           type: string
           title: Status
+        attempt_no:
+          type: integer
+          title: Attempt No
       type: object
       required:
       - assignment_id
       - test_id
       - child_id
       - status
+      - attempt_no
       title: AssignmentResponse
     AttemptAnswerResponse:
       properties:

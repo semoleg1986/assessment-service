@@ -25,6 +25,7 @@ class SqlAlchemyAssignmentRepository(AssignmentRepository):
                 status=assignment.status.value,
                 assigned_at=assignment.assigned_at,
                 version=assignment.version,
+                attempt_no=assignment.attempt_no,
             )
             self._session.add(model)
             return
@@ -34,6 +35,7 @@ class SqlAlchemyAssignmentRepository(AssignmentRepository):
         model.status = assignment.status.value
         model.assigned_at = assignment.assigned_at
         model.version = assignment.version
+        model.attempt_no = assignment.attempt_no
 
     def get(self, assignment_id: UUID) -> AssignmentAggregate | None:
         model = self._session.get(AssignmentModel, assignment_id)

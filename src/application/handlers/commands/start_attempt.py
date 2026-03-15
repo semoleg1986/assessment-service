@@ -26,36 +26,19 @@ def handle_start_attempt(
     if assignment.child_id != command.child_id:
         raise InvariantViolationError("assignment does not belong to child")
 
-    assignments_by_child = {
-        item.assignment_id: item
-        for item in uow.assignments.list_by_child(command.child_id)
-    }
     attempts_by_child = uow.attempts.list_by_child(command.child_id)
 
-    # Idempotent resume: if there is an active attempt for the same assignment,
-    # return it instead of creating a duplicate.
+    # Idempotent resume for the same assignment.
     for attempt in attempts_by_child:
-        if (
-            attempt.assignment_id == command.assignment_id
-            and attempt.status == AttemptStatus.STARTED
-        ):
+        if attempt.assignment_id != command.assignment_id:
+            continue
+        if attempt.status == AttemptStatus.STARTED:
             if assignment.status != AssignmentStatus.STARTED:
                 assignment.mark_started()
                 uow.assignments.save(assignment)
                 uow.commit()
             return attempt
-
-    # One test => one attempt per child. If attempt already exists for this test,
-    # do not open a new one.
-    for attempt in attempts_by_child:
-        existing_assignment = assignments_by_child.get(attempt.assignment_id)
-        if existing_assignment is None:
-            continue
-        if existing_assignment.test_id != assignment.test_id:
-            continue
-        if attempt.status == AttemptStatus.STARTED:
-            return attempt
-        raise InvariantViolationError("attempt for this test already exists")
+        raise InvariantViolationError("attempt for this assignment already exists")
 
     attempt = AttemptAggregate(
         attempt_id=uuid4(),

@@ -135,6 +135,7 @@ def assignment_from_model(model: AssignmentModel) -> AssignmentAggregate:
         status=AssignmentStatus(model.status),
         assigned_at=model.assigned_at,
         version=model.version,
+        attempt_no=model.attempt_no,
     )
 
 

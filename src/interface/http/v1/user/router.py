@@ -53,6 +53,7 @@ def list_assignments_by_child(
             assignment_id=a.assignment_id,
             test_id=a.test_id,
             status=a.status.value,
+            attempt_no=a.attempt_no,
         )
         for a in assignments
     ]

@@ -22,6 +22,8 @@ class AssignmentAggregate:
     :type assigned_at: datetime
     :param version: Версия агрегата.
     :type version: int
+    :param attempt_no: Порядковый номер попытки по тесту для ребёнка.
+    :type attempt_no: int
     """
 
     assignment_id: UUID
@@ -30,6 +32,11 @@ class AssignmentAggregate:
     status: AssignmentStatus = AssignmentStatus.ASSIGNED
     assigned_at: datetime = field(default_factory=lambda: datetime.now(UTC))
     version: int = 1
+    attempt_no: int = 1
+
+    def __post_init__(self) -> None:
+        if self.attempt_no < 1:
+            raise ValueError("attempt_no must be >= 1")
 
     def mark_started(self) -> None:
         """Перевести назначение в статус `started`."""

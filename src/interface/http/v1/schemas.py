@@ -70,6 +70,7 @@ class TestResponse(BaseModel):
 class AssignTestRequest(BaseModel):
     test_id: UUID
     child_id: UUID
+    retake: bool = False
 
 
 class AssignmentResponse(BaseModel):
@@ -77,6 +78,7 @@ class AssignmentResponse(BaseModel):
     test_id: UUID
     child_id: UUID
     status: str
+    attempt_no: int
 
 
 class AssignmentListItemResponse(BaseModel):
@@ -84,6 +86,7 @@ class AssignmentListItemResponse(BaseModel):
     test_id: UUID
     test_title: str | None = None
     status: str
+    attempt_no: int
     due_at: str | None = None
 
 

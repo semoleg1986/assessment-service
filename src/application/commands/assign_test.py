@@ -6,3 +6,4 @@ from uuid import UUID
 class AssignTestCommand:
     test_id: UUID
     child_id: UUID
+    retake: bool = False

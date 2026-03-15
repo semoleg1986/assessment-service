@@ -542,17 +542,24 @@ def assign_test(
 ) -> AssignmentResponse:
     try:
         assignment = handle_assign_test(
-            AssignTestCommand(test_id=body.test_id, child_id=body.child_id),
+            AssignTestCommand(
+                test_id=body.test_id,
+                child_id=body.child_id,
+                retake=body.retake,
+            ),
             uow=uow,
         )
     except NotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except InvariantViolationError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
 
     return AssignmentResponse(
         assignment_id=assignment.assignment_id,
         test_id=assignment.test_id,
         child_id=assignment.child_id,
         status=assignment.status.value,
+        attempt_no=assignment.attempt_no,
     )
 
 

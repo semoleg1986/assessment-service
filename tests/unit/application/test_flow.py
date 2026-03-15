@@ -310,7 +310,42 @@ def test_start_attempt_returns_existing_started_attempt() -> None:
     assert second.attempt_id == first.attempt_id
 
 
-def test_one_attempt_per_test_for_child() -> None:
+def test_assign_duplicate_without_retake_fails() -> None:
+    uow = InMemoryUnitOfWork()
+    _prepare_basic_catalog(uow)
+
+    test = handle_create_test(
+        CreateTestCommand(
+            subject_code="math",
+            grade=1,
+            questions=[
+                QuestionInput(
+                    node_id="M2-S-01-N1",
+                    text="5-2",
+                    answer_key="3",
+                    max_score=1,
+                )
+            ],
+        ),
+        uow=uow,
+    )
+    child_id = uuid4()
+    handle_assign_test(
+        AssignTestCommand(test_id=test.test_id, child_id=child_id),
+        uow=uow,
+    )
+
+    try:
+        handle_assign_test(
+            AssignTestCommand(test_id=test.test_id, child_id=child_id),
+            uow=uow,
+        )
+        assert False, "expected InvariantViolationError"
+    except InvariantViolationError as exc:
+        assert str(exc) == "assignment for this test already exists, use retake=true"
+
+
+def test_retake_assignment_allows_new_attempt_for_same_test() -> None:
     uow = InMemoryUnitOfWork()
     _prepare_basic_catalog(uow)
 
@@ -334,12 +369,9 @@ def test_one_attempt_per_test_for_child() -> None:
         AssignTestCommand(test_id=test.test_id, child_id=child_id),
         uow=uow,
     )
-    second_assignment = handle_assign_test(
-        AssignTestCommand(test_id=test.test_id, child_id=child_id),
-        uow=uow,
-    )
+    assert first_assignment.attempt_no == 1
 
-    attempt = handle_start_attempt(
+    first_attempt = handle_start_attempt(
         StartAttemptCommand(
             assignment_id=first_assignment.assignment_id,
             child_id=child_id,
@@ -348,7 +380,7 @@ def test_one_attempt_per_test_for_child() -> None:
     )
     handle_submit_attempt(
         SubmitAttemptCommand(
-            attempt_id=attempt.attempt_id,
+            attempt_id=first_attempt.attempt_id,
             answers=[
                 SubmittedAnswerInput(
                     question_id=test.questions[0].question_id,
@@ -359,17 +391,55 @@ def test_one_attempt_per_test_for_child() -> None:
         uow=uow,
     )
 
+    retake_assignment = handle_assign_test(
+        AssignTestCommand(test_id=test.test_id, child_id=child_id, retake=True),
+        uow=uow,
+    )
+    assert retake_assignment.attempt_no == 2
+
+    second_attempt = handle_start_attempt(
+        StartAttemptCommand(
+            assignment_id=retake_assignment.assignment_id,
+            child_id=child_id,
+        ),
+        uow=uow,
+    )
+    assert second_attempt.assignment_id == retake_assignment.assignment_id
+
+
+def test_retake_requires_existing_submitted_attempt() -> None:
+    uow = InMemoryUnitOfWork()
+    _prepare_basic_catalog(uow)
+
+    test = handle_create_test(
+        CreateTestCommand(
+            subject_code="math",
+            grade=1,
+            questions=[
+                QuestionInput(
+                    node_id="M2-S-01-N1",
+                    text="5-2",
+                    answer_key="3",
+                    max_score=1,
+                )
+            ],
+        ),
+        uow=uow,
+    )
+    child_id = uuid4()
+    handle_assign_test(
+        AssignTestCommand(test_id=test.test_id, child_id=child_id),
+        uow=uow,
+    )
+
     try:
-        handle_start_attempt(
-            StartAttemptCommand(
-                assignment_id=second_assignment.assignment_id,
-                child_id=child_id,
-            ),
+        handle_assign_test(
+            AssignTestCommand(test_id=test.test_id, child_id=child_id, retake=True),
             uow=uow,
         )
         assert False, "expected InvariantViolationError"
     except InvariantViolationError as exc:
-        assert str(exc) == "attempt for this test already exists"
+        assert str(exc) == "retake requires at least one existing attempt for this test"
 
 
 def test_submit_attempt_stores_time_spent_ms() -> None:
