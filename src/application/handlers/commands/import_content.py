@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from datetime import UTC, datetime
 from uuid import NAMESPACE_URL, uuid4, uuid5
 
 from src.application.commands.create_micro_skill import CreateMicroSkillCommand
@@ -21,7 +20,6 @@ from src.application.handlers.commands.create_subject import handle_create_subje
 from src.application.handlers.commands.create_topic import handle_create_topic
 from src.application.ports.unit_of_work import UnitOfWork
 from src.domain.aggregates.test_aggregate import AssessmentTest
-from src.domain.entities.micro_skill_node import MicroSkillNode
 from src.domain.entities.question import Question
 from src.domain.entities.question_option import QuestionOption
 from src.domain.entities.subject import Subject
@@ -623,31 +621,21 @@ def handle_import_content(
         )
         if changed:
             details["micro_skills_updated"] += 1
-        updated_at = existing_node.updated_at
-        version = existing_node.version
-        if changed:
-            version += 1
-            updated_at = datetime.now(UTC)
-        uow.micro_skills.save(
-            MicroSkillNode(
-                node_id=node.node_id,
-                subject_code=node.subject_code,
-                topic_code=node.topic_code,
-                grade=node.grade,
-                section_code=node.section_code,
-                section_name=node.section_name,
-                micro_skill_name=node.micro_skill_name,
-                predecessor_ids=node.predecessor_ids,
-                criticality=node.criticality,
-                source_ref=node.source_ref,
-                description=node.description,
-                status=node.status,
-                external_ref=node.external_ref,
-                version=version,
-                created_at=existing_node.created_at,
-                updated_at=updated_at,
-            )
+        existing_node.update_details(
+            subject_code=node.subject_code,
+            topic_code=node.topic_code,
+            grade=node.grade,
+            section_code=node.section_code,
+            section_name=node.section_name,
+            micro_skill_name=node.micro_skill_name,
+            predecessor_ids=node.predecessor_ids,
+            criticality=node.criticality,
+            source_ref=node.source_ref,
+            description=node.description,
+            status=node.status,
+            external_ref=node.external_ref,
         )
+        uow.micro_skills.save(existing_node)
         if changed:
             uow.commit()
 

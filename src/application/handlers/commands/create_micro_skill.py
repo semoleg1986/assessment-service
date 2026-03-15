@@ -1,42 +1,8 @@
-from collections import deque
-
 from src.application.commands.create_micro_skill import CreateMicroSkillCommand
 from src.application.ports.unit_of_work import UnitOfWork
 from src.domain.entities.micro_skill_node import MicroSkillNode
 from src.domain.errors import InvariantViolationError, NotFoundError
-
-
-def _has_path(uow: UnitOfWork, src: str, target: str) -> bool:
-    """
-    Проверить достижимость `target` из `src` по predecessor-ребрам.
-
-    :param uow: Unit of Work.
-    :type uow: UnitOfWork
-    :param src: Исходный узел.
-    :type src: str
-    :param target: Целевой узел.
-    :type target: str
-    :return: True, если путь существует.
-    :rtype: bool
-    """
-    if src == target:
-        return True
-    visited: set[str] = set()
-    queue = deque([src])
-    while queue:
-        node_id = queue.popleft()
-        if node_id in visited:
-            continue
-        visited.add(node_id)
-        node = uow.micro_skills.get(node_id)
-        if node is None:
-            continue
-        for pred in node.predecessor_ids:
-            if pred == target:
-                return True
-            if pred not in visited:
-                queue.append(pred)
-    return False
+from src.domain.services import ensure_predecessors_are_valid
 
 
 def handle_create_micro_skill(
@@ -63,11 +29,18 @@ def handle_create_micro_skill(
     if uow.micro_skills.get(command.node_id) is not None:
         raise InvariantViolationError("micro skill already exists")
 
-    for pred in command.predecessor_ids:
-        if uow.micro_skills.get(pred) is None:
-            raise NotFoundError(f"predecessor not found: {pred}")
-        if _has_path(uow, pred, command.node_id):
-            raise InvariantViolationError("cycle detected in micro-skill graph")
+    ensure_predecessors_are_valid(
+        node_id=command.node_id,
+        predecessor_ids=command.predecessor_ids,
+        exists=lambda pred: uow.micro_skills.get(pred) is not None,
+        get_predecessors=(
+            lambda node_id: (
+                current.predecessor_ids
+                if (current := uow.micro_skills.get(node_id)) is not None
+                else None
+            )
+        ),
+    )
 
     node = MicroSkillNode(
         node_id=command.node_id,

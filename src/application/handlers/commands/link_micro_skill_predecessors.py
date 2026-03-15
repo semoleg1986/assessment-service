@@ -1,45 +1,10 @@
-from collections import deque
-from datetime import UTC, datetime
-
 from src.application.commands.link_micro_skill_predecessors import (
     LinkMicroSkillPredecessorsCommand,
 )
 from src.application.ports.unit_of_work import UnitOfWork
 from src.domain.entities.micro_skill_node import MicroSkillNode
-from src.domain.errors import InvariantViolationError, NotFoundError
-
-
-def _has_path(uow: UnitOfWork, src: str, target: str) -> bool:
-    """
-    Проверить достижимость `target` из `src` для детекции циклов.
-
-    :param uow: Unit of Work.
-    :type uow: UnitOfWork
-    :param src: Исходный узел.
-    :type src: str
-    :param target: Целевой узел.
-    :type target: str
-    :return: True, если путь существует.
-    :rtype: bool
-    """
-    if src == target:
-        return True
-    visited: set[str] = set()
-    queue = deque([src])
-    while queue:
-        node_id = queue.popleft()
-        if node_id in visited:
-            continue
-        visited.add(node_id)
-        node = uow.micro_skills.get(node_id)
-        if node is None:
-            continue
-        for pred in node.predecessor_ids:
-            if pred == target:
-                return True
-            if pred not in visited:
-                queue.append(pred)
-    return False
+from src.domain.errors import NotFoundError
+from src.domain.services import ensure_predecessors_are_valid
 
 
 def handle_link_micro_skill_predecessors(
@@ -60,20 +25,23 @@ def handle_link_micro_skill_predecessors(
     if node is None:
         raise NotFoundError("micro skill not found")
 
-    for pred in command.predecessor_ids:
-        if pred == command.node_id:
-            raise InvariantViolationError("self dependency is not allowed")
-        if uow.micro_skills.get(pred) is None:
-            raise NotFoundError(f"predecessor not found: {pred}")
-        if _has_path(uow, pred, command.node_id):
-            raise InvariantViolationError("cycle detected in micro-skill graph")
+    ensure_predecessors_are_valid(
+        node_id=command.node_id,
+        predecessor_ids=command.predecessor_ids,
+        exists=lambda pred: uow.micro_skills.get(pred) is not None,
+        get_predecessors=(
+            lambda node_id: (
+                current.predecessor_ids
+                if (current := uow.micro_skills.get(node_id)) is not None
+                else None
+            )
+        ),
+    )
 
-    if node.predecessor_ids == command.predecessor_ids:
+    changed = node.relink_predecessors(command.predecessor_ids)
+    if not changed:
         return node
 
-    node.predecessor_ids = command.predecessor_ids
-    node.version += 1
-    node.updated_at = datetime.now(UTC)
     uow.micro_skills.save(node)
     uow.commit()
     return node
