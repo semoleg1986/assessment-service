@@ -6,7 +6,7 @@ from logging.config import fileConfig
 from sqlalchemy import engine_from_config, pool
 
 from alembic import context  # type: ignore[attr-defined]
-from src.infrastructure.persistence.sqlalchemy.models import Base
+from src.infrastructure.db.models import Base
 
 config = context.config
 
