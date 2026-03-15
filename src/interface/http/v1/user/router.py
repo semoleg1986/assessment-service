@@ -3,21 +3,30 @@ from uuid import UUID
 from dishka.integrations.fastapi import DishkaRoute, FromDishka
 from fastapi import APIRouter, HTTPException
 
-from src.application.commands import (
+from src.application.delivery.commands.save_attempt_answers import (
     SaveAttemptAnswersCommand,
-    StartAttemptCommand,
+)
+from src.application.delivery.commands.start_attempt import StartAttemptCommand
+from src.application.delivery.commands.submit_attempt import (
     SubmitAttemptCommand,
     SubmittedAnswerInput,
 )
-from src.application.handlers import (
+from src.application.delivery.handlers.get_attempt_result import (
     handle_get_attempt_result,
+)
+from src.application.delivery.handlers.list_assignments_by_child import (
     handle_list_assignments_by_child,
+)
+from src.application.delivery.handlers.save_attempt_answers import (
     handle_save_attempt_answers,
-    handle_start_attempt,
-    handle_submit_attempt,
+)
+from src.application.delivery.handlers.start_attempt import handle_start_attempt
+from src.application.delivery.handlers.submit_attempt import handle_submit_attempt
+from src.application.delivery.queries.get_attempt_result import GetAttemptResultQuery
+from src.application.delivery.queries.list_assignments_by_child import (
+    ListAssignmentsByChildQuery,
 )
 from src.application.ports.unit_of_work import UnitOfWork
-from src.application.queries import GetAttemptResultQuery, ListAssignmentsByChildQuery
 from src.domain.errors import InvariantViolationError, NotFoundError
 from src.domain.shared.questions import DiagnosticTag
 from src.interface.http.v1.schemas import (

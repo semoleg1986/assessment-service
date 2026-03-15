@@ -3,53 +3,69 @@ from uuid import UUID
 from dishka.integrations.fastapi import DishkaRoute, FromDishka
 from fastapi import APIRouter, HTTPException, status
 
-from src.application.commands import (
-    AssignTestCommand,
-    CleanupFixturesCommand,
-    CreateMicroSkillCommand,
-    CreateSubjectCommand,
+from src.application.content.commands.cleanup_fixtures import CleanupFixturesCommand
+from src.application.content.commands.create_micro_skill import CreateMicroSkillCommand
+from src.application.content.commands.create_subject import CreateSubjectCommand
+from src.application.content.commands.create_test import (
     CreateTestCommand,
-    CreateTopicCommand,
-    DeleteMicroSkillCommand,
-    LinkMicroSkillPredecessorsCommand,
     QuestionInput,
     QuestionOptionInput,
     TextDistractorInput,
-    UpdateMicroSkillCommand,
 )
-from src.application.handlers import (
-    handle_assign_test,
-    handle_cleanup_fixtures,
+from src.application.content.commands.create_topic import CreateTopicCommand
+from src.application.content.commands.delete_micro_skill import DeleteMicroSkillCommand
+from src.application.content.commands.link_micro_skill_predecessors import (
+    LinkMicroSkillPredecessorsCommand,
+)
+from src.application.content.commands.update_micro_skill import UpdateMicroSkillCommand
+from src.application.content.handlers.cleanup_fixtures import handle_cleanup_fixtures
+from src.application.content.handlers.create_micro_skill import (
     handle_create_micro_skill,
-    handle_create_subject,
-    handle_create_test,
-    handle_create_topic,
+)
+from src.application.content.handlers.create_subject import handle_create_subject
+from src.application.content.handlers.create_test import handle_create_test
+from src.application.content.handlers.create_topic import handle_create_topic
+from src.application.content.handlers.delete_micro_skill import (
     handle_delete_micro_skill,
-    handle_get_child_diagnostics,
-    handle_get_child_results,
-    handle_get_child_skill_results,
-    handle_get_test_by_id,
+)
+from src.application.content.handlers.get_test_by_id import handle_get_test_by_id
+from src.application.content.handlers.link_micro_skill_predecessors import (
     handle_link_micro_skill_predecessors,
-    handle_list_micro_skills,
-    handle_list_subjects,
-    handle_list_tests,
-    handle_list_topics,
+)
+from src.application.content.handlers.list_micro_skills import handle_list_micro_skills
+from src.application.content.handlers.list_subjects import handle_list_subjects
+from src.application.content.handlers.list_tests import handle_list_tests
+from src.application.content.handlers.list_topics import handle_list_topics
+from src.application.content.handlers.update_micro_skill import (
     handle_update_micro_skill,
 )
+from src.application.content.queries.get_test_by_id import GetTestByIdQuery
+from src.application.content.queries.list_micro_skills import ListMicroSkillsQuery
+from src.application.content.queries.list_subjects import ListSubjectsQuery
+from src.application.content.queries.list_tests import ListTestsQuery
+from src.application.content.queries.list_topics import ListTopicsQuery
+from src.application.delivery.commands.assign_test import AssignTestCommand
+from src.application.delivery.handlers.assign_test import handle_assign_test
 from src.application.ports.fixture_cleanup import (
     FixtureCleanupService,
     FixtureCleanupUnsupportedError,
 )
 from src.application.ports.unit_of_work import UnitOfWork
-from src.application.queries import (
+from src.application.reporting.handlers.get_child_diagnostics import (
+    handle_get_child_diagnostics,
+)
+from src.application.reporting.handlers.get_child_results import (
+    handle_get_child_results,
+)
+from src.application.reporting.handlers.get_child_skill_results import (
+    handle_get_child_skill_results,
+)
+from src.application.reporting.queries.get_child_diagnostics import (
     GetChildDiagnosticsQuery,
-    GetChildResultsQuery,
+)
+from src.application.reporting.queries.get_child_results import GetChildResultsQuery
+from src.application.reporting.queries.get_child_skill_results import (
     GetChildSkillResultsQuery,
-    GetTestByIdQuery,
-    ListMicroSkillsQuery,
-    ListSubjectsQuery,
-    ListTestsQuery,
-    ListTopicsQuery,
 )
 from src.domain.errors import InvariantViolationError, NotFoundError
 from src.domain.shared.questions import DiagnosticTag

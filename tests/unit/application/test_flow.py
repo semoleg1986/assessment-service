@@ -1,29 +1,35 @@
 from uuid import uuid4
 
-from src.application.commands import (
-    AssignTestCommand,
-    CreateMicroSkillCommand,
-    CreateSubjectCommand,
+from src.application.content.commands.create_micro_skill import CreateMicroSkillCommand
+from src.application.content.commands.create_subject import CreateSubjectCommand
+from src.application.content.commands.create_test import (
     CreateTestCommand,
-    CreateTopicCommand,
     QuestionInput,
     QuestionOptionInput,
-    SaveAttemptAnswersCommand,
-    StartAttemptCommand,
-    SubmitAttemptCommand,
-    SubmittedAnswerInput,
     TextDistractorInput,
 )
-from src.application.handlers import (
-    handle_assign_test,
+from src.application.content.commands.create_topic import CreateTopicCommand
+from src.application.content.handlers.create_micro_skill import (
     handle_create_micro_skill,
-    handle_create_subject,
-    handle_create_test,
-    handle_create_topic,
-    handle_save_attempt_answers,
-    handle_start_attempt,
-    handle_submit_attempt,
 )
+from src.application.content.handlers.create_subject import handle_create_subject
+from src.application.content.handlers.create_test import handle_create_test
+from src.application.content.handlers.create_topic import handle_create_topic
+from src.application.delivery.commands.assign_test import AssignTestCommand
+from src.application.delivery.commands.save_attempt_answers import (
+    SaveAttemptAnswersCommand,
+)
+from src.application.delivery.commands.start_attempt import StartAttemptCommand
+from src.application.delivery.commands.submit_attempt import (
+    SubmitAttemptCommand,
+    SubmittedAnswerInput,
+)
+from src.application.delivery.handlers.assign_test import handle_assign_test
+from src.application.delivery.handlers.save_attempt_answers import (
+    handle_save_attempt_answers,
+)
+from src.application.delivery.handlers.start_attempt import handle_start_attempt
+from src.application.delivery.handlers.submit_attempt import handle_submit_attempt
 from src.domain.errors import InvariantViolationError, NotFoundError
 from src.domain.shared.questions import DiagnosticTag, QuestionType, TextMatchMode
 from src.domain.shared.statuses import CriticalityLevel
