@@ -3,8 +3,8 @@ from src.application.content.commands.link_micro_skill_predecessors import (
 )
 from src.application.ports.unit_of_work import UnitOfWork
 from src.domain.content.micro_skill.entity import MicroSkillNode
+from src.domain.content.services import ensure_predecessors_are_valid
 from src.domain.errors import NotFoundError
-from src.domain.services import ensure_predecessors_are_valid
 
 
 def handle_link_micro_skill_predecessors(
