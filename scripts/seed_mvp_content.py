@@ -5,15 +5,15 @@ import logging
 from dataclasses import dataclass
 from os import getenv
 
-from src.application.commands.create_micro_skill import CreateMicroSkillCommand
-from src.application.commands.create_subject import CreateSubjectCommand
-from src.application.commands.create_topic import CreateTopicCommand
-from src.application.handlers.commands.create_micro_skill import (
+from src.application.content.commands.create_micro_skill import CreateMicroSkillCommand
+from src.application.content.commands.create_subject import CreateSubjectCommand
+from src.application.content.commands.create_topic import CreateTopicCommand
+from src.application.content.handlers.create_micro_skill import (
     handle_create_micro_skill,
 )
-from src.application.handlers.commands.create_subject import handle_create_subject
-from src.application.handlers.commands.create_topic import handle_create_topic
-from src.domain.value_objects.statuses import CriticalityLevel
+from src.application.content.handlers.create_subject import handle_create_subject
+from src.application.content.handlers.create_topic import handle_create_topic
+from src.domain.shared.statuses import CriticalityLevel
 from src.infrastructure.uow import AppSettings, build_uow
 
 logger = logging.getLogger("assessment.seed")
