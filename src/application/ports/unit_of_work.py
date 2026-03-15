@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from src.application.ports.repositories import (
+from src.domain.repositories import (
     AssignmentRepository,
     AttemptRepository,
     MicroSkillNodeRepository,

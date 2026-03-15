@@ -1,6 +1,12 @@
 from uuid import UUID
 
-from src.application.ports.repositories import (
+from src.domain.content.micro_skill.entity import MicroSkillNode
+from src.domain.content.subject.entity import Subject
+from src.domain.content.test.aggregate import AssessmentTest
+from src.domain.content.topic.entity import Topic
+from src.domain.delivery.assignment.aggregate import AssignmentAggregate
+from src.domain.delivery.attempt.aggregate import AttemptAggregate
+from src.domain.repositories import (
     AssignmentRepository,
     AttemptRepository,
     MicroSkillNodeRepository,
@@ -8,12 +14,6 @@ from src.application.ports.repositories import (
     TestRepository,
     TopicRepository,
 )
-from src.domain.content.micro_skill.entity import MicroSkillNode
-from src.domain.content.subject.entity import Subject
-from src.domain.content.test.aggregate import AssessmentTest
-from src.domain.content.topic.entity import Topic
-from src.domain.delivery.assignment.aggregate import AssignmentAggregate
-from src.domain.delivery.attempt.aggregate import AttemptAggregate
 from src.domain.shared.statuses import AttemptStatus
 
 

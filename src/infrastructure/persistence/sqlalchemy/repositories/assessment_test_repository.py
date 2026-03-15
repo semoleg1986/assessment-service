@@ -4,8 +4,8 @@ from uuid import UUID
 
 from sqlalchemy import select
 
-from src.application.ports.repositories import TestRepository
 from src.domain.content.test.aggregate import AssessmentTest
+from src.domain.repositories import TestRepository
 from src.infrastructure.persistence.sqlalchemy.mappers import assessment_test_from_model
 from src.infrastructure.persistence.sqlalchemy.models import QuestionModel, TestModel
 from src.infrastructure.persistence.sqlalchemy.session_types import SessionLike
