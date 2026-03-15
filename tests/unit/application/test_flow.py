@@ -8,6 +8,7 @@ from src.application.commands import (
     CreateTopicCommand,
     QuestionInput,
     QuestionOptionInput,
+    SaveAttemptAnswersCommand,
     StartAttemptCommand,
     SubmitAttemptCommand,
     SubmittedAnswerInput,
@@ -19,6 +20,7 @@ from src.application.handlers import (
     handle_create_subject,
     handle_create_test,
     handle_create_topic,
+    handle_save_attempt_answers,
     handle_start_attempt,
     handle_submit_attempt,
 )
@@ -418,3 +420,56 @@ def test_submit_attempt_stores_time_spent_ms() -> None:
     saved_attempt = uow.attempts.get(attempt.attempt_id)
     assert saved_attempt is not None
     assert saved_attempt.answers[0].time_spent_ms == 3210
+
+
+def test_save_attempt_answers_persists_draft_answers() -> None:
+    uow = InMemoryUnitOfWork()
+    _prepare_basic_catalog(uow)
+
+    test = handle_create_test(
+        CreateTestCommand(
+            subject_code="math",
+            grade=1,
+            questions=[
+                QuestionInput(
+                    node_id="M2-S-01-N1",
+                    text="9-4",
+                    answer_key="5",
+                    max_score=1,
+                )
+            ],
+        ),
+        uow=uow,
+    )
+    assignment = handle_assign_test(
+        AssignTestCommand(test_id=test.test_id, child_id=uuid4()),
+        uow=uow,
+    )
+    attempt = handle_start_attempt(
+        StartAttemptCommand(
+            assignment_id=assignment.assignment_id,
+            child_id=assignment.child_id,
+        ),
+        uow=uow,
+    )
+
+    result = handle_save_attempt_answers(
+        SaveAttemptAnswersCommand(
+            attempt_id=attempt.attempt_id,
+            answers=[
+                SubmittedAnswerInput(
+                    question_id=test.questions[0].question_id,
+                    value="5",
+                    time_spent_ms=2100,
+                )
+            ],
+        ),
+        uow=uow,
+    )
+
+    saved_attempt = uow.attempts.get(attempt.attempt_id)
+    assert result["saved_answers"] == 1
+    assert saved_attempt is not None
+    assert saved_attempt.status.value == "started"
+    assert saved_attempt.answers[0].value == "5"
+    assert saved_attempt.answers[0].time_spent_ms == 2100

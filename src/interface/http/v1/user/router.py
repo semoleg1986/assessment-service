@@ -163,6 +163,8 @@ def save_attempt_answers(
         )
     except NotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except InvariantViolationError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
     return SaveAttemptAnswersResponse(
         attempt_id=str(result["attempt_id"]),
         saved_answers=int(result["saved_answers"]),

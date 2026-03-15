@@ -42,6 +42,20 @@ class AttemptAggregate:
     answers: list[Answer] = field(default_factory=list)
     version: int = 1
 
+    def save_answers(self, answers: list[Answer]) -> None:
+        """
+        Сохранить черновик ответов без завершения попытки.
+
+        :param answers: Текущие ответы ученика.
+        :type answers: list[Answer]
+        """
+        if self.status != AttemptStatus.STARTED:
+            raise InvariantViolationError(
+                "attempt answers can be saved only for started attempt"
+            )
+        self.answers = answers
+        self.version += 1
+
     def submit(self, answers: list[Answer]) -> None:
         """
         Завершить попытку и зафиксировать ответы.
