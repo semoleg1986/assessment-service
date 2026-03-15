@@ -1,12 +1,12 @@
 from abc import ABC, abstractmethod
 from uuid import UUID
 
-from src.domain.aggregates.assignment import AssignmentAggregate
-from src.domain.aggregates.attempt import AttemptAggregate
-from src.domain.aggregates.test_aggregate import AssessmentTest
-from src.domain.entities.micro_skill_node import MicroSkillNode
-from src.domain.entities.subject import Subject
-from src.domain.entities.topic import Topic
+from src.domain.content.micro_skill.entity import MicroSkillNode
+from src.domain.content.subject.entity import Subject
+from src.domain.content.test.aggregate import AssessmentTest
+from src.domain.content.topic.entity import Topic
+from src.domain.delivery.assignment.aggregate import AssignmentAggregate
+from src.domain.delivery.attempt.aggregate import AttemptAggregate
 
 
 class TestRepository(ABC):

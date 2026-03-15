@@ -52,7 +52,7 @@ from src.application.queries import (
     ListTopicsQuery,
 )
 from src.domain.errors import InvariantViolationError, NotFoundError
-from src.domain.value_objects.questions import DiagnosticTag
+from src.domain.shared.questions import DiagnosticTag
 from src.interface.http.v1.content_import import import_content_with_uow
 from src.interface.http.v1.schemas import (
     AssignmentResponse,

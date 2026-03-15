@@ -6,12 +6,8 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field
 
-from src.domain.value_objects.questions import (
-    DiagnosticTag,
-    QuestionType,
-    TextMatchMode,
-)
-from src.domain.value_objects.statuses import CriticalityLevel, MicroSkillStatus
+from src.domain.shared.questions import DiagnosticTag, QuestionType, TextMatchMode
+from src.domain.shared.statuses import CriticalityLevel, MicroSkillStatus
 
 
 class QuestionOptionCreateRequest(BaseModel):

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from src.application.commands.import_content import (
+from src.application.content.commands.import_content import (
     ImportContentCommand,
     ImportContentIssue,
     ImportContentPayloadInput,
@@ -13,7 +13,7 @@ from src.application.commands.import_content import (
     ImportTextDistractorInput,
     ImportTopicInput,
 )
-from src.application.handlers.commands.import_content import handle_import_content
+from src.application.content.handlers.import_content import handle_import_content
 from src.application.ports.unit_of_work import UnitOfWork
 from src.interface.http.v1.schemas import (
     ContentImportDetails,

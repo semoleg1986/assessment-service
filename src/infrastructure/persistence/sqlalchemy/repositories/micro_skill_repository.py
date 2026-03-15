@@ -3,7 +3,7 @@ from __future__ import annotations
 from sqlalchemy import select
 
 from src.application.ports.repositories import MicroSkillNodeRepository
-from src.domain.entities.micro_skill_node import MicroSkillNode
+from src.domain.content.micro_skill.entity import MicroSkillNode
 from src.infrastructure.persistence.sqlalchemy.mappers import micro_skill_from_model
 from src.infrastructure.persistence.sqlalchemy.models import MicroSkillNodeModel
 from src.infrastructure.persistence.sqlalchemy.session_types import SessionLike

@@ -2,8 +2,8 @@ from uuid import uuid4
 
 import pytest
 
-from src.domain.aggregates.attempt import AttemptAggregate
-from src.domain.entities.answer import Answer
+from src.domain.delivery.attempt.aggregate import AttemptAggregate
+from src.domain.delivery.attempt.entities.answer import Answer
 from src.domain.errors import InvariantViolationError
 
 

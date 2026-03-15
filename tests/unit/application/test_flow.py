@@ -25,12 +25,8 @@ from src.application.handlers import (
     handle_submit_attempt,
 )
 from src.domain.errors import InvariantViolationError, NotFoundError
-from src.domain.value_objects.questions import (
-    DiagnosticTag,
-    QuestionType,
-    TextMatchMode,
-)
-from src.domain.value_objects.statuses import CriticalityLevel
+from src.domain.shared.questions import DiagnosticTag, QuestionType, TextMatchMode
+from src.domain.shared.statuses import CriticalityLevel
 from src.infrastructure.uow import InMemoryUnitOfWork
 
 

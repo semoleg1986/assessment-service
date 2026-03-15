@@ -1,33 +1,36 @@
 import pytest
 
-from src.application.commands.create_micro_skill import CreateMicroSkillCommand
-from src.application.commands.create_subject import CreateSubjectCommand
-from src.application.commands.create_test import CreateTestCommand, QuestionInput
-from src.application.commands.create_topic import CreateTopicCommand
-from src.application.commands.delete_micro_skill import DeleteMicroSkillCommand
-from src.application.commands.link_micro_skill_predecessors import (
+from src.application.content.commands.create_micro_skill import CreateMicroSkillCommand
+from src.application.content.commands.create_subject import CreateSubjectCommand
+from src.application.content.commands.create_test import (
+    CreateTestCommand,
+    QuestionInput,
+)
+from src.application.content.commands.create_topic import CreateTopicCommand
+from src.application.content.commands.delete_micro_skill import DeleteMicroSkillCommand
+from src.application.content.commands.link_micro_skill_predecessors import (
     LinkMicroSkillPredecessorsCommand,
 )
-from src.application.commands.update_micro_skill import UpdateMicroSkillCommand
-from src.application.handlers.commands.create_micro_skill import (
+from src.application.content.commands.update_micro_skill import UpdateMicroSkillCommand
+from src.application.content.handlers.create_micro_skill import (
     handle_create_micro_skill,
 )
-from src.application.handlers.commands.create_subject import handle_create_subject
-from src.application.handlers.commands.create_test import handle_create_test
-from src.application.handlers.commands.create_topic import handle_create_topic
-from src.application.handlers.commands.delete_micro_skill import (
+from src.application.content.handlers.create_subject import handle_create_subject
+from src.application.content.handlers.create_test import handle_create_test
+from src.application.content.handlers.create_topic import handle_create_topic
+from src.application.content.handlers.delete_micro_skill import (
     handle_delete_micro_skill,
 )
-from src.application.handlers.commands.link_micro_skill_predecessors import (
+from src.application.content.handlers.link_micro_skill_predecessors import (
     handle_link_micro_skill_predecessors,
 )
-from src.application.handlers.commands.update_micro_skill import (
+from src.application.content.handlers.list_micro_skills import handle_list_micro_skills
+from src.application.content.handlers.update_micro_skill import (
     handle_update_micro_skill,
 )
-from src.application.handlers.queries.list_micro_skills import handle_list_micro_skills
-from src.application.queries.list_micro_skills import ListMicroSkillsQuery
+from src.application.content.queries.list_micro_skills import ListMicroSkillsQuery
 from src.domain.errors import InvariantViolationError, NotFoundError
-from src.domain.value_objects.statuses import CriticalityLevel
+from src.domain.shared.statuses import CriticalityLevel
 from src.infrastructure.uow import InMemoryUnitOfWork
 
 

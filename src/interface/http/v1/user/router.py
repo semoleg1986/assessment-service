@@ -19,7 +19,7 @@ from src.application.handlers import (
 from src.application.ports.unit_of_work import UnitOfWork
 from src.application.queries import GetAttemptResultQuery, ListAssignmentsByChildQuery
 from src.domain.errors import InvariantViolationError, NotFoundError
-from src.domain.value_objects.questions import DiagnosticTag
+from src.domain.shared.questions import DiagnosticTag
 from src.interface.http.v1.schemas import (
     AssignmentListItemResponse,
     AttemptAnswerResponse,

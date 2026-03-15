@@ -2,8 +2,8 @@ from uuid import uuid4
 
 import pytest
 
-from src.domain.aggregates.test_aggregate import AssessmentTest
-from src.domain.entities.question import Question
+from src.domain.content.test.aggregate import AssessmentTest
+from src.domain.content.test.entities.question import Question
 from src.domain.errors import InvariantViolationError
 
 

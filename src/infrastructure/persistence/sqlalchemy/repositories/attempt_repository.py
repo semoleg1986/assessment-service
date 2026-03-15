@@ -5,8 +5,8 @@ from uuid import UUID
 from sqlalchemy import select
 
 from src.application.ports.repositories import AttemptRepository
-from src.domain.aggregates.attempt import AttemptAggregate
-from src.domain.value_objects.statuses import AttemptStatus
+from src.domain.delivery.attempt.aggregate import AttemptAggregate
+from src.domain.shared.statuses import AttemptStatus
 from src.infrastructure.persistence.sqlalchemy.mappers import attempt_from_model
 from src.infrastructure.persistence.sqlalchemy.models import AnswerModel, AttemptModel
 from src.infrastructure.persistence.sqlalchemy.session_types import SessionLike
