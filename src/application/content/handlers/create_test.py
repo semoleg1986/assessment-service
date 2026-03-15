@@ -2,10 +2,10 @@ from uuid import uuid4
 
 from src.application.content.commands.create_test import CreateTestCommand
 from src.application.ports.unit_of_work import UnitOfWork
-from src.domain.content.test.entities.question import Question
-from src.domain.content.test.entities.question_option import QuestionOption
-from src.domain.content.test.entities.text_distractor import TextDistractor
 from src.domain.content.test.entity import AssessmentTest
+from src.domain.content.test.question import Question
+from src.domain.content.test.question_option import QuestionOption
+from src.domain.content.test.text_distractor import TextDistractor
 from src.domain.errors import NotFoundError
 
 

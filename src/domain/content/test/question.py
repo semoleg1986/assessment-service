@@ -1,8 +1,8 @@
 from dataclasses import dataclass, field
 from uuid import UUID
 
-from src.domain.content.test.entities.question_option import QuestionOption
-from src.domain.content.test.entities.text_distractor import TextDistractor
+from src.domain.content.test.question_option import QuestionOption
+from src.domain.content.test.text_distractor import TextDistractor
 from src.domain.errors import InvariantViolationError
 from src.domain.shared.questions import QuestionType
 

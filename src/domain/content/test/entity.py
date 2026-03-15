@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from uuid import UUID
 
-from src.domain.content.test.entities.question import Question
+from src.domain.content.test.question import Question
 from src.domain.errors import InvariantViolationError
 
 

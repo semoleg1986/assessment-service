@@ -2,7 +2,7 @@ from src.application.delivery.commands.save_attempt_answers import (
     SaveAttemptAnswersCommand,
 )
 from src.application.ports.unit_of_work import UnitOfWork
-from src.domain.delivery.attempt.answer.entity import Answer
+from src.domain.delivery.attempt.answer import Answer
 from src.domain.errors import InvariantViolationError, NotFoundError
 from src.domain.shared.statuses import AttemptStatus
 

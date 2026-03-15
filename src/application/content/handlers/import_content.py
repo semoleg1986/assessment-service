@@ -20,10 +20,10 @@ from src.application.content.handlers.create_subject import handle_create_subjec
 from src.application.content.handlers.create_topic import handle_create_topic
 from src.application.ports.unit_of_work import UnitOfWork
 from src.domain.content.subject.entity import Subject
-from src.domain.content.test.entities.question import Question
-from src.domain.content.test.entities.question_option import QuestionOption
-from src.domain.content.test.entities.text_distractor import TextDistractor
 from src.domain.content.test.entity import AssessmentTest
+from src.domain.content.test.question import Question
+from src.domain.content.test.question_option import QuestionOption
+from src.domain.content.test.text_distractor import TextDistractor
 from src.domain.content.topic.entity import Topic
 from src.domain.errors import InvariantViolationError, NotFoundError
 from src.domain.shared.questions import QuestionType
