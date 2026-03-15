@@ -1,121 +1,82 @@
 # Доменная Модель
 
-Контракт доменной модели сервиса `assessment-service`. Документ синхронизирован с текущим `main`.
+Контракт Domain Layer сервиса `assessment-service` в текущей контекстной структуре.
 
-## Агрегаты
+## Структура Domain
 
-### 1. AssessmentTest (Aggregate Root)
+```shell
+src/domain/
+├── content/
+│   ├── subject/{entity,repository}.py
+│   ├── topic/{entity,repository}.py
+│   ├── micro_skill/{entity,policies,repository}.py
+│   └── test/{entity,question,question_option,text_distractor,repository}.py
+├── delivery/
+│   ├── assignment/{entity,repository}.py
+│   └── attempt/{entity,answer,repository}.py
+├── shared/{questions,statuses}.py
+└── errors.py
+```
 
-- Поля:
-  - `test_id: UUID`
-  - `subject_code: str`
-  - `grade: int`
-  - `questions: list[Question]`
-  - `created_at: datetime`
-  - `version: int`
-- Инварианты:
-  - тест содержит минимум один вопрос
-  - `grade` в диапазоне `1..4`
-  - каждый `question` проходит собственную валидацию
+## Контекст `content`
 
-### 2. AssignmentAggregate (Aggregate Root)
+### `AssessmentTest` (Aggregate Root)
 
-- Поля:
-  - `assignment_id: UUID`
-  - `test_id: UUID`
-  - `child_id: UUID`
-  - `status: assigned | started | completed | expired | cancelled`
-  - `assigned_at: datetime`
-  - `version: int`
+- Поля: `test_id`, `subject_code`, `grade`, `questions`, `created_at`, `version`.
 - Поведение:
-  - `mark_started()`
-  - `mark_completed()`
+  - `validate()` — проверка инвариантов;
+  - `revise(...)` — ревизия контента + `version += 1`.
+- Инварианты:
+  - минимум 1 вопрос;
+  - `grade` в диапазоне `1..4`;
+  - каждый `Question` валиден.
 
-### 3. AttemptAggregate (Aggregate Root)
+### `MicroSkillNode` (Aggregate Root)
+
+- Поля: `node_id`, `subject_code`, `topic_code`, `grade`, разделы, `predecessor_ids`,
+  `criticality`, `status`, `description`, `external_ref`, `version`, timestamps.
+- Поведение:
+  - `update_details(...)` — обновление метаданных с контрольным `changed`;
+  - `relink_predecessors(...)` — изменение зависимостей узла.
+- Политики:
+  - `micro_skill/policies.py` проверяет граф зависимостей (включая cycle detection).
+
+### `Subject`, `Topic`
+
+- Простые доменные сущности справочников контента.
+
+### `Question` + дочерние объекты
+
+- `Question` поддерживает типы:
+  - `text`;
+  - `single_choice`.
+- `QuestionOption` — вариант выбора для `single_choice`.
+- `TextDistractor` — шаблон ошибок для text-ответа:
+  - `match_mode: exact | normalized | regex`;
+  - `diagnostic_tag`.
+
+## Контекст `delivery`
+
+### `AssignmentAggregate` (Aggregate Root)
+
+- Поля: `assignment_id`, `test_id`, `child_id`, `status`, `assigned_at`, `version`.
+- Поведение: `mark_started()`, `mark_completed()`.
+
+### `AttemptAggregate` (Aggregate Root)
+
+- Поля: `attempt_id`, `assignment_id`, `child_id`, `status`, `started_at`,
+  `submitted_at`, `score`, `answers`, `version`.
+- Поведение:
+  - `save_answers(...)` — сохраняет черновик ответов при `status=started`;
+  - `submit(...)` — завершает попытку, фиксирует score и `submitted_at`.
+
+### `Answer`
 
 - Поля:
-  - `attempt_id: UUID`
-  - `assignment_id: UUID`
-  - `child_id: UUID`
-  - `status: started | submitted | cancelled`
-  - `started_at: datetime`
-  - `submitted_at: datetime | None`
-  - `score: int`
-  - `answers: list[Answer]`
-  - `version: int`
-- Поведение:
-  - `submit(answers)`
-- Инварианты:
-  - отправка попытки разрешена только из `started`
+  - `question_id`, `value`, `selected_option_id`, `resolved_diagnostic_tag`,
+    `is_correct`, `awarded_score`.
 
-## Сущности
-
-### Subject
-
-- `code: str`
-- `name: str`
-
-### Topic
-
-- `code: str`
-- `subject_code: str`
-- `grade: int`
-- `name: str`
-
-### MicroSkillNode
-
-- `node_id: str`
-- `subject_code: str`
-- `grade: int`
-- `topic_code: str | None`
-- `section_code: str`
-- `section_name: str`
-- `micro_skill_name: str`
-- `predecessor_ids: list[str]`
-- `criticality: low | medium | high`
-- `source_ref: str | None`
-- `description: str | None`
-- `status: draft | active | archived`
-- `external_ref: str | None`
-- `version: int`
-- `created_at: datetime`
-- `updated_at: datetime`
-
-### Question
-
-- `question_id: UUID`
-- `node_id: str`
-- `text: str`
-- `question_type: text | single_choice`
-- `answer_key: str | None`
-- `correct_option_id: str | None`
-- `options: list[QuestionOption]`
-- `text_distractors: list[TextDistractor]`
-- `max_score: int`
-
-### QuestionOption
-
-- `option_id: str`
-- `text: str`
-- `position: int`
-- `diagnostic_tag: DiagnosticTag | None`
-
-### TextDistractor
-
-- `pattern: str`
-- `match_mode: exact | normalized | regex`
-- `diagnostic_tag: DiagnosticTag`
-
-### Answer
-
-- `question_id: UUID`
-- `value: str | None`
-- `selected_option_id: str | None`
-- `resolved_diagnostic_tag: DiagnosticTag | None`
-- `is_correct: bool`
-- `awarded_score: int`
-
-## Value Objects
+## Value Objects / Enums (`src/domain/shared/*`)
 
 - `AssignmentStatus`: `assigned | started | completed | expired | cancelled`
 - `AttemptStatus`: `started | submitted | cancelled`
@@ -127,16 +88,12 @@
 
 ## Ключевые инварианты
 
-- Assignment ссылается на существующие `child_id` и `test_id` (проверка в application/integration).
-- Для одного assignment только одна активная attempt.
-- Итоговый `score` детерминированно считается как сумма `awarded_score` ответов.
-- `MicroSkillNode.topic_code` должен ссылаться на существующую `Topic` того же `subject_code` и `grade`.
-- Для `Question.question_type=text`:
-  - обязателен `answer_key`
-  - запрещены `options` и `correct_option_id`
-- Для `Question.question_type=single_choice`:
-  - минимум 2 варианта в `options`
-  - `option_id` уникальны в рамках вопроса
-  - `position` уникальны и `>= 1`
-  - `correct_option_id` обязан ссылаться на существующий `option_id`
-  - `diagnostic_tag` у правильного варианта должен быть `null`
+1. Для `Question(question_type=text)` обязателен `answer_key`, запрещены `options/correct_option_id`.
+2. Для `Question(question_type=single_choice)`:
+   - минимум 2 `options`;
+   - уникальные `option_id` и `position >= 1`;
+   - `correct_option_id` обязан ссылаться на существующий `option_id`;
+   - у правильного варианта `diagnostic_tag` должен быть `null`.
+3. `AttemptAggregate.submit()` и `save_answers()` разрешены только из `started`.
+4. Итоговый `score` считается детерминированно как сумма `awarded_score`.
+5. Domain Layer изолирован от HTTP/SQLAlchemy/FastAPI.

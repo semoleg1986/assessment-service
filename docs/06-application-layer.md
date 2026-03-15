@@ -1,70 +1,105 @@
 # Слой Application
 
-Документ описывает use-case слой: команды/запросы, их хендлеры и порты.
+Документ фиксирует актуальный use-case слой `assessment-service`: команды/запросы, хендлеры и порты.
+
+## Структура Application
+
+```shell
+src/application/
+├── content/
+│   ├── commands/
+│   ├── handlers/
+│   └── queries/
+├── delivery/
+│   ├── commands/
+│   ├── handlers/
+│   └── queries/
+├── reporting/
+│   ├── handlers/
+│   └── queries/
+└── ports/
+    ├── unit_of_work.py
+    └── fixture_cleanup.py
+```
 
 ## Команды (write-side)
+
+### `content.commands`
 
 - `CreateSubject`
 - `CreateTopic`
 - `CreateMicroSkill`
+- `UpdateMicroSkill`
+- `DeleteMicroSkill`
 - `LinkMicroSkillPredecessors`
 - `CreateTest`
+- `ImportContent`
+- `CleanupFixtures`
+
+### `delivery.commands`
+
 - `AssignTest`
 - `StartAttempt`
 - `SaveAttemptAnswers`
 - `SubmitAttempt`
-- `ImportContent`
-- `CleanupFixtures`
 
 ## Запросы (read-side)
+
+### `content.queries`
 
 - `ListSubjects`
 - `ListTopics`
 - `ListMicroSkills`
 - `ListTests`
 - `GetTestById`
+
+### `delivery.queries`
+
 - `ListAssignmentsByChild`
 - `GetAttemptResult`
-- `GetChildDiagnostics`
+
+### `reporting.queries`
+
+- `GetChildResultsQuery`
+- `GetChildSkillResultsQuery`
+- `GetChildDiagnosticsQuery`
 
 ## Хендлеры
 
-- `src/application/handlers/commands/*` — изменение состояния агрегатов.
-- `src/application/handlers/queries/*` — чтение проекций/репозиториев.
-- Хендлеры работают только с application-командами и портами.
+- Каждый use-case реализован отдельным handler-файлом в своем контексте:
+  - `content/handlers/*`
+  - `delivery/handlers/*`
+  - `reporting/handlers/*`
+- Handler принимает typed-command/query, использует `UnitOfWork` и доменные репозитории.
 
 ## Порты
 
-- `UnitOfWork`
-- `TestRepository`
-- `AssignmentRepository`
-- `AttemptRepository`
-- `SubjectRepository`
-- `TopicRepository`
-- `MicroSkillNodeRepository`
-- `FixtureCleanupService`
+### `UnitOfWork` (`ports/unit_of_work.py`)
+
+- Репозитории:
+  - `tests`, `assignments`, `attempts`, `subjects`, `topics`, `micro_skills`.
+- Транзакционная граница:
+  - `commit()`.
+
+### `FixtureCleanupService` (`ports/fixture_cleanup.py`)
+
+- Отдельный порт для dry-run/apply очистки тестовых фикстур с отчетом по счетчикам.
 
 ## Границы ответственности
 
-- Валидация HTTP payload и маппинг DTO выполняются на interface-слое.
-- Application-слой оперирует типизированными командами и доменными сущностями.
-- Транзакционная граница — `UnitOfWork.commit()`.
-- Интеграционные проверки ссылочной целостности выполняются в хендлерах import/create команд.
+1. Interface слой выполняет transport-валидацию и HTTP-маппинг.
+2. Application слой оперирует командами/запросами и доменными типами.
+3. Domain слой содержит бизнес-инварианты и ничего не знает о transport/ORM.
+4. SQLAlchemy остается в infrastructure; application работает только через порты/UoW.
 
-## Специфика `ImportContent` (`v1.2`)
+## Специфика `ImportContent` (`contract_version=v1.2`)
 
-- Поддерживает два режима:
-  - `validate_only=true` — только проверка
-  - `validate_only=false` — upsert
-- Поддерживает два профиля обработки ошибок:
-  - `collect`
-  - `fail_fast`
-- Для `tests/questions` используется entity-level isolation:
-  - невалидная сущность фиксируется в `errors[]`
-  - остальная валидная часть payload продолжает обработку
-
-## Примечания по Clean Architecture
-
-- Interface не должен обращаться к SQLAlchemy напрямую: только через `Dishka`/портовые зависимости.
-- Domain не знает про HTTP/Pydantic/SQLAlchemy.
-- Application не содержит деталей транспорта (headers, cookies, status codes).
+- Режимы:
+  - `validate_only=true` — валидация без записи;
+  - `validate_only=false` — upsert.
+- Режим ошибок:
+  - `collect`;
+  - `fail_fast`.
+- Для `tests/questions` действует entity-level isolation:
+  - отдельные невалидные сущности попадают в `errors[]`;
+  - валидные сущности продолжают импорт.
