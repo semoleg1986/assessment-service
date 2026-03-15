@@ -1,7 +1,3 @@
-from dataclasses import dataclass
+"""Compatibility shim: migrated to context-first package."""
 
-
-@dataclass(slots=True)
-class LinkMicroSkillPredecessorsCommand:
-    node_id: str
-    predecessor_ids: list[str]
+from src.application.content.commands.link_micro_skill_predecessors import *  # noqa: E501,F401,F403

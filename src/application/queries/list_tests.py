@@ -1,6 +1,3 @@
-from dataclasses import dataclass
+"""Compatibility shim: migrated to context-first package."""
 
-
-@dataclass(slots=True)
-class ListTestsQuery:
-    pass
+from src.application.content.queries.list_tests import *  # noqa: E501,F401,F403

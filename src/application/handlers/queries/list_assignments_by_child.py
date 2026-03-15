@@ -1,13 +1,3 @@
-from src.application.ports.unit_of_work import UnitOfWork
-from src.application.queries.list_assignments_by_child import (
-    ListAssignmentsByChildQuery,
-)
-from src.domain.aggregates.assignment import AssignmentAggregate
+"""Compatibility shim: migrated to context-first package."""
 
-
-def handle_list_assignments_by_child(
-    query: ListAssignmentsByChildQuery,
-    *,
-    uow: UnitOfWork,
-) -> list[AssignmentAggregate]:
-    return uow.assignments.list_by_child(query.child_id)
+from src.application.delivery.handlers.list_assignments_by_child import *  # noqa: E501,F401,F403

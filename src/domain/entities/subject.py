@@ -1,16 +1,3 @@
-from dataclasses import dataclass
+"""Compatibility shim: migrated to context-first package."""
 
-
-@dataclass(slots=True)
-class Subject:
-    """
-    Предмет учебной программы.
-
-    :param code: Уникальный код предмета.
-    :type code: str
-    :param name: Отображаемое название предмета.
-    :type name: str
-    """
-
-    code: str
-    name: str
+from src.domain.content.subject.entity import *  # noqa: E501,F401,F403

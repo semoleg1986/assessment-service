@@ -1,20 +1,3 @@
-from dataclasses import dataclass
+"""Compatibility shim: migrated to context-first package."""
 
-from src.domain.value_objects.statuses import CriticalityLevel, MicroSkillStatus
-
-
-@dataclass(slots=True)
-class CreateMicroSkillCommand:
-    node_id: str
-    subject_code: str
-    topic_code: str
-    grade: int
-    section_code: str
-    section_name: str
-    micro_skill_name: str
-    predecessor_ids: list[str]
-    criticality: CriticalityLevel
-    source_ref: str | None = None
-    description: str | None = None
-    status: MicroSkillStatus = MicroSkillStatus.ACTIVE
-    external_ref: str | None = None
+from src.application.content.commands.create_micro_skill import *  # noqa: E501,F401,F403

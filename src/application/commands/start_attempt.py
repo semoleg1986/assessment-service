@@ -1,8 +1,3 @@
-from dataclasses import dataclass
-from uuid import UUID
+"""Compatibility shim: migrated to context-first package."""
 
-
-@dataclass(slots=True)
-class StartAttemptCommand:
-    assignment_id: UUID
-    child_id: UUID
+from src.application.delivery.commands.start_attempt import *  # noqa: E501,F401,F403

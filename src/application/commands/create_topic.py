@@ -1,9 +1,3 @@
-from dataclasses import dataclass
+"""Compatibility shim: migrated to context-first package."""
 
-
-@dataclass(slots=True)
-class CreateTopicCommand:
-    code: str
-    subject_code: str
-    grade: int
-    name: str
+from src.application.content.commands.create_topic import *  # noqa: E501,F401,F403

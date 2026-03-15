@@ -1,7 +1,3 @@
-from dataclasses import dataclass
-from uuid import UUID
+"""Compatibility shim: migrated to context-first package."""
 
-
-@dataclass(slots=True)
-class GetChildDiagnosticsQuery:
-    child_id: UUID
+from src.application.reporting.queries.get_child_diagnostics import *  # noqa: E501,F401,F403

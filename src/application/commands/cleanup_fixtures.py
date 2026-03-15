@@ -1,9 +1,3 @@
-from dataclasses import dataclass
+"""Compatibility shim: migrated to context-first package."""
 
-
-@dataclass(slots=True)
-class CleanupFixturesCommand:
-    dry_run: bool
-    subject_code_patterns: tuple[str, ...]
-    topic_code_patterns: tuple[str, ...]
-    node_id_patterns: tuple[str, ...]
+from src.application.content.commands.cleanup_fixtures import *  # noqa: E501,F401,F403

@@ -1,7 +1,3 @@
-from dataclasses import dataclass
-from uuid import UUID
+"""Compatibility shim: migrated to context-first package."""
 
-
-@dataclass(slots=True)
-class ListAssignmentsByChildQuery:
-    child_id: UUID
+from src.application.delivery.queries.list_assignments_by_child import *  # noqa: E501,F401,F403

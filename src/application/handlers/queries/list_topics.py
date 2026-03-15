@@ -1,18 +1,3 @@
-from src.application.ports.unit_of_work import UnitOfWork
-from src.application.queries.list_topics import ListTopicsQuery
-from src.domain.entities.topic import Topic
+"""Compatibility shim: migrated to context-first package."""
 
-
-def handle_list_topics(query: ListTopicsQuery, uow: UnitOfWork) -> list[Topic]:
-    """
-    Получить список тем.
-
-    :param query: Запрос списка тем.
-    :type query: ListTopicsQuery
-    :param uow: Unit of Work.
-    :type uow: UnitOfWork
-    :return: Список тем.
-    :rtype: list[Topic]
-    """
-    _ = query
-    return uow.topics.list()
+from src.application.content.handlers.list_topics import *  # noqa: E501,F401,F403

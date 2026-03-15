@@ -1,10 +1,3 @@
-from dataclasses import dataclass
-from uuid import UUID
+"""Compatibility shim: migrated to context-first package."""
 
-from src.application.commands.submit_attempt import SubmittedAnswerInput
-
-
-@dataclass(slots=True)
-class SaveAttemptAnswersCommand:
-    attempt_id: UUID
-    answers: list[SubmittedAnswerInput]
+from src.application.delivery.commands.save_attempt_answers import *  # noqa: E501,F401,F403

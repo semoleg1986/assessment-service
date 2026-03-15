@@ -1,7 +1,3 @@
-from dataclasses import dataclass
-from uuid import UUID
+"""Compatibility shim: migrated to context-first package."""
 
-
-@dataclass(slots=True)
-class GetTestByIdQuery:
-    test_id: UUID
+from src.application.content.queries.get_test_by_id import *  # noqa: E501,F401,F403

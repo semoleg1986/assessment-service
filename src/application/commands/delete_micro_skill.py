@@ -1,6 +1,3 @@
-from dataclasses import dataclass
+"""Compatibility shim: migrated to context-first package."""
 
-
-@dataclass(slots=True)
-class DeleteMicroSkillCommand:
-    node_id: str
+from src.application.content.commands.delete_micro_skill import *  # noqa: E501,F401,F403
