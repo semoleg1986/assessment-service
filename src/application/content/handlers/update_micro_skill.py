@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from src.application.content.commands.update_micro_skill import UpdateMicroSkillCommand
 from src.application.ports.unit_of_work import UnitOfWork
+from src.domain.content.micro_skill import ensure_predecessors_are_valid
 from src.domain.content.micro_skill.entity import MicroSkillNode
-from src.domain.content.services import ensure_predecessors_are_valid
 from src.domain.errors import InvariantViolationError, NotFoundError
 
 

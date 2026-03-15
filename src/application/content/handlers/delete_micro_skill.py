@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from src.application.content.commands.delete_micro_skill import DeleteMicroSkillCommand
 from src.application.ports.unit_of_work import UnitOfWork
-from src.domain.content.services import ensure_micro_skill_can_be_deleted
+from src.domain.content.micro_skill import ensure_micro_skill_can_be_deleted
 from src.domain.errors import NotFoundError
 
 
