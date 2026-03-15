@@ -587,6 +587,16 @@ def get_child_results(
         summary=ChildResultsSummaryResponse(
             attempts_total=result["summary"]["attempts_total"],
             submitted_attempts_total=result["summary"]["submitted_attempts_total"],
+            started_attempts_total=result["summary"]["started_attempts_total"],
+            attempts_with_diagnostics_total=(
+                result["summary"]["attempts_with_diagnostics_total"]
+            ),
+            answers_total=result["summary"]["answers_total"],
+            expected_answers_total=result["summary"]["expected_answers_total"],
+            correct_answers_total=result["summary"]["correct_answers_total"],
+            accuracy_percent=result["summary"]["accuracy_percent"],
+            time_spent_ms_total=result["summary"]["time_spent_ms_total"],
+            avg_time_per_answer_ms=result["summary"]["avg_time_per_answer_ms"],
             resolved_diagnostic_tags=_sorted_diagnostic_tag_counts(
                 result["summary"]["resolved_diagnostic_tags"]
             ),
@@ -599,8 +609,15 @@ def get_child_results(
                 score=item["score"],
                 started_at=item["started_at"],
                 submitted_at=item["submitted_at"],
+                duration_seconds=item["duration_seconds"],
                 answers_total=item["answers_total"],
+                expected_answers_total=item["expected_answers_total"],
+                unanswered_answers_total=item["unanswered_answers_total"],
                 correct_answers=item["correct_answers"],
+                accuracy_percent=item["accuracy_percent"],
+                time_spent_ms_total=item["time_spent_ms_total"],
+                avg_time_per_answer_ms=item["avg_time_per_answer_ms"],
+                has_resolved_diagnostics=item["has_resolved_diagnostics"],
                 resolved_diagnostic_tags=_sorted_diagnostic_tag_counts(
                     item["resolved_diagnostic_tags"]
                 ),

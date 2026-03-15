@@ -109,6 +109,12 @@ def test_child_results_returns_attempts_and_diagnostic_summary() -> None:
     assert report["child_id"] == child_id
     assert report["summary"]["attempts_total"] == 1
     assert report["summary"]["submitted_attempts_total"] == 1
+    assert report["summary"]["started_attempts_total"] == 0
+    assert report["summary"]["answers_total"] == 1
+    assert report["summary"]["expected_answers_total"] == 1
+    assert report["summary"]["correct_answers_total"] == 0
+    assert report["summary"]["accuracy_percent"] == 0.0
+    assert report["summary"]["attempts_with_diagnostics_total"] == 1
     assert report["summary"]["resolved_diagnostic_tags"] == [
         {"tag": "inattention", "count": 1}
     ]
@@ -118,6 +124,10 @@ def test_child_results_returns_attempts_and_diagnostic_summary() -> None:
     assert row["attempt_id"] == attempt_id
     assert row["assignment_id"] == assignment_id
     assert row["answers_total"] == 1
+    assert row["expected_answers_total"] == 1
+    assert row["unanswered_answers_total"] == 0
     assert row["correct_answers"] == 0
+    assert row["accuracy_percent"] == 0.0
+    assert row["has_resolved_diagnostics"] is True
     assert row["resolved_diagnostic_tags"] == [{"tag": "inattention", "count": 1}]
     assert row["started_at"]

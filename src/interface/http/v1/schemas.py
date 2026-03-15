@@ -296,8 +296,15 @@ class ChildResultsAttemptResponse(BaseModel):
     score: int
     started_at: datetime
     submitted_at: datetime | None
+    duration_seconds: int | None
     answers_total: int
+    expected_answers_total: int
+    unanswered_answers_total: int
     correct_answers: int
+    accuracy_percent: float
+    time_spent_ms_total: int
+    avg_time_per_answer_ms: int | None
+    has_resolved_diagnostics: bool
     resolved_diagnostic_tags: list[ChildResultsDiagnosticTagCountResponse] = Field(
         default_factory=list
     )
@@ -306,6 +313,14 @@ class ChildResultsAttemptResponse(BaseModel):
 class ChildResultsSummaryResponse(BaseModel):
     attempts_total: int
     submitted_attempts_total: int
+    started_attempts_total: int
+    attempts_with_diagnostics_total: int
+    answers_total: int
+    expected_answers_total: int
+    correct_answers_total: int
+    accuracy_percent: float
+    time_spent_ms_total: int
+    avg_time_per_answer_ms: int | None
     resolved_diagnostic_tags: list[ChildResultsDiagnosticTagCountResponse] = Field(
         default_factory=list
     )

@@ -809,7 +809,14 @@ paths:
                 summary:
                   attempts_total: 1
                   submitted_attempts_total: 1
-                  resolved_diagnostic_tags: []
+                  started_attempts_total: 1
+                  attempts_with_diagnostics_total: 1
+                  answers_total: 1
+                  expected_answers_total: 1
+                  correct_answers_total: 1
+                  accuracy_percent: 1
+                  time_spent_ms_total: 1
+                  avg_time_per_answer_ms: 1
                 attempts:
                 - attempt_id: string
                   assignment_id: string
@@ -817,8 +824,15 @@ paths:
                   score: 1
                   started_at: '2026-03-13T00:00:00Z'
                   submitted_at: string
+                  duration_seconds: string
                   answers_total: 1
+                  expected_answers_total: 1
+                  unanswered_answers_total: 1
                   correct_answers: 1
+                  accuracy_percent: 1
+                  time_spent_ms_total: 1
+                  avg_time_per_answer_ms: string
+                  has_resolved_diagnostics: true
         '422':
           description: Validation Error
           content:
@@ -1391,12 +1405,37 @@ components:
             format: date-time
           - type: 'null'
           title: Submitted At
+        duration_seconds:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Duration Seconds
         answers_total:
           type: integer
           title: Answers Total
+        expected_answers_total:
+          type: integer
+          title: Expected Answers Total
+        unanswered_answers_total:
+          type: integer
+          title: Unanswered Answers Total
         correct_answers:
           type: integer
           title: Correct Answers
+        accuracy_percent:
+          type: number
+          title: Accuracy Percent
+        time_spent_ms_total:
+          type: integer
+          title: Time Spent Ms Total
+        avg_time_per_answer_ms:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Avg Time Per Answer Ms
+        has_resolved_diagnostics:
+          type: boolean
+          title: Has Resolved Diagnostics
         resolved_diagnostic_tags:
           items:
             $ref: '#/components/schemas/ChildResultsDiagnosticTagCountResponse'
@@ -1410,8 +1449,15 @@ components:
       - score
       - started_at
       - submitted_at
+      - duration_seconds
       - answers_total
+      - expected_answers_total
+      - unanswered_answers_total
       - correct_answers
+      - accuracy_percent
+      - time_spent_ms_total
+      - avg_time_per_answer_ms
+      - has_resolved_diagnostics
       title: ChildResultsAttemptResponse
     ChildResultsDiagnosticTagCountResponse:
       properties:
@@ -1451,6 +1497,32 @@ components:
         submitted_attempts_total:
           type: integer
           title: Submitted Attempts Total
+        started_attempts_total:
+          type: integer
+          title: Started Attempts Total
+        attempts_with_diagnostics_total:
+          type: integer
+          title: Attempts With Diagnostics Total
+        answers_total:
+          type: integer
+          title: Answers Total
+        expected_answers_total:
+          type: integer
+          title: Expected Answers Total
+        correct_answers_total:
+          type: integer
+          title: Correct Answers Total
+        accuracy_percent:
+          type: number
+          title: Accuracy Percent
+        time_spent_ms_total:
+          type: integer
+          title: Time Spent Ms Total
+        avg_time_per_answer_ms:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Avg Time Per Answer Ms
         resolved_diagnostic_tags:
           items:
             $ref: '#/components/schemas/ChildResultsDiagnosticTagCountResponse'
@@ -1460,6 +1532,14 @@ components:
       required:
       - attempts_total
       - submitted_attempts_total
+      - started_attempts_total
+      - attempts_with_diagnostics_total
+      - answers_total
+      - expected_answers_total
+      - correct_answers_total
+      - accuracy_percent
+      - time_spent_ms_total
+      - avg_time_per_answer_ms
       title: ChildResultsSummaryResponse
     ContentImportDetails:
       properties:
