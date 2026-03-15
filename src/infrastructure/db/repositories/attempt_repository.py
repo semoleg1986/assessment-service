@@ -7,9 +7,9 @@ from sqlalchemy import select
 from src.domain.delivery.attempt.entity import AttemptAggregate
 from src.domain.delivery.attempt.repository import AttemptRepository
 from src.domain.shared.statuses import AttemptStatus
-from src.infrastructure.persistence.sqlalchemy.mappers import attempt_from_model
-from src.infrastructure.persistence.sqlalchemy.models import AnswerModel, AttemptModel
-from src.infrastructure.persistence.sqlalchemy.session_types import SessionLike
+from src.infrastructure.db.mappers import attempt_from_model
+from src.infrastructure.db.models import AnswerModel, AttemptModel
+from src.infrastructure.db.session import SessionLike
 
 
 class SqlAlchemyAttemptRepository(AttemptRepository):

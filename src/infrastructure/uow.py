@@ -4,8 +4,7 @@ from dataclasses import dataclass
 from os import getenv
 
 from src.application.ports.unit_of_work import UnitOfWork
-from src.infrastructure.persistence.sqlalchemy.uow import SqlAlchemyUnitOfWork
-from src.infrastructure.repositories.in_memory import (
+from src.infrastructure.db.repositories.in_memory import (
     InMemoryAssignmentRepository,
     InMemoryAttemptRepository,
     InMemoryMicroSkillNodeRepository,
@@ -13,6 +12,7 @@ from src.infrastructure.repositories.in_memory import (
     InMemoryTestRepository,
     InMemoryTopicRepository,
 )
+from src.infrastructure.db.uow import SqlAlchemyUnitOfWork
 
 
 class InMemoryUnitOfWork(UnitOfWork):

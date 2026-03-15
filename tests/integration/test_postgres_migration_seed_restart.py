@@ -12,7 +12,7 @@ from pathlib import Path
 import pytest
 from sqlalchemy import create_engine, text
 
-from src.infrastructure.persistence.sqlalchemy.uow import SqlAlchemyUnitOfWork
+from src.infrastructure.db.uow import SqlAlchemyUnitOfWork
 from src.interface.http.v1.router import _import_content_with_uow
 from src.interface.http.v1.schemas import ContentImportRequest
 

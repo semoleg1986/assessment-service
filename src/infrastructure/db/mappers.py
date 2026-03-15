@@ -17,7 +17,7 @@ from src.domain.shared.statuses import (
     CriticalityLevel,
     MicroSkillStatus,
 )
-from src.infrastructure.persistence.sqlalchemy.models import (
+from src.infrastructure.db.models import (
     AssignmentModel,
     AttemptModel,
     MicroSkillNodeModel,

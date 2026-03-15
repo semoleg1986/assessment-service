@@ -10,7 +10,7 @@ from sqlalchemy.engine import CursorResult
 from sqlalchemy.orm import Session
 
 from src.application.ports.unit_of_work import UnitOfWork
-from src.infrastructure.persistence.sqlalchemy.models import (
+from src.infrastructure.db.models import (
     AnswerModel,
     AssignmentModel,
     AttemptModel,
@@ -20,7 +20,7 @@ from src.infrastructure.persistence.sqlalchemy.models import (
     TestModel,
     TopicModel,
 )
-from src.infrastructure.persistence.sqlalchemy.uow import SqlAlchemyUnitOfWork
+from src.infrastructure.db.uow import SqlAlchemyUnitOfWork
 
 DEFAULT_SUBJECT_CODE_PATTERNS: tuple[str, ...] = (r"^math_v\d{2}.*$",)
 DEFAULT_TOPIC_CODE_PATTERNS: tuple[str, ...] = (r"^MV\d{2}.*$",)

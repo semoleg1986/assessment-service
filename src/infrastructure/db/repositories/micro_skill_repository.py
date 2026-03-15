@@ -4,9 +4,9 @@ from sqlalchemy import select
 
 from src.domain.content.micro_skill.entity import MicroSkillNode
 from src.domain.content.micro_skill.repository import MicroSkillNodeRepository
-from src.infrastructure.persistence.sqlalchemy.mappers import micro_skill_from_model
-from src.infrastructure.persistence.sqlalchemy.models import MicroSkillNodeModel
-from src.infrastructure.persistence.sqlalchemy.session_types import SessionLike
+from src.infrastructure.db.mappers import micro_skill_from_model
+from src.infrastructure.db.models import MicroSkillNodeModel
+from src.infrastructure.db.session import SessionLike
 
 
 class SqlAlchemyMicroSkillNodeRepository(MicroSkillNodeRepository):

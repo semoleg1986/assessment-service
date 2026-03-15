@@ -6,9 +6,9 @@ from sqlalchemy import select
 
 from src.domain.content.test.entity import AssessmentTest
 from src.domain.content.test.repository import TestRepository
-from src.infrastructure.persistence.sqlalchemy.mappers import assessment_test_from_model
-from src.infrastructure.persistence.sqlalchemy.models import QuestionModel, TestModel
-from src.infrastructure.persistence.sqlalchemy.session_types import SessionLike
+from src.infrastructure.db.mappers import assessment_test_from_model
+from src.infrastructure.db.models import QuestionModel, TestModel
+from src.infrastructure.db.session import SessionLike
 
 
 class SqlAlchemyTestRepository(TestRepository):

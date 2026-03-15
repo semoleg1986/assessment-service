@@ -4,9 +4,9 @@ from sqlalchemy import select
 
 from src.domain.content.subject.entity import Subject
 from src.domain.content.subject.repository import SubjectRepository
-from src.infrastructure.persistence.sqlalchemy.mappers import subject_from_model
-from src.infrastructure.persistence.sqlalchemy.models import SubjectModel
-from src.infrastructure.persistence.sqlalchemy.session_types import SessionLike
+from src.infrastructure.db.mappers import subject_from_model
+from src.infrastructure.db.models import SubjectModel
+from src.infrastructure.db.session import SessionLike
 
 
 class SqlAlchemySubjectRepository(SubjectRepository):

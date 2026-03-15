@@ -4,9 +4,9 @@ from sqlalchemy import select
 
 from src.domain.content.topic.entity import Topic
 from src.domain.content.topic.repository import TopicRepository
-from src.infrastructure.persistence.sqlalchemy.mappers import topic_from_model
-from src.infrastructure.persistence.sqlalchemy.models import TopicModel
-from src.infrastructure.persistence.sqlalchemy.session_types import SessionLike
+from src.infrastructure.db.mappers import topic_from_model
+from src.infrastructure.db.models import TopicModel
+from src.infrastructure.db.session import SessionLike
 
 
 class SqlAlchemyTopicRepository(TopicRepository):

@@ -4,7 +4,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, scoped_session, sessionmaker
 
 from src.application.ports.unit_of_work import UnitOfWork
-from src.infrastructure.persistence.sqlalchemy.repositories import (
+from src.infrastructure.db.repositories import (
     SqlAlchemyAssignmentRepository,
     SqlAlchemyAttemptRepository,
     SqlAlchemyMicroSkillNodeRepository,

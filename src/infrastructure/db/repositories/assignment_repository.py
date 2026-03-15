@@ -6,9 +6,9 @@ from sqlalchemy import select
 
 from src.domain.delivery.assignment.entity import AssignmentAggregate
 from src.domain.delivery.assignment.repository import AssignmentRepository
-from src.infrastructure.persistence.sqlalchemy.mappers import assignment_from_model
-from src.infrastructure.persistence.sqlalchemy.models import AssignmentModel
-from src.infrastructure.persistence.sqlalchemy.session_types import SessionLike
+from src.infrastructure.db.mappers import assignment_from_model
+from src.infrastructure.db.models import AssignmentModel
+from src.infrastructure.db.session import SessionLike
 
 
 class SqlAlchemyAssignmentRepository(AssignmentRepository):
