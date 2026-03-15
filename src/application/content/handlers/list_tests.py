@@ -1,6 +1,6 @@
 from src.application.content.queries.list_tests import ListTestsQuery
 from src.application.ports.unit_of_work import UnitOfWork
-from src.domain.content.test.aggregate import AssessmentTest
+from src.domain.content.test.entity import AssessmentTest
 
 
 def handle_list_tests(query: ListTestsQuery, uow: UnitOfWork) -> list[AssessmentTest]:

@@ -3,10 +3,10 @@ from uuid import UUID
 
 from src.domain.content.micro_skill.entity import MicroSkillNode
 from src.domain.content.subject.entity import Subject
-from src.domain.content.test.aggregate import AssessmentTest
+from src.domain.content.test.entity import AssessmentTest
 from src.domain.content.topic.entity import Topic
-from src.domain.delivery.assignment.aggregate import AssignmentAggregate
-from src.domain.delivery.attempt.aggregate import AttemptAggregate
+from src.domain.delivery.assignment.entity import AssignmentAggregate
+from src.domain.delivery.attempt.entity import AttemptAggregate
 
 
 class TestRepository(ABC):

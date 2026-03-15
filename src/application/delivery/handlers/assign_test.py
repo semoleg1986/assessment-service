@@ -2,7 +2,7 @@ from uuid import uuid4
 
 from src.application.delivery.commands.assign_test import AssignTestCommand
 from src.application.ports.unit_of_work import UnitOfWork
-from src.domain.delivery.assignment.aggregate import AssignmentAggregate
+from src.domain.delivery.assignment.entity import AssignmentAggregate
 from src.domain.errors import InvariantViolationError, NotFoundError
 from src.domain.shared.statuses import AttemptStatus
 

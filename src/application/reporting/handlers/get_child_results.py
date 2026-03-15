@@ -4,7 +4,7 @@ from typing import TypedDict
 
 from src.application.ports.unit_of_work import UnitOfWork
 from src.application.reporting.queries.get_child_results import GetChildResultsQuery
-from src.domain.delivery.attempt.aggregate import AttemptAggregate
+from src.domain.delivery.attempt.entity import AttemptAggregate
 from src.domain.shared.statuses import AttemptStatus
 
 
