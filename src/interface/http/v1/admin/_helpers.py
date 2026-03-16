@@ -1,9 +1,11 @@
 from __future__ import annotations
 
-from src.domain.content.micro_skill.entity import MicroSkillNode
-from src.domain.content.test.entity import AssessmentTest
-from src.domain.content.test.question import Question
-from src.domain.shared.questions import DiagnosticTag
+from datetime import datetime
+from typing import Protocol, Sequence
+from uuid import UUID
+
+from src.application.contracts.questions import DiagnosticTag, QuestionType
+from src.application.contracts.statuses import CriticalityLevel, MicroSkillStatus
 from src.interface.http.v1.schemas import (
     ChildResultsDiagnosticTagCountResponse,
     FixtureCleanupCountsResponse,
@@ -12,6 +14,104 @@ from src.interface.http.v1.schemas import (
     QuestionResponse,
     TestResponse,
 )
+
+
+class _QuestionOptionView(Protocol):
+    @property
+    def option_id(self) -> str: ...
+
+    @property
+    def text(self) -> str: ...
+
+    @property
+    def position(self) -> int: ...
+
+
+class _QuestionView(Protocol):
+    @property
+    def question_id(self) -> UUID: ...
+
+    @property
+    def node_id(self) -> str: ...
+
+    @property
+    def text(self) -> str: ...
+
+    @property
+    def question_type(self) -> QuestionType: ...
+
+    @property
+    def max_score(self) -> int: ...
+
+    @property
+    def options(self) -> Sequence[_QuestionOptionView]: ...
+
+
+class _TestView(Protocol):
+    @property
+    def test_id(self) -> UUID: ...
+
+    @property
+    def subject_code(self) -> str: ...
+
+    @property
+    def grade(self) -> int: ...
+
+    @property
+    def version(self) -> int: ...
+
+    @property
+    def questions(self) -> Sequence[_QuestionView]: ...
+
+
+class _MicroSkillView(Protocol):
+    @property
+    def node_id(self) -> str: ...
+
+    @property
+    def subject_code(self) -> str: ...
+
+    @property
+    def topic_code(self) -> str | None: ...
+
+    @property
+    def grade(self) -> int: ...
+
+    @property
+    def section_code(self) -> str: ...
+
+    @property
+    def section_name(self) -> str: ...
+
+    @property
+    def micro_skill_name(self) -> str: ...
+
+    @property
+    def predecessor_ids(self) -> list[str]: ...
+
+    @property
+    def criticality(self) -> CriticalityLevel: ...
+
+    @property
+    def source_ref(self) -> str | None: ...
+
+    @property
+    def description(self) -> str | None: ...
+
+    @property
+    def status(self) -> MicroSkillStatus: ...
+
+    @property
+    def external_ref(self) -> str | None: ...
+
+    @property
+    def version(self) -> int: ...
+
+    @property
+    def created_at(self) -> datetime: ...
+
+    @property
+    def updated_at(self) -> datetime: ...
 
 
 def sorted_diagnostic_tag_counts(
@@ -49,7 +149,7 @@ def cleanup_counts_response(
     )
 
 
-def question_response(question: Question) -> QuestionResponse:
+def question_response(question: _QuestionView) -> QuestionResponse:
     return QuestionResponse(
         question_id=question.question_id,
         node_id=question.node_id,
@@ -67,7 +167,7 @@ def question_response(question: Question) -> QuestionResponse:
     )
 
 
-def test_response(test: AssessmentTest) -> TestResponse:
+def test_response(test: _TestView) -> TestResponse:
     return TestResponse(
         test_id=test.test_id,
         subject_code=test.subject_code,
@@ -78,7 +178,7 @@ def test_response(test: AssessmentTest) -> TestResponse:
 
 
 def micro_skill_response(
-    node: MicroSkillNode, *, blocks_count: int
+    node: _MicroSkillView, *, blocks_count: int
 ) -> MicroSkillResponse:
     return MicroSkillResponse(
         node_id=node.node_id,

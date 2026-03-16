@@ -4,8 +4,8 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
-from src.domain.shared.questions import QuestionType
-from src.domain.shared.statuses import CriticalityLevel, MicroSkillStatus
+from src.application.contracts.questions import QuestionType
+from src.application.contracts.statuses import CriticalityLevel, MicroSkillStatus
 from src.interface.http.v1.schemas.content import (
     QuestionOptionCreateRequest,
     TextDistractorCreateRequest,

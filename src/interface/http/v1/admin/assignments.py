@@ -3,8 +3,8 @@ from fastapi import APIRouter, HTTPException, status
 
 from src.application.delivery.commands.assign_test import AssignTestCommand
 from src.application.delivery.handlers.assign_test import handle_assign_test
+from src.application.errors import InvariantViolationError, NotFoundError
 from src.application.ports.unit_of_work import UnitOfWork
-from src.domain.errors import InvariantViolationError, NotFoundError
 from src.interface.http.v1.schemas import AssignmentResponse, AssignTestRequest
 
 router = APIRouter(tags=["assessment"], route_class=DishkaRoute)

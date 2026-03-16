@@ -3,6 +3,7 @@ from uuid import UUID
 from dishka.integrations.fastapi import DishkaRoute, FromDishka
 from fastapi import APIRouter, HTTPException
 
+from src.application.contracts.questions import DiagnosticTag
 from src.application.delivery.commands.save_attempt_answers import (
     SaveAttemptAnswersCommand,
 )
@@ -26,9 +27,8 @@ from src.application.delivery.queries.get_attempt_result import GetAttemptResult
 from src.application.delivery.queries.list_assignments_by_child import (
     ListAssignmentsByChildQuery,
 )
+from src.application.errors import InvariantViolationError, NotFoundError
 from src.application.ports.unit_of_work import UnitOfWork
-from src.domain.errors import InvariantViolationError, NotFoundError
-from src.domain.shared.questions import DiagnosticTag
 from src.interface.http.v1.schemas import (
     AssignmentListItemResponse,
     AttemptAnswerResponse,

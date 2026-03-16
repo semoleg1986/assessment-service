@@ -14,8 +14,8 @@ from src.application.content.handlers.get_test_by_id import handle_get_test_by_i
 from src.application.content.handlers.list_tests import handle_list_tests
 from src.application.content.queries.get_test_by_id import GetTestByIdQuery
 from src.application.content.queries.list_tests import ListTestsQuery
+from src.application.errors import InvariantViolationError, NotFoundError
 from src.application.ports.unit_of_work import UnitOfWork
-from src.domain.errors import InvariantViolationError, NotFoundError
 from src.interface.http.v1.admin._helpers import test_response
 from src.interface.http.v1.schemas import (
     CreateTestRequest,

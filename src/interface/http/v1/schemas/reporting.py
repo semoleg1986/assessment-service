@@ -6,7 +6,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field
 
-from src.domain.shared.questions import DiagnosticTag
+from src.application.contracts.questions import DiagnosticTag
 
 
 class ChildDiagnosticsResponse(BaseModel):

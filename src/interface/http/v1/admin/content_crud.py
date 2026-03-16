@@ -29,8 +29,8 @@ from src.application.content.handlers.update_micro_skill import (
 from src.application.content.queries.list_micro_skills import ListMicroSkillsQuery
 from src.application.content.queries.list_subjects import ListSubjectsQuery
 from src.application.content.queries.list_topics import ListTopicsQuery
+from src.application.errors import InvariantViolationError, NotFoundError
 from src.application.ports.unit_of_work import UnitOfWork
-from src.domain.errors import InvariantViolationError, NotFoundError
 from src.interface.http.v1.admin._helpers import micro_skill_response
 from src.interface.http.v1.schemas import (
     MicroSkillCreateRequest,
