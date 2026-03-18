@@ -1026,6 +1026,59 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
       security:
       - bearerAuth: []
+  /v1/admin/results/children/{child_id}/correction-plan:
+    get:
+      tags:
+      - assessment
+      - assessment
+      summary: Get Child Correction Plan
+      operationId: getAdminResultsChildrenCorrectionPlanByChildId
+      parameters:
+      - name: child_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Child Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChildCorrectionPlanResponse'
+              example:
+                child_id: 00000000-0000-4000-8000-000000000000
+                generated_at: '2026-03-13T00:00:00Z'
+                summary:
+                  actions_total: 1
+                  p1_total: 1
+                  p2_total: 1
+                  p3_total: 1
+                  p4_total: 1
+                actions:
+                - node_id: string
+                  topic_code: string
+                  skill_name: string
+                  priority: P1
+                  rationale: string
+                  recommendation: string
+                  target_outcome: string
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      security:
+      - bearerAuth: []
   /v1/user/children/{child_id}/assignments:
     get:
       tags:
@@ -1554,6 +1607,97 @@ components:
       - score
       - answers
       title: AttemptResultResponse
+    ChildCorrectionPlanActionResponse:
+      properties:
+        node_id:
+          type: string
+          title: Node Id
+        topic_code:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Topic Code
+        skill_name:
+          type: string
+          title: Skill Name
+        signal:
+          $ref: '#/components/schemas/SkillSignal'
+        priority:
+          type: string
+          enum:
+          - P1
+          - P2
+          - P3
+          - P4
+          title: Priority
+        rationale:
+          type: string
+          title: Rationale
+        recommendation:
+          type: string
+          title: Recommendation
+        target_outcome:
+          type: string
+          title: Target Outcome
+      type: object
+      required:
+      - node_id
+      - topic_code
+      - skill_name
+      - signal
+      - priority
+      - rationale
+      - recommendation
+      - target_outcome
+      title: ChildCorrectionPlanActionResponse
+    ChildCorrectionPlanResponse:
+      properties:
+        child_id:
+          type: string
+          format: uuid
+          title: Child Id
+        generated_at:
+          type: string
+          format: date-time
+          title: Generated At
+        summary:
+          $ref: '#/components/schemas/ChildCorrectionPlanSummaryResponse'
+        actions:
+          items:
+            $ref: '#/components/schemas/ChildCorrectionPlanActionResponse'
+          type: array
+          title: Actions
+      type: object
+      required:
+      - child_id
+      - generated_at
+      - summary
+      title: ChildCorrectionPlanResponse
+    ChildCorrectionPlanSummaryResponse:
+      properties:
+        actions_total:
+          type: integer
+          title: Actions Total
+        p1_total:
+          type: integer
+          title: P1 Total
+        p2_total:
+          type: integer
+          title: P2 Total
+        p3_total:
+          type: integer
+          title: P3 Total
+        p4_total:
+          type: integer
+          title: P4 Total
+      type: object
+      required:
+      - actions_total
+      - p1_total
+      - p2_total
+      - p3_total
+      - p4_total
+      title: ChildCorrectionPlanSummaryResponse
     ChildDiagnosticsResponse:
       properties:
         child_id:

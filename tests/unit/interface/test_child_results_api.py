@@ -338,3 +338,26 @@ def test_child_skill_results_returns_gap_levels_and_recommendations() -> None:
     assert secondary["accuracy_percent"] == 100.0
     assert secondary["gap_level"] == "insufficient_data"
     assert secondary["signal"] == "risk"
+
+    plan_res = client.get(f"/v1/admin/results/children/{child_id}/correction-plan")
+    assert plan_res.status_code == 200
+    plan = plan_res.json()
+
+    assert plan["child_id"] == child_id
+    assert plan["summary"]["actions_total"] == 2
+    assert plan["summary"]["p1_total"] == 1
+    assert plan["summary"]["p2_total"] == 0
+    assert plan["summary"]["p3_total"] == 1
+    assert plan["summary"]["p4_total"] == 0
+
+    assert len(plan["actions"]) == 2
+    first_action = plan["actions"][0]
+    second_action = plan["actions"][1]
+    assert first_action["node_id"] == primary_node_id
+    assert first_action["signal"] == "critical_gap"
+    assert first_action["priority"] == "P1"
+    assert first_action["recommendation"]
+    assert first_action["target_outcome"]
+    assert second_action["node_id"] == secondary_node_id
+    assert second_action["signal"] == "risk"
+    assert second_action["priority"] == "P3"

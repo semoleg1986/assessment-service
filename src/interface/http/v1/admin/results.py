@@ -7,6 +7,9 @@ from src.application.facade import AssessmentResultsFacade
 from src.interface.http.v1.admin._helpers import sorted_diagnostic_tag_counts
 from src.interface.http.v1.mappers import to_child_scoped_input
 from src.interface.http.v1.schemas import (
+    ChildCorrectionPlanActionResponse,
+    ChildCorrectionPlanResponse,
+    ChildCorrectionPlanSummaryResponse,
     ChildDiagnosticsResponse,
     ChildResultsAttemptResponse,
     ChildResultsResponse,
@@ -136,5 +139,42 @@ def get_child_skill_results(
                 recommendation=item["recommendation"],
             )
             for item in result["skills"]
+        ],
+    )
+
+
+@router.get(
+    "/admin/results/children/{child_id}/correction-plan",
+    response_model=ChildCorrectionPlanResponse,
+)
+def get_child_correction_plan(
+    child_id: UUID,
+    facade: FromDishka[AssessmentResultsFacade],
+) -> ChildCorrectionPlanResponse:
+    result = facade.get_child_correction_plan(
+        payload=to_child_scoped_input(child_id=child_id)
+    )
+    return ChildCorrectionPlanResponse(
+        child_id=child_id,
+        generated_at=result["generated_at"],
+        summary=ChildCorrectionPlanSummaryResponse(
+            actions_total=result["summary"]["actions_total"],
+            p1_total=result["summary"]["p1_total"],
+            p2_total=result["summary"]["p2_total"],
+            p3_total=result["summary"]["p3_total"],
+            p4_total=result["summary"]["p4_total"],
+        ),
+        actions=[
+            ChildCorrectionPlanActionResponse(
+                node_id=item["node_id"],
+                topic_code=item["topic_code"],
+                skill_name=item["skill_name"],
+                signal=item["signal"],
+                priority=item["priority"],
+                rationale=item["rationale"],
+                recommendation=item["recommendation"],
+                target_outcome=item["target_outcome"],
+            )
+            for item in result["actions"]
         ],
     )

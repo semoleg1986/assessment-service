@@ -48,6 +48,9 @@ from src.interface.http.v1.schemas.imports import (
     FixtureCleanupResponse,
 )
 from src.interface.http.v1.schemas.reporting import (
+    ChildCorrectionPlanActionResponse,
+    ChildCorrectionPlanResponse,
+    ChildCorrectionPlanSummaryResponse,
     ChildDiagnosticsResponse,
     ChildResultsAttemptResponse,
     ChildResultsDiagnosticTagCountResponse,
@@ -64,6 +67,9 @@ __all__ = [
     "AssignmentResponse",
     "AttemptAnswerResponse",
     "AttemptResultResponse",
+    "ChildCorrectionPlanActionResponse",
+    "ChildCorrectionPlanResponse",
+    "ChildCorrectionPlanSummaryResponse",
     "ChildDiagnosticsResponse",
     "ChildResultsAttemptResponse",
     "ChildResultsDiagnosticTagCountResponse",

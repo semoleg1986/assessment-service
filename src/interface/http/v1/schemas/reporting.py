@@ -98,3 +98,29 @@ class ChildSkillResultsResponse(BaseModel):
     child_id: UUID
     summary: ChildSkillResultsSummaryResponse
     skills: list[ChildSkillResultResponse] = Field(default_factory=list)
+
+
+class ChildCorrectionPlanActionResponse(BaseModel):
+    node_id: str
+    topic_code: str | None
+    skill_name: str
+    signal: SkillSignal
+    priority: Literal["P1", "P2", "P3", "P4"]
+    rationale: str
+    recommendation: str
+    target_outcome: str
+
+
+class ChildCorrectionPlanSummaryResponse(BaseModel):
+    actions_total: int
+    p1_total: int
+    p2_total: int
+    p3_total: int
+    p4_total: int
+
+
+class ChildCorrectionPlanResponse(BaseModel):
+    child_id: UUID
+    generated_at: datetime
+    summary: ChildCorrectionPlanSummaryResponse
+    actions: list[ChildCorrectionPlanActionResponse] = Field(default_factory=list)

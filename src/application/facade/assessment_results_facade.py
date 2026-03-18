@@ -5,6 +5,10 @@ from src.application.ports.unit_of_work import UnitOfWork
 from src.application.reporting.handlers.get_child_diagnostics import (
     handle_get_child_diagnostics,
 )
+from src.application.reporting.handlers.get_child_correction_plan import (
+    ChildCorrectionPlan,
+    handle_get_child_correction_plan,
+)
 from src.application.reporting.handlers.get_child_results import (
     ChildResults,
     handle_get_child_results,
@@ -15,6 +19,9 @@ from src.application.reporting.handlers.get_child_skill_results import (
 )
 from src.application.reporting.queries.get_child_diagnostics import (
     GetChildDiagnosticsQuery,
+)
+from src.application.reporting.queries.get_child_correction_plan import (
+    GetChildCorrectionPlanQuery,
 )
 from src.application.reporting.queries.get_child_results import GetChildResultsQuery
 from src.application.reporting.queries.get_child_skill_results import (
@@ -45,5 +52,13 @@ class AssessmentResultsFacade:
     ) -> ChildSkillResults:
         return handle_get_child_skill_results(
             GetChildSkillResultsQuery(child_id=payload.child_id),
+            uow=self._uow,
+        )
+
+    def get_child_correction_plan(
+        self, *, payload: ChildScopedInput
+    ) -> ChildCorrectionPlan:
+        return handle_get_child_correction_plan(
+            GetChildCorrectionPlanQuery(child_id=payload.child_id),
             uow=self._uow,
         )
