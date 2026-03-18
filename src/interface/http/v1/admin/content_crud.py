@@ -2,7 +2,7 @@ from dishka.integrations.fastapi import DishkaRoute, FromDishka
 from fastapi import APIRouter, HTTPException, status
 
 from src.application.errors import InvariantViolationError, NotFoundError
-from src.application.facade import AssessmentAdminFacade
+from src.application.facade import AssessmentContentFacade
 from src.interface.http.v1.admin._helpers import micro_skill_response
 from src.interface.http.v1.schemas import (
     MicroSkillCreateRequest,
@@ -18,7 +18,7 @@ from src.interface.http.v1.schemas import (
 router = APIRouter(tags=["assessment"], route_class=DishkaRoute)
 
 
-def _micro_skill_blocks_count(node_id: str, *, facade: AssessmentAdminFacade) -> int:
+def _micro_skill_blocks_count(node_id: str, *, facade: AssessmentContentFacade) -> int:
     return next(
         (
             item["blocks_count"]
@@ -36,7 +36,7 @@ def _micro_skill_blocks_count(node_id: str, *, facade: AssessmentAdminFacade) ->
 )
 def create_subject(
     body: SubjectCreateRequest,
-    facade: FromDishka[AssessmentAdminFacade],
+    facade: FromDishka[AssessmentContentFacade],
 ) -> SubjectResponse:
     try:
         subject = facade.create_subject(code=body.code, name=body.name)
@@ -47,7 +47,7 @@ def create_subject(
 
 @router.get("/admin/subjects", response_model=list[SubjectResponse])
 def list_subjects(
-    facade: FromDishka[AssessmentAdminFacade],
+    facade: FromDishka[AssessmentContentFacade],
 ) -> list[SubjectResponse]:
     subjects = facade.list_subjects()
     return [
@@ -62,7 +62,7 @@ def list_subjects(
 )
 def create_topic(
     body: TopicCreateRequest,
-    facade: FromDishka[AssessmentAdminFacade],
+    facade: FromDishka[AssessmentContentFacade],
 ) -> TopicResponse:
     try:
         topic = facade.create_topic(
@@ -85,7 +85,7 @@ def create_topic(
 
 @router.get("/admin/topics", response_model=list[TopicResponse])
 def list_topics(
-    facade: FromDishka[AssessmentAdminFacade],
+    facade: FromDishka[AssessmentContentFacade],
 ) -> list[TopicResponse]:
     topics = facade.list_topics()
     return [
@@ -106,7 +106,7 @@ def list_topics(
 )
 def create_micro_skill(
     body: MicroSkillCreateRequest,
-    facade: FromDishka[AssessmentAdminFacade],
+    facade: FromDishka[AssessmentContentFacade],
 ) -> MicroSkillResponse:
     try:
         node = facade.create_micro_skill(
@@ -139,7 +139,7 @@ def create_micro_skill(
 def update_micro_skill(
     node_id: str,
     body: MicroSkillUpdateRequest,
-    facade: FromDishka[AssessmentAdminFacade],
+    facade: FromDishka[AssessmentContentFacade],
 ) -> MicroSkillResponse:
     try:
         node = facade.update_micro_skill(
@@ -174,7 +174,7 @@ def update_micro_skill(
 )
 def delete_micro_skill(
     node_id: str,
-    facade: FromDishka[AssessmentAdminFacade],
+    facade: FromDishka[AssessmentContentFacade],
 ) -> None:
     try:
         facade.delete_micro_skill(node_id=node_id)
@@ -191,7 +191,7 @@ def delete_micro_skill(
 def link_micro_skill_predecessors(
     node_id: str,
     body: MicroSkillLinkRequest,
-    facade: FromDishka[AssessmentAdminFacade],
+    facade: FromDishka[AssessmentContentFacade],
 ) -> MicroSkillResponse:
     try:
         node = facade.link_micro_skill_predecessors(
@@ -211,7 +211,7 @@ def link_micro_skill_predecessors(
 
 @router.get("/admin/micro-skills", response_model=list[MicroSkillResponse])
 def list_micro_skills(
-    facade: FromDishka[AssessmentAdminFacade],
+    facade: FromDishka[AssessmentContentFacade],
 ) -> list[MicroSkillResponse]:
     items = facade.list_micro_skills()
     return [

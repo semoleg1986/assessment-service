@@ -5,7 +5,7 @@ from fastapi import APIRouter, HTTPException, status
 
 from src.application.errors import InvariantViolationError, NotFoundError
 from src.application.facade import (
-    AssessmentAdminFacade,
+    AssessmentContentFacade,
     TestQuestionData,
     TestQuestionOptionData,
     TestTextDistractorData,
@@ -28,7 +28,7 @@ router = APIRouter(tags=["assessment"], route_class=DishkaRoute)
 )
 def create_test(
     body: CreateTestRequest,
-    facade: FromDishka[AssessmentAdminFacade],
+    facade: FromDishka[AssessmentContentFacade],
 ) -> TestResponse:
     try:
         test = facade.create_test(
@@ -74,7 +74,7 @@ def create_test(
 @router.get("/tests", response_model=list[TestResponse])
 @router.get("/admin/tests", response_model=list[TestResponse])
 def list_tests(
-    facade: FromDishka[AssessmentAdminFacade],
+    facade: FromDishka[AssessmentContentFacade],
 ) -> list[TestResponse]:
     tests = facade.list_tests()
     return [test_response(test) for test in tests]
@@ -86,7 +86,7 @@ def list_tests(
 )
 def publish_test(
     test_id: UUID,
-    facade: FromDishka[AssessmentAdminFacade],
+    facade: FromDishka[AssessmentContentFacade],
 ) -> PublishTestResponse:
     if facade.get_test_by_id(test_id=test_id) is None:
         raise HTTPException(status_code=404, detail="test not found")

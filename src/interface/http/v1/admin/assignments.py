@@ -2,7 +2,7 @@ from dishka.integrations.fastapi import DishkaRoute, FromDishka
 from fastapi import APIRouter, HTTPException, status
 
 from src.application.errors import InvariantViolationError, NotFoundError
-from src.application.facade import AssessmentAdminFacade
+from src.application.facade import AssessmentContentFacade
 from src.interface.http.v1.schemas import AssignmentResponse, AssignTestRequest
 
 router = APIRouter(tags=["assessment"], route_class=DishkaRoute)
@@ -20,7 +20,7 @@ router = APIRouter(tags=["assessment"], route_class=DishkaRoute)
 )
 def assign_test(
     body: AssignTestRequest,
-    facade: FromDishka[AssessmentAdminFacade],
+    facade: FromDishka[AssessmentContentFacade],
 ) -> AssignmentResponse:
     try:
         assignment = facade.assign_test(

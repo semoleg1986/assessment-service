@@ -1,14 +1,25 @@
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Literal, Protocol
 
-from src.application.facade import AssessmentAdminFacade
 from src.interface.http.v1.schemas import (
     ContentImportDetails,
     ContentImportIssue,
     ContentImportRequest,
     ContentImportResponse,
 )
+
+
+class _ImportFacadeLike(Protocol):
+    def import_content_payload(
+        self,
+        *,
+        source_id: str,
+        contract_version: str,
+        validate_only: bool,
+        error_mode: Literal["collect", "fail_fast"],
+        payload: dict[str, Any],
+    ) -> Any: ...
 
 
 def _issue_to_schema(issue: Any) -> ContentImportIssue:
@@ -44,7 +55,7 @@ def _to_response(result: Any) -> ContentImportResponse:
 def import_content_with_uow(
     *,
     body: ContentImportRequest,
-    facade: AssessmentAdminFacade,
+    facade: _ImportFacadeLike,
 ) -> ContentImportResponse:
     result = facade.import_content_payload(
         source_id=body.source_id,

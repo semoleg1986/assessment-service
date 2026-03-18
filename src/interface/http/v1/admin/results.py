@@ -3,7 +3,7 @@ from uuid import UUID
 from dishka.integrations.fastapi import DishkaRoute, FromDishka
 from fastapi import APIRouter
 
-from src.application.facade import AssessmentAdminFacade
+from src.application.facade import AssessmentResultsFacade
 from src.interface.http.v1.admin._helpers import sorted_diagnostic_tag_counts
 from src.interface.http.v1.schemas import (
     ChildDiagnosticsResponse,
@@ -24,7 +24,7 @@ router = APIRouter(tags=["assessment"], route_class=DishkaRoute)
 )
 def get_child_diagnostics(
     child_id: UUID,
-    facade: FromDishka[AssessmentAdminFacade],
+    facade: FromDishka[AssessmentResultsFacade],
 ) -> ChildDiagnosticsResponse:
     result = facade.get_child_diagnostics(child_id=child_id)
     return ChildDiagnosticsResponse(
@@ -40,7 +40,7 @@ def get_child_diagnostics(
 )
 def get_child_results(
     child_id: UUID,
-    facade: FromDishka[AssessmentAdminFacade],
+    facade: FromDishka[AssessmentResultsFacade],
 ) -> ChildResultsResponse:
     result = facade.get_child_results(child_id=child_id)
     return ChildResultsResponse(
@@ -94,7 +94,7 @@ def get_child_results(
 )
 def get_child_skill_results(
     child_id: UUID,
-    facade: FromDishka[AssessmentAdminFacade],
+    facade: FromDishka[AssessmentResultsFacade],
 ) -> ChildSkillResultsResponse:
     result = facade.get_child_skill_results(child_id=child_id)
     return ChildSkillResultsResponse(
