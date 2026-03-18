@@ -1,7 +1,8 @@
 from __future__ import annotations
 
-from typing import Any, Literal, Protocol
+from typing import Any, Protocol
 
+from src.application.facade import ImportContentPayloadInput
 from src.interface.http.v1.schemas import (
     ContentImportDetails,
     ContentImportIssue,
@@ -14,11 +15,7 @@ class _ImportFacadeLike(Protocol):
     def import_content_payload(
         self,
         *,
-        source_id: str,
-        contract_version: str,
-        validate_only: bool,
-        error_mode: Literal["collect", "fail_fast"],
-        payload: dict[str, Any],
+        payload: ImportContentPayloadInput,
     ) -> Any: ...
 
 
@@ -58,10 +55,12 @@ def import_content_with_uow(
     facade: _ImportFacadeLike,
 ) -> ContentImportResponse:
     result = facade.import_content_payload(
-        source_id=body.source_id,
-        contract_version=body.contract_version,
-        validate_only=body.validate_only,
-        error_mode=body.error_mode,
-        payload=body.payload.model_dump(mode="python"),
+        payload=ImportContentPayloadInput(
+            source_id=body.source_id,
+            contract_version=body.contract_version,
+            validate_only=body.validate_only,
+            error_mode=body.error_mode,
+            payload=body.payload.model_dump(mode="python"),
+        )
     )
     return _to_response(result)

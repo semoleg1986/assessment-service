@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from typing import Any, Literal
-
 from src.application.content.commands.import_content import (
     ImportContentCommand,
     ImportContentPayloadInput,
@@ -15,6 +13,7 @@ from src.application.content.commands.import_content import (
     ImportTopicInput,
 )
 from src.application.content.handlers.import_content import handle_import_content
+from src.application.facade.inputs import ImportContentPayloadInput as FacadeImportInput
 from src.application.ports.unit_of_work import UnitOfWork
 
 
@@ -28,24 +27,18 @@ class AssessmentImportFacade:
         return handle_import_content(command, uow=self._uow)
 
     def import_content_payload(
-        self,
-        *,
-        source_id: str,
-        contract_version: str,
-        validate_only: bool,
-        error_mode: Literal["collect", "fail_fast"],
-        payload: dict[str, Any],
+        self, *, payload: FacadeImportInput
     ) -> ImportContentResult:
         return handle_import_content(
             ImportContentCommand(
-                source_id=source_id,
-                contract_version=contract_version,
-                validate_only=validate_only,
-                error_mode=error_mode,
+                source_id=payload.source_id,
+                contract_version=payload.contract_version,
+                validate_only=payload.validate_only,
+                error_mode=payload.error_mode,
                 payload=ImportContentPayloadInput(
                     subjects=[
                         ImportSubjectInput(code=item["code"], name=item["name"])
-                        for item in payload.get("subjects", [])
+                        for item in payload.payload.get("subjects", [])
                     ],
                     topics=[
                         ImportTopicInput(
@@ -54,7 +47,7 @@ class AssessmentImportFacade:
                             grade=item["grade"],
                             name=item["name"],
                         )
-                        for item in payload.get("topics", [])
+                        for item in payload.payload.get("topics", [])
                     ],
                     micro_skills=[
                         ImportMicroSkillInput(
@@ -72,7 +65,7 @@ class AssessmentImportFacade:
                             status=item.get("status"),
                             external_ref=item.get("external_ref"),
                         )
-                        for item in payload.get("micro_skills", [])
+                        for item in payload.payload.get("micro_skills", [])
                     ],
                     tests=[
                         ImportTestInput(
@@ -115,7 +108,7 @@ class AssessmentImportFacade:
                                 for question in item.get("questions", [])
                             ],
                         )
-                        for item in payload.get("tests", [])
+                        for item in payload.payload.get("tests", [])
                     ],
                 ),
             ),

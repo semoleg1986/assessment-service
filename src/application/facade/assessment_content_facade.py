@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 from uuid import UUID
 
 from src.application.content.commands.cleanup_fixtures import CleanupFixturesCommand
@@ -47,11 +46,6 @@ from src.application.content.queries.list_micro_skills import ListMicroSkillsQue
 from src.application.content.queries.list_subjects import ListSubjectsQuery
 from src.application.content.queries.list_tests import ListTestsQuery
 from src.application.content.queries.list_topics import ListTopicsQuery
-from src.application.contracts.questions import (
-    DiagnosticTag,
-    QuestionType,
-    TextMatchMode,
-)
 from src.application.delivery.commands.assign_test import AssignTestCommand
 from src.application.delivery.handlers.assign_test import handle_assign_test
 from src.application.ports.fixture_cleanup import (
@@ -64,34 +58,16 @@ from src.domain.content.subject.entity import Subject
 from src.domain.content.test.entity import AssessmentTest
 from src.domain.content.topic.entity import Topic
 from src.domain.delivery.assignment.entity import AssignmentAggregate
-from src.domain.shared.statuses import CriticalityLevel, MicroSkillStatus
-
-
-@dataclass(frozen=True, slots=True)
-class TestQuestionOptionData:
-    option_id: str
-    text: str
-    position: int
-    diagnostic_tag: DiagnosticTag | None
-
-
-@dataclass(frozen=True, slots=True)
-class TestTextDistractorData:
-    pattern: str
-    match_mode: TextMatchMode
-    diagnostic_tag: DiagnosticTag
-
-
-@dataclass(frozen=True, slots=True)
-class TestQuestionData:
-    node_id: str
-    text: str
-    question_type: QuestionType
-    answer_key: str | None
-    correct_option_id: str | None
-    options: list[TestQuestionOptionData]
-    text_distractors: list[TestTextDistractorData]
-    max_score: int
+from src.domain.shared.statuses import MicroSkillStatus
+from src.application.facade.inputs import (
+    AssignTestInput,
+    CleanupFixturesInput,
+    CreateSubjectInput,
+    CreateTestInput,
+    CreateTopicInput,
+    LinkMicroSkillPredecessorsInput,
+    UpsertMicroSkillInput,
+)
 
 
 class AssessmentContentFacade:
@@ -106,24 +82,22 @@ class AssessmentContentFacade:
         self._uow = uow
         self._fixture_cleanup_service = fixture_cleanup_service
 
-    def create_subject(self, *, code: str, name: str) -> Subject:
+    def create_subject(self, *, payload: CreateSubjectInput) -> Subject:
         return handle_create_subject(
-            CreateSubjectCommand(code=code, name=name),
+            CreateSubjectCommand(code=payload.code, name=payload.name),
             uow=self._uow,
         )
 
     def list_subjects(self) -> list[Subject]:
         return handle_list_subjects(ListSubjectsQuery(), uow=self._uow)
 
-    def create_topic(
-        self, *, code: str, subject_code: str, grade: int, name: str
-    ) -> Topic:
+    def create_topic(self, *, payload: CreateTopicInput) -> Topic:
         return handle_create_topic(
             CreateTopicCommand(
-                code=code,
-                subject_code=subject_code,
-                grade=grade,
-                name=name,
+                code=payload.code,
+                subject_code=payload.subject_code,
+                grade=payload.grade,
+                name=payload.name,
             ),
             uow=self._uow,
         )
@@ -134,35 +108,23 @@ class AssessmentContentFacade:
     def create_micro_skill(
         self,
         *,
-        node_id: str,
-        subject_code: str,
-        topic_code: str,
-        grade: int,
-        section_code: str,
-        section_name: str,
-        micro_skill_name: str,
-        predecessor_ids: list[str],
-        criticality: CriticalityLevel,
-        source_ref: str | None,
-        description: str | None,
-        status: MicroSkillStatus | None,
-        external_ref: str | None,
+        payload: UpsertMicroSkillInput,
     ) -> MicroSkillNode:
         return handle_create_micro_skill(
             CreateMicroSkillCommand(
-                node_id=node_id,
-                subject_code=subject_code,
-                topic_code=topic_code,
-                grade=grade,
-                section_code=section_code,
-                section_name=section_name,
-                micro_skill_name=micro_skill_name,
-                predecessor_ids=predecessor_ids,
-                criticality=criticality,
-                source_ref=source_ref,
-                description=description,
-                status=status or MicroSkillStatus.ACTIVE,
-                external_ref=external_ref,
+                node_id=payload.node_id,
+                subject_code=payload.subject_code,
+                topic_code=payload.topic_code,
+                grade=payload.grade,
+                section_code=payload.section_code,
+                section_name=payload.section_name,
+                micro_skill_name=payload.micro_skill_name,
+                predecessor_ids=payload.predecessor_ids,
+                criticality=payload.criticality,
+                source_ref=payload.source_ref,
+                description=payload.description,
+                status=payload.status or MicroSkillStatus.ACTIVE,
+                external_ref=payload.external_ref,
             ),
             uow=self._uow,
         )
@@ -170,35 +132,23 @@ class AssessmentContentFacade:
     def update_micro_skill(
         self,
         *,
-        node_id: str,
-        subject_code: str,
-        topic_code: str,
-        grade: int,
-        section_code: str,
-        section_name: str,
-        micro_skill_name: str,
-        predecessor_ids: list[str],
-        criticality: CriticalityLevel,
-        source_ref: str | None,
-        description: str | None,
-        status: MicroSkillStatus | None,
-        external_ref: str | None,
+        payload: UpsertMicroSkillInput,
     ) -> MicroSkillNode:
         return handle_update_micro_skill(
             UpdateMicroSkillCommand(
-                node_id=node_id,
-                subject_code=subject_code,
-                topic_code=topic_code,
-                grade=grade,
-                section_code=section_code,
-                section_name=section_name,
-                micro_skill_name=micro_skill_name,
-                predecessor_ids=predecessor_ids,
-                criticality=criticality,
-                source_ref=source_ref,
-                description=description,
-                status=status or MicroSkillStatus.ACTIVE,
-                external_ref=external_ref,
+                node_id=payload.node_id,
+                subject_code=payload.subject_code,
+                topic_code=payload.topic_code,
+                grade=payload.grade,
+                section_code=payload.section_code,
+                section_name=payload.section_name,
+                micro_skill_name=payload.micro_skill_name,
+                predecessor_ids=payload.predecessor_ids,
+                criticality=payload.criticality,
+                source_ref=payload.source_ref,
+                description=payload.description,
+                status=payload.status or MicroSkillStatus.ACTIVE,
+                external_ref=payload.external_ref,
             ),
             uow=self._uow,
         )
@@ -210,12 +160,12 @@ class AssessmentContentFacade:
         )
 
     def link_micro_skill_predecessors(
-        self, *, node_id: str, predecessor_ids: list[str]
+        self, *, payload: LinkMicroSkillPredecessorsInput
     ) -> MicroSkillNode:
         return handle_link_micro_skill_predecessors(
             LinkMicroSkillPredecessorsCommand(
-                node_id=node_id,
-                predecessor_ids=predecessor_ids,
+                node_id=payload.node_id,
+                predecessor_ids=payload.predecessor_ids,
             ),
             uow=self._uow,
         )
@@ -226,9 +176,7 @@ class AssessmentContentFacade:
     def create_test(
         self,
         *,
-        subject_code: str,
-        grade: int,
-        questions: list[TestQuestionData],
+        payload: CreateTestInput,
     ) -> AssessmentTest:
         mapped_questions = [
             QuestionInput(
@@ -256,12 +204,12 @@ class AssessmentContentFacade:
                 ],
                 max_score=question.max_score,
             )
-            for question in questions
+            for question in payload.questions
         ]
         return handle_create_test(
             CreateTestCommand(
-                subject_code=subject_code,
-                grade=grade,
+                subject_code=payload.subject_code,
+                grade=payload.grade,
                 questions=mapped_questions,
             ),
             uow=self._uow,
@@ -273,28 +221,27 @@ class AssessmentContentFacade:
     def get_test_by_id(self, *, test_id: UUID) -> AssessmentTest | None:
         return handle_get_test_by_id(GetTestByIdQuery(test_id=test_id), uow=self._uow)
 
-    def assign_test(
-        self, *, test_id: UUID, child_id: UUID, retake: bool
-    ) -> AssignmentAggregate:
+    def assign_test(self, *, payload: AssignTestInput) -> AssignmentAggregate:
         return handle_assign_test(
-            AssignTestCommand(test_id=test_id, child_id=child_id, retake=retake),
+            AssignTestCommand(
+                test_id=payload.test_id,
+                child_id=payload.child_id,
+                retake=payload.retake,
+            ),
             uow=self._uow,
         )
 
     def cleanup_fixtures(
         self,
         *,
-        dry_run: bool,
-        subject_code_patterns: tuple[str, ...],
-        topic_code_patterns: tuple[str, ...],
-        node_id_patterns: tuple[str, ...],
+        payload: CleanupFixturesInput,
     ) -> FixtureCleanupExecution:
         return handle_cleanup_fixtures(
             CleanupFixturesCommand(
-                dry_run=dry_run,
-                subject_code_patterns=subject_code_patterns,
-                topic_code_patterns=topic_code_patterns,
-                node_id_patterns=node_id_patterns,
+                dry_run=payload.dry_run,
+                subject_code_patterns=payload.subject_code_patterns,
+                topic_code_patterns=payload.topic_code_patterns,
+                node_id_patterns=payload.node_id_patterns,
             ),
             uow=self._uow,
             service=self._fixture_cleanup_service,

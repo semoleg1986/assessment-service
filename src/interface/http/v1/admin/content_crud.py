@@ -2,7 +2,13 @@ from dishka.integrations.fastapi import DishkaRoute, FromDishka
 from fastapi import APIRouter, HTTPException, status
 
 from src.application.errors import InvariantViolationError, NotFoundError
-from src.application.facade import AssessmentContentFacade
+from src.application.facade import (
+    AssessmentContentFacade,
+    CreateSubjectInput,
+    CreateTopicInput,
+    LinkMicroSkillPredecessorsInput,
+    UpsertMicroSkillInput,
+)
 from src.interface.http.v1.admin._helpers import micro_skill_response
 from src.interface.http.v1.schemas import (
     MicroSkillCreateRequest,
@@ -39,7 +45,9 @@ def create_subject(
     facade: FromDishka[AssessmentContentFacade],
 ) -> SubjectResponse:
     try:
-        subject = facade.create_subject(code=body.code, name=body.name)
+        subject = facade.create_subject(
+            payload=CreateSubjectInput(code=body.code, name=body.name)
+        )
     except InvariantViolationError as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
     return SubjectResponse(code=subject.code, name=subject.name)
@@ -66,10 +74,12 @@ def create_topic(
 ) -> TopicResponse:
     try:
         topic = facade.create_topic(
-            code=body.code,
-            subject_code=body.subject_code,
-            grade=body.grade,
-            name=body.name,
+            payload=CreateTopicInput(
+                code=body.code,
+                subject_code=body.subject_code,
+                grade=body.grade,
+                name=body.name,
+            )
         )
     except NotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
@@ -110,19 +120,21 @@ def create_micro_skill(
 ) -> MicroSkillResponse:
     try:
         node = facade.create_micro_skill(
-            node_id=body.node_id,
-            subject_code=body.subject_code,
-            topic_code=body.topic_code,
-            grade=body.grade,
-            section_code=body.section_code,
-            section_name=body.section_name,
-            micro_skill_name=body.micro_skill_name,
-            predecessor_ids=body.predecessor_ids,
-            criticality=body.criticality,
-            source_ref=body.source_ref,
-            description=body.description,
-            status=body.status,
-            external_ref=body.external_ref,
+            payload=UpsertMicroSkillInput(
+                node_id=body.node_id,
+                subject_code=body.subject_code,
+                topic_code=body.topic_code,
+                grade=body.grade,
+                section_code=body.section_code,
+                section_name=body.section_name,
+                micro_skill_name=body.micro_skill_name,
+                predecessor_ids=body.predecessor_ids,
+                criticality=body.criticality,
+                source_ref=body.source_ref,
+                description=body.description,
+                status=body.status,
+                external_ref=body.external_ref,
+            )
         )
     except NotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
@@ -143,19 +155,21 @@ def update_micro_skill(
 ) -> MicroSkillResponse:
     try:
         node = facade.update_micro_skill(
-            node_id=node_id,
-            subject_code=body.subject_code,
-            topic_code=body.topic_code,
-            grade=body.grade,
-            section_code=body.section_code,
-            section_name=body.section_name,
-            micro_skill_name=body.micro_skill_name,
-            predecessor_ids=body.predecessor_ids,
-            criticality=body.criticality,
-            source_ref=body.source_ref,
-            description=body.description,
-            status=body.status,
-            external_ref=body.external_ref,
+            payload=UpsertMicroSkillInput(
+                node_id=node_id,
+                subject_code=body.subject_code,
+                topic_code=body.topic_code,
+                grade=body.grade,
+                section_code=body.section_code,
+                section_name=body.section_name,
+                micro_skill_name=body.micro_skill_name,
+                predecessor_ids=body.predecessor_ids,
+                criticality=body.criticality,
+                source_ref=body.source_ref,
+                description=body.description,
+                status=body.status,
+                external_ref=body.external_ref,
+            )
         )
     except NotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
@@ -195,8 +209,10 @@ def link_micro_skill_predecessors(
 ) -> MicroSkillResponse:
     try:
         node = facade.link_micro_skill_predecessors(
-            node_id=node_id,
-            predecessor_ids=body.predecessor_ids,
+            payload=LinkMicroSkillPredecessorsInput(
+                node_id=node_id,
+                predecessor_ids=body.predecessor_ids,
+            )
         )
     except NotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc

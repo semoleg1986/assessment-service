@@ -1,7 +1,7 @@
 from dishka.integrations.fastapi import DishkaRoute, FromDishka
 from fastapi import APIRouter, HTTPException, status
 
-from src.application.facade import AssessmentContentFacade
+from src.application.facade import AssessmentContentFacade, CleanupFixturesInput
 from src.application.ports.fixture_cleanup import FixtureCleanupUnsupportedError
 from src.interface.http.v1.admin._helpers import cleanup_counts_response
 from src.interface.http.v1.schemas import (
@@ -24,10 +24,12 @@ def cleanup_fixtures(
 ) -> FixtureCleanupResponse:
     try:
         result = facade.cleanup_fixtures(
-            dry_run=body.dry_run,
-            subject_code_patterns=tuple(body.subject_code_patterns),
-            topic_code_patterns=tuple(body.topic_code_patterns),
-            node_id_patterns=tuple(body.node_id_patterns),
+            payload=CleanupFixturesInput(
+                dry_run=body.dry_run,
+                subject_code_patterns=tuple(body.subject_code_patterns),
+                topic_code_patterns=tuple(body.topic_code_patterns),
+                node_id_patterns=tuple(body.node_id_patterns),
+            )
         )
     except FixtureCleanupUnsupportedError as exc:
         raise HTTPException(

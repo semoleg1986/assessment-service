@@ -1,8 +1,5 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
-from uuid import UUID
-
 from src.application.delivery.commands.save_attempt_answers import (
     SaveAttemptAnswersCommand,
 )
@@ -28,17 +25,16 @@ from src.application.delivery.queries.get_attempt_result import GetAttemptResult
 from src.application.delivery.queries.list_assignments_by_child import (
     ListAssignmentsByChildQuery,
 )
+from src.application.facade.inputs import (
+    AttemptIdInput,
+    ChildScopedInput,
+    SaveAttemptAnswersInput,
+    StartAttemptInput,
+    SubmitAttemptInput,
+)
 from src.application.ports.unit_of_work import UnitOfWork
 from src.domain.delivery.assignment.entity import AssignmentAggregate
 from src.domain.delivery.attempt.entity import AttemptAggregate
-
-
-@dataclass(frozen=True, slots=True)
-class SubmittedAnswerData:
-    question_id: UUID
-    value: str | None
-    selected_option_id: str | None
-    time_spent_ms: int | None
 
 
 class AssessmentUserFacade:
@@ -50,26 +46,26 @@ class AssessmentUserFacade:
         self._uow = uow
 
     def list_assignments_by_child(
-        self, *, child_id: UUID
+        self, *, payload: ChildScopedInput
     ) -> list[AssignmentAggregate]:
         return handle_list_assignments_by_child(
-            ListAssignmentsByChildQuery(child_id=child_id),
+            ListAssignmentsByChildQuery(child_id=payload.child_id),
             uow=self._uow,
         )
 
-    def start_attempt(
-        self, *, assignment_id: UUID, child_id: UUID
-    ) -> AttemptAggregate:
+    def start_attempt(self, *, payload: StartAttemptInput) -> AttemptAggregate:
         return handle_start_attempt(
-            StartAttemptCommand(assignment_id=assignment_id, child_id=child_id),
+            StartAttemptCommand(
+                assignment_id=payload.assignment_id,
+                child_id=payload.child_id,
+            ),
             uow=self._uow,
         )
 
     def submit_attempt(
         self,
         *,
-        attempt_id: UUID,
-        answers: list[SubmittedAnswerData],
+        payload: SubmitAttemptInput,
     ) -> SubmitAttemptResult:
         submitted_answers = [
             SubmittedAnswerInput(
@@ -78,18 +74,19 @@ class AssessmentUserFacade:
                 selected_option_id=item.selected_option_id,
                 time_spent_ms=item.time_spent_ms,
             )
-            for item in answers
+            for item in payload.answers
         ]
         return handle_submit_attempt(
-            SubmitAttemptCommand(attempt_id=attempt_id, answers=submitted_answers),
+            SubmitAttemptCommand(
+                attempt_id=payload.attempt_id, answers=submitted_answers
+            ),
             uow=self._uow,
         )
 
     def save_attempt_answers(
         self,
         *,
-        attempt_id: UUID,
-        answers: list[SubmittedAnswerData],
+        payload: SaveAttemptAnswersInput,
     ) -> dict[str, str | int]:
         submitted_answers = [
             SubmittedAnswerInput(
@@ -98,15 +95,17 @@ class AssessmentUserFacade:
                 selected_option_id=item.selected_option_id,
                 time_spent_ms=item.time_spent_ms,
             )
-            for item in answers
+            for item in payload.answers
         ]
         return handle_save_attempt_answers(
-            SaveAttemptAnswersCommand(attempt_id=attempt_id, answers=submitted_answers),
+            SaveAttemptAnswersCommand(
+                attempt_id=payload.attempt_id, answers=submitted_answers
+            ),
             uow=self._uow,
         )
 
-    def get_attempt_result(self, *, attempt_id: UUID) -> AttemptResult:
+    def get_attempt_result(self, *, payload: AttemptIdInput) -> AttemptResult:
         return handle_get_attempt_result(
-            GetAttemptResultQuery(attempt_id=attempt_id),
+            GetAttemptResultQuery(attempt_id=payload.attempt_id),
             uow=self._uow,
         )

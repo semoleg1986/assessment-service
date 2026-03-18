@@ -5,7 +5,15 @@ from fastapi import APIRouter, HTTPException
 
 from src.application.contracts.questions import DiagnosticTag
 from src.application.errors import InvariantViolationError, NotFoundError
-from src.application.facade import AssessmentUserFacade, SubmittedAnswerData
+from src.application.facade import (
+    AssessmentUserFacade,
+    AttemptIdInput,
+    ChildScopedInput,
+    SaveAttemptAnswersInput,
+    StartAttemptInput,
+    SubmitAttemptInput,
+    SubmittedAnswerData,
+)
 from src.interface.http.v1.schemas import (
     AssignmentListItemResponse,
     AttemptAnswerResponse,
@@ -30,7 +38,9 @@ def list_assignments_by_child(
     child_id: UUID,
     facade: FromDishka[AssessmentUserFacade],
 ) -> list[AssignmentListItemResponse]:
-    assignments = facade.list_assignments_by_child(child_id=child_id)
+    assignments = facade.list_assignments_by_child(
+        payload=ChildScopedInput(child_id=child_id)
+    )
     return [
         AssignmentListItemResponse(
             assignment_id=a.assignment_id,
@@ -49,8 +59,10 @@ def start_attempt(
 ) -> StartAttemptResponse:
     try:
         attempt = facade.start_attempt(
-            assignment_id=body.assignment_id,
-            child_id=body.child_id,
+            payload=StartAttemptInput(
+                assignment_id=body.assignment_id,
+                child_id=body.child_id,
+            )
         )
     except NotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
@@ -95,16 +107,18 @@ def submit_attempt(
 ) -> SubmitAttemptResponse:
     try:
         result = facade.submit_attempt(
-            attempt_id=attempt_id,
-            answers=[
-                SubmittedAnswerData(
-                    question_id=a.question_id,
-                    value=a.value,
-                    selected_option_id=a.selected_option_id,
-                    time_spent_ms=a.time_spent_ms,
-                )
-                for a in body.answers
-            ],
+            payload=SubmitAttemptInput(
+                attempt_id=attempt_id,
+                answers=[
+                    SubmittedAnswerData(
+                        question_id=a.question_id,
+                        value=a.value,
+                        selected_option_id=a.selected_option_id,
+                        time_spent_ms=a.time_spent_ms,
+                    )
+                    for a in body.answers
+                ],
+            )
         )
     except NotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
@@ -125,16 +139,18 @@ def save_attempt_answers(
 ) -> SaveAttemptAnswersResponse:
     try:
         result = facade.save_attempt_answers(
-            attempt_id=attempt_id,
-            answers=[
-                SubmittedAnswerData(
-                    question_id=a.question_id,
-                    value=a.value,
-                    selected_option_id=a.selected_option_id,
-                    time_spent_ms=a.time_spent_ms,
-                )
-                for a in body.answers
-            ],
+            payload=SaveAttemptAnswersInput(
+                attempt_id=attempt_id,
+                answers=[
+                    SubmittedAnswerData(
+                        question_id=a.question_id,
+                        value=a.value,
+                        selected_option_id=a.selected_option_id,
+                        time_spent_ms=a.time_spent_ms,
+                    )
+                    for a in body.answers
+                ],
+            )
         )
     except NotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
@@ -152,7 +168,9 @@ def get_attempt_result(
     facade: FromDishka[AssessmentUserFacade],
 ) -> AttemptResultResponse:
     try:
-        result = facade.get_attempt_result(attempt_id=attempt_id)
+        result = facade.get_attempt_result(
+            payload=AttemptIdInput(attempt_id=attempt_id)
+        )
     except NotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     return AttemptResultResponse(

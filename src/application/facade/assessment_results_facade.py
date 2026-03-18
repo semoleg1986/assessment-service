@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-from uuid import UUID
-
+from src.application.facade.inputs import ChildScopedInput
 from src.application.ports.unit_of_work import UnitOfWork
 from src.application.reporting.handlers.get_child_diagnostics import (
     handle_get_child_diagnostics,
@@ -29,20 +28,22 @@ class AssessmentResultsFacade:
     def __init__(self, *, uow: UnitOfWork) -> None:
         self._uow = uow
 
-    def get_child_diagnostics(self, *, child_id: UUID) -> dict[str, int]:
+    def get_child_diagnostics(self, *, payload: ChildScopedInput) -> dict[str, int]:
         return handle_get_child_diagnostics(
-            GetChildDiagnosticsQuery(child_id=child_id),
+            GetChildDiagnosticsQuery(child_id=payload.child_id),
             uow=self._uow,
         )
 
-    def get_child_results(self, *, child_id: UUID) -> ChildResults:
+    def get_child_results(self, *, payload: ChildScopedInput) -> ChildResults:
         return handle_get_child_results(
-            GetChildResultsQuery(child_id=child_id),
+            GetChildResultsQuery(child_id=payload.child_id),
             uow=self._uow,
         )
 
-    def get_child_skill_results(self, *, child_id: UUID) -> ChildSkillResults:
+    def get_child_skill_results(
+        self, *, payload: ChildScopedInput
+    ) -> ChildSkillResults:
         return handle_get_child_skill_results(
-            GetChildSkillResultsQuery(child_id=child_id),
+            GetChildSkillResultsQuery(child_id=payload.child_id),
             uow=self._uow,
         )
