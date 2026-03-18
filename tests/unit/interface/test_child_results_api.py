@@ -308,6 +308,10 @@ def test_child_skill_results_returns_gap_levels_and_recommendations() -> None:
     assert report["summary"]["medium_gap_total"] == 0
     assert report["summary"]["low_gap_total"] == 0
     assert report["summary"]["insufficient_data_total"] == 1
+    assert report["summary"]["critical_gap_total"] == 1
+    assert report["summary"]["gap_total"] == 0
+    assert report["summary"]["risk_total"] == 1
+    assert report["summary"]["normal_total"] == 0
 
     assert len(report["skills"]) == 2
     primary = report["skills"][0]
@@ -318,6 +322,7 @@ def test_child_skill_results_returns_gap_levels_and_recommendations() -> None:
     assert primary["correct_answers"] == 0
     assert primary["accuracy_percent"] == 0.0
     assert primary["gap_level"] == "high"
+    assert primary["signal"] == "critical_gap"
     assert primary["wilson_low"] >= 0.0
     assert primary["wilson_high"] <= 1.0
     assert primary["recommendation"]
@@ -332,3 +337,4 @@ def test_child_skill_results_returns_gap_levels_and_recommendations() -> None:
     assert secondary["correct_answers"] == 2
     assert secondary["accuracy_percent"] == 100.0
     assert secondary["gap_level"] == "insufficient_data"
+    assert secondary["signal"] == "risk"

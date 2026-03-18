@@ -74,6 +74,7 @@ class ChildSkillResultResponse(BaseModel):
     wilson_low: float
     wilson_high: float
     gap_level: Literal["insufficient_data", "high", "medium", "low"]
+    signal: Literal["normal", "risk", "gap", "critical_gap"]
     resolved_diagnostic_tags: list[ChildResultsDiagnosticTagCountResponse] = Field(
         default_factory=list
     )
@@ -86,6 +87,10 @@ class ChildSkillResultsSummaryResponse(BaseModel):
     medium_gap_total: int
     low_gap_total: int
     insufficient_data_total: int
+    critical_gap_total: int
+    gap_total: int
+    risk_total: int
+    normal_total: int
 
 
 class ChildSkillResultsResponse(BaseModel):

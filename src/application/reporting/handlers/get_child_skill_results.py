@@ -34,12 +34,20 @@ _DIAGNOSTIC_RECOMMENDATIONS: dict[str, str] = {
 }
 
 GapLevel: TypeAlias = Literal["insufficient_data", "high", "medium", "low"]
+Signal: TypeAlias = Literal["normal", "risk", "gap", "critical_gap"]
 
 _GAP_LEVEL_RANK: dict[GapLevel, int] = {
     "high": 0,
     "medium": 1,
     "low": 2,
     "insufficient_data": 3,
+}
+
+_SIGNAL_RANK: dict[Signal, int] = {
+    "critical_gap": 0,
+    "gap": 1,
+    "risk": 2,
+    "normal": 3,
 }
 
 
@@ -54,6 +62,7 @@ class ChildSkillResult(TypedDict):
     wilson_low: float
     wilson_high: float
     gap_level: GapLevel
+    signal: Signal
     resolved_diagnostic_tags: dict[str, int]
     recommendation: str
 
@@ -64,6 +73,10 @@ class ChildSkillResultsSummary(TypedDict):
     medium_gap_total: int
     low_gap_total: int
     insufficient_data_total: int
+    critical_gap_total: int
+    gap_total: int
+    risk_total: int
+    normal_total: int
 
 
 class ChildSkillResults(TypedDict):
@@ -119,6 +132,25 @@ def _top_diagnostic_tag(tag_counts: Counter[str]) -> str | None:
     if not tag_counts:
         return None
     return sorted(tag_counts.items(), key=lambda item: (-item[1], item[0]))[0][0]
+
+
+def _signal(
+    *,
+    attempted_questions: int,
+    accuracy_percent: float,
+    wilson_low: float,
+    gap_level: GapLevel,
+) -> Signal:
+    del attempted_questions, accuracy_percent, wilson_low
+    if gap_level == "high":
+        return "critical_gap"
+    if gap_level == "medium":
+        return "gap"
+    if gap_level == "low":
+        return "normal"
+    if gap_level == "insufficient_data":
+        return "risk"
+    return "risk"
 
 
 def _recommendation(
@@ -216,6 +248,10 @@ def handle_get_child_skill_results(
     medium_gap_total = 0
     low_gap_total = 0
     insufficient_data_total = 0
+    critical_gap_total = 0
+    gap_total = 0
+    risk_total = 0
+    normal_total = 0
 
     for node_id, accumulator in skill_accumulators.items():
         attempted_questions = accumulator.attempted_questions
@@ -234,6 +270,12 @@ def handle_get_child_skill_results(
         )
         wilson_low, wilson_high = _wilson_interval(correct_answers, attempted_questions)
         gap_level = _gap_level(attempted_questions, wilson_low)
+        signal = _signal(
+            attempted_questions=attempted_questions,
+            accuracy_percent=accuracy_percent,
+            wilson_low=wilson_low,
+            gap_level=gap_level,
+        )
 
         if gap_level == "high":
             high_gap_total += 1
@@ -243,6 +285,15 @@ def handle_get_child_skill_results(
             low_gap_total += 1
         else:
             insufficient_data_total += 1
+
+        if signal == "critical_gap":
+            critical_gap_total += 1
+        elif signal == "gap":
+            gap_total += 1
+        elif signal == "risk":
+            risk_total += 1
+        else:
+            normal_total += 1
 
         top_diagnostic_tag = _top_diagnostic_tag(accumulator.resolved_diagnostic_tags)
         rows.append(
@@ -257,6 +308,7 @@ def handle_get_child_skill_results(
                 "wilson_low": wilson_low,
                 "wilson_high": wilson_high,
                 "gap_level": gap_level,
+                "signal": signal,
                 "resolved_diagnostic_tags": dict(accumulator.resolved_diagnostic_tags),
                 "recommendation": _recommendation(
                     gap_level=gap_level,
@@ -268,6 +320,7 @@ def handle_get_child_skill_results(
 
     rows.sort(
         key=lambda row: (
+            _SIGNAL_RANK[row["signal"]],
             _GAP_LEVEL_RANK[row["gap_level"]],
             row["accuracy_percent"],
             row["skill_name"],
@@ -282,6 +335,10 @@ def handle_get_child_skill_results(
             "medium_gap_total": medium_gap_total,
             "low_gap_total": low_gap_total,
             "insufficient_data_total": insufficient_data_total,
+            "critical_gap_total": critical_gap_total,
+            "gap_total": gap_total,
+            "risk_total": risk_total,
+            "normal_total": normal_total,
         },
         "skills": rows,
     }

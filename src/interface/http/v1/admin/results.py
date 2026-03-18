@@ -112,6 +112,10 @@ def get_child_skill_results(
             medium_gap_total=result["summary"]["medium_gap_total"],
             low_gap_total=result["summary"]["low_gap_total"],
             insufficient_data_total=result["summary"]["insufficient_data_total"],
+            critical_gap_total=result["summary"]["critical_gap_total"],
+            gap_total=result["summary"]["gap_total"],
+            risk_total=result["summary"]["risk_total"],
+            normal_total=result["summary"]["normal_total"],
         ),
         skills=[
             ChildSkillResultResponse(
@@ -125,6 +129,7 @@ def get_child_skill_results(
                 wilson_low=item["wilson_low"],
                 wilson_high=item["wilson_high"],
                 gap_level=item["gap_level"],
+                signal=item["signal"],
                 resolved_diagnostic_tags=sorted_diagnostic_tag_counts(
                     item["resolved_diagnostic_tags"]
                 ),

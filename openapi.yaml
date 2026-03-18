@@ -996,6 +996,10 @@ paths:
                   medium_gap_total: 1
                   low_gap_total: 1
                   insufficient_data_total: 1
+                  critical_gap_total: 1
+                  gap_total: 1
+                  risk_total: 1
+                  normal_total: 1
                 skills:
                 - node_id: string
                   topic_code: string
@@ -1007,6 +1011,7 @@ paths:
                   wilson_low: 1
                   wilson_high: 1
                   gap_level: insufficient_data
+                  signal: normal
                   recommendation: string
         '422':
           description: Validation Error
@@ -1769,6 +1774,14 @@ components:
           - medium
           - low
           title: Gap Level
+        signal:
+          type: string
+          enum:
+          - normal
+          - risk
+          - gap
+          - critical_gap
+          title: Signal
         resolved_diagnostic_tags:
           items:
             $ref: '#/components/schemas/ChildResultsDiagnosticTagCountResponse'
@@ -1789,6 +1802,7 @@ components:
       - wilson_low
       - wilson_high
       - gap_level
+      - signal
       - recommendation
       title: ChildSkillResultResponse
     ChildSkillResultsResponse:
@@ -1826,6 +1840,18 @@ components:
         insufficient_data_total:
           type: integer
           title: Insufficient Data Total
+        critical_gap_total:
+          type: integer
+          title: Critical Gap Total
+        gap_total:
+          type: integer
+          title: Gap Total
+        risk_total:
+          type: integer
+          title: Risk Total
+        normal_total:
+          type: integer
+          title: Normal Total
       type: object
       required:
       - total_skills
@@ -1833,6 +1859,10 @@ components:
       - medium_gap_total
       - low_gap_total
       - insufficient_data_total
+      - critical_gap_total
+      - gap_total
+      - risk_total
+      - normal_total
       title: ChildSkillResultsSummaryResponse
     ContentImportDetails:
       properties:
