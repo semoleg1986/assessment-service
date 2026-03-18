@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
 from uuid import UUID
 
 from src.application.delivery.commands.save_attempt_answers import (
@@ -32,6 +33,14 @@ from src.domain.delivery.assignment.entity import AssignmentAggregate
 from src.domain.delivery.attempt.entity import AttemptAggregate
 
 
+@dataclass(frozen=True, slots=True)
+class SubmittedAnswerData:
+    question_id: UUID
+    value: str | None
+    selected_option_id: str | None
+    time_spent_ms: int | None
+
+
 class AssessmentUserFacade:
     """
     Фасад application-слоя для user сценариев assessment-service.
@@ -60,10 +69,19 @@ class AssessmentUserFacade:
         self,
         *,
         attempt_id: UUID,
-        answers: list[SubmittedAnswerInput],
+        answers: list[SubmittedAnswerData],
     ) -> SubmitAttemptResult:
+        submitted_answers = [
+            SubmittedAnswerInput(
+                question_id=item.question_id,
+                value=item.value,
+                selected_option_id=item.selected_option_id,
+                time_spent_ms=item.time_spent_ms,
+            )
+            for item in answers
+        ]
         return handle_submit_attempt(
-            SubmitAttemptCommand(attempt_id=attempt_id, answers=answers),
+            SubmitAttemptCommand(attempt_id=attempt_id, answers=submitted_answers),
             uow=self._uow,
         )
 
@@ -71,10 +89,19 @@ class AssessmentUserFacade:
         self,
         *,
         attempt_id: UUID,
-        answers: list[SubmittedAnswerInput],
+        answers: list[SubmittedAnswerData],
     ) -> dict[str, str | int]:
+        submitted_answers = [
+            SubmittedAnswerInput(
+                question_id=item.question_id,
+                value=item.value,
+                selected_option_id=item.selected_option_id,
+                time_spent_ms=item.time_spent_ms,
+            )
+            for item in answers
+        ]
         return handle_save_attempt_answers(
-            SaveAttemptAnswersCommand(attempt_id=attempt_id, answers=answers),
+            SaveAttemptAnswersCommand(attempt_id=attempt_id, answers=submitted_answers),
             uow=self._uow,
         )
 

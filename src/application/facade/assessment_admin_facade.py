@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
+from typing import Any, Literal
 from uuid import UUID
 
 from src.application.content.commands.cleanup_fixtures import CleanupFixturesCommand
@@ -8,12 +10,22 @@ from src.application.content.commands.create_subject import CreateSubjectCommand
 from src.application.content.commands.create_test import (
     CreateTestCommand,
     QuestionInput,
+    QuestionOptionInput,
+    TextDistractorInput,
 )
 from src.application.content.commands.create_topic import CreateTopicCommand
 from src.application.content.commands.delete_micro_skill import DeleteMicroSkillCommand
 from src.application.content.commands.import_content import (
     ImportContentCommand,
+    ImportContentPayloadInput,
     ImportContentResult,
+    ImportMicroSkillInput,
+    ImportQuestionInput,
+    ImportQuestionOptionInput,
+    ImportSubjectInput,
+    ImportTestInput,
+    ImportTextDistractorInput,
+    ImportTopicInput,
 )
 from src.application.content.commands.link_micro_skill_predecessors import (
     LinkMicroSkillPredecessorsCommand,
@@ -74,6 +86,11 @@ from src.application.reporting.queries.get_child_results import GetChildResultsQ
 from src.application.reporting.queries.get_child_skill_results import (
     GetChildSkillResultsQuery,
 )
+from src.application.contracts.questions import (
+    DiagnosticTag,
+    QuestionType,
+    TextMatchMode,
+)
 from src.domain.content.micro_skill.entity import MicroSkillNode
 from src.domain.content.subject.entity import Subject
 from src.domain.content.test.entity import AssessmentTest
@@ -98,6 +115,101 @@ class AssessmentAdminFacade:
 
     def import_content(self, *, command: ImportContentCommand) -> ImportContentResult:
         return handle_import_content(command, uow=self._uow)
+
+    def import_content_payload(
+        self,
+        *,
+        source_id: str,
+        contract_version: str,
+        validate_only: bool,
+        error_mode: Literal["collect", "fail_fast"],
+        payload: dict[str, Any],
+    ) -> ImportContentResult:
+        return handle_import_content(
+            ImportContentCommand(
+                source_id=source_id,
+                contract_version=contract_version,
+                validate_only=validate_only,
+                error_mode=error_mode,
+                payload=ImportContentPayloadInput(
+                    subjects=[
+                        ImportSubjectInput(code=item["code"], name=item["name"])
+                        for item in payload.get("subjects", [])
+                    ],
+                    topics=[
+                        ImportTopicInput(
+                            code=item["code"],
+                            subject_code=item["subject_code"],
+                            grade=item["grade"],
+                            name=item["name"],
+                        )
+                        for item in payload.get("topics", [])
+                    ],
+                    micro_skills=[
+                        ImportMicroSkillInput(
+                            node_id=item["node_id"],
+                            subject_code=item["subject_code"],
+                            topic_code=item["topic_code"],
+                            grade=item["grade"],
+                            section_code=item["section_code"],
+                            section_name=item["section_name"],
+                            micro_skill_name=item["micro_skill_name"],
+                            predecessor_ids=item.get("predecessor_ids", []),
+                            criticality=item["criticality"],
+                            source_ref=item.get("source_ref"),
+                            description=item.get("description"),
+                            status=item.get("status"),
+                            external_ref=item.get("external_ref"),
+                        )
+                        for item in payload.get("micro_skills", [])
+                    ],
+                    tests=[
+                        ImportTestInput(
+                            external_id=item["external_id"],
+                            subject_code=item["subject_code"],
+                            grade=item["grade"],
+                            questions=[
+                                ImportQuestionInput(
+                                    external_id=question["external_id"],
+                                    node_id=question["node_id"],
+                                    text=question["text"],
+                                    question_type=question.get("question_type", "text"),
+                                    answer_key=question.get("answer_key"),
+                                    correct_option_id=question.get("correct_option_id"),
+                                    options=[
+                                        ImportQuestionOptionInput(
+                                            option_id=option["option_id"],
+                                            text=option["text"],
+                                            position=option["position"],
+                                            diagnostic_tag=option.get("diagnostic_tag"),
+                                        )
+                                        for option in question.get("options", [])
+                                    ],
+                                    text_distractors=[
+                                        ImportTextDistractorInput(
+                                            pattern=distractor["pattern"],
+                                            match_mode=distractor.get(
+                                                "match_mode", "exact"
+                                            ),
+                                            diagnostic_tag=distractor.get(
+                                                "diagnostic_tag", "other"
+                                            ),
+                                        )
+                                        for distractor in question.get(
+                                            "text_distractors", []
+                                        )
+                                    ],
+                                    max_score=question["max_score"],
+                                )
+                                for question in item.get("questions", [])
+                            ],
+                        )
+                        for item in payload.get("tests", [])
+                    ],
+                ),
+            ),
+            uow=self._uow,
+        )
 
     def create_subject(self, *, code: str, name: str) -> Subject:
         return handle_create_subject(
@@ -221,13 +333,41 @@ class AssessmentAdminFacade:
         *,
         subject_code: str,
         grade: int,
-        questions: list[QuestionInput],
+        questions: list["TestQuestionData"],
     ) -> AssessmentTest:
+        mapped_questions = [
+            QuestionInput(
+                node_id=question.node_id,
+                text=question.text,
+                question_type=question.question_type,
+                answer_key=question.answer_key,
+                correct_option_id=question.correct_option_id,
+                options=[
+                    QuestionOptionInput(
+                        option_id=option.option_id,
+                        text=option.text,
+                        position=option.position,
+                        diagnostic_tag=option.diagnostic_tag,
+                    )
+                    for option in question.options
+                ],
+                text_distractors=[
+                    TextDistractorInput(
+                        pattern=item.pattern,
+                        match_mode=item.match_mode,
+                        diagnostic_tag=item.diagnostic_tag,
+                    )
+                    for item in question.text_distractors
+                ],
+                max_score=question.max_score,
+            )
+            for question in questions
+        ]
         return handle_create_test(
             CreateTestCommand(
                 subject_code=subject_code,
                 grade=grade,
-                questions=questions,
+                questions=mapped_questions,
             ),
             uow=self._uow,
         )
@@ -282,3 +422,30 @@ class AssessmentAdminFacade:
             uow=self._uow,
             service=self._fixture_cleanup_service,
         )
+
+
+@dataclass(frozen=True, slots=True)
+class TestQuestionOptionData:
+    option_id: str
+    text: str
+    position: int
+    diagnostic_tag: DiagnosticTag | None
+
+
+@dataclass(frozen=True, slots=True)
+class TestTextDistractorData:
+    pattern: str
+    match_mode: TextMatchMode
+    diagnostic_tag: DiagnosticTag
+
+
+@dataclass(frozen=True, slots=True)
+class TestQuestionData:
+    node_id: str
+    text: str
+    question_type: QuestionType
+    answer_key: str | None
+    correct_option_id: str | None
+    options: list[TestQuestionOptionData]
+    text_distractors: list[TestTextDistractorData]
+    max_score: int

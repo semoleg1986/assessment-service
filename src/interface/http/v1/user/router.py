@@ -4,9 +4,8 @@ from dishka.integrations.fastapi import DishkaRoute, FromDishka
 from fastapi import APIRouter, HTTPException
 
 from src.application.contracts.questions import DiagnosticTag
-from src.application.delivery.commands.submit_attempt import SubmittedAnswerInput
 from src.application.errors import InvariantViolationError, NotFoundError
-from src.application.facade import AssessmentUserFacade
+from src.application.facade import AssessmentUserFacade, SubmittedAnswerData
 from src.interface.http.v1.schemas import (
     AssignmentListItemResponse,
     AttemptAnswerResponse,
@@ -98,7 +97,7 @@ def submit_attempt(
         result = facade.submit_attempt(
             attempt_id=attempt_id,
             answers=[
-                SubmittedAnswerInput(
+                SubmittedAnswerData(
                     question_id=a.question_id,
                     value=a.value,
                     selected_option_id=a.selected_option_id,
@@ -128,7 +127,7 @@ def save_attempt_answers(
         result = facade.save_attempt_answers(
             attempt_id=attempt_id,
             answers=[
-                SubmittedAnswerInput(
+                SubmittedAnswerData(
                     question_id=a.question_id,
                     value=a.value,
                     selected_option_id=a.selected_option_id,
