@@ -4,31 +4,9 @@ from dishka.integrations.fastapi import DishkaRoute, FromDishka
 from fastapi import APIRouter, HTTPException
 
 from src.application.contracts.questions import DiagnosticTag
-from src.application.delivery.commands.save_attempt_answers import (
-    SaveAttemptAnswersCommand,
-)
-from src.application.delivery.commands.start_attempt import StartAttemptCommand
-from src.application.delivery.commands.submit_attempt import (
-    SubmitAttemptCommand,
-    SubmittedAnswerInput,
-)
-from src.application.delivery.handlers.get_attempt_result import (
-    handle_get_attempt_result,
-)
-from src.application.delivery.handlers.list_assignments_by_child import (
-    handle_list_assignments_by_child,
-)
-from src.application.delivery.handlers.save_attempt_answers import (
-    handle_save_attempt_answers,
-)
-from src.application.delivery.handlers.start_attempt import handle_start_attempt
-from src.application.delivery.handlers.submit_attempt import handle_submit_attempt
-from src.application.delivery.queries.get_attempt_result import GetAttemptResultQuery
-from src.application.delivery.queries.list_assignments_by_child import (
-    ListAssignmentsByChildQuery,
-)
+from src.application.delivery.commands.submit_attempt import SubmittedAnswerInput
 from src.application.errors import InvariantViolationError, NotFoundError
-from src.application.ports.unit_of_work import UnitOfWork
+from src.application.facade import AssessmentUserFacade
 from src.interface.http.v1.schemas import (
     AssignmentListItemResponse,
     AttemptAnswerResponse,
@@ -51,12 +29,9 @@ router = APIRouter(tags=["assessment"], route_class=DishkaRoute)
 )
 def list_assignments_by_child(
     child_id: UUID,
-    uow: FromDishka[UnitOfWork],
+    facade: FromDishka[AssessmentUserFacade],
 ) -> list[AssignmentListItemResponse]:
-    assignments = handle_list_assignments_by_child(
-        ListAssignmentsByChildQuery(child_id=child_id),
-        uow=uow,
-    )
+    assignments = facade.list_assignments_by_child(child_id=child_id)
     return [
         AssignmentListItemResponse(
             assignment_id=a.assignment_id,
@@ -71,15 +46,12 @@ def list_assignments_by_child(
 @router.post("/attempts/start", response_model=StartAttemptResponse)
 def start_attempt(
     body: StartAttemptRequest,
-    uow: FromDishka[UnitOfWork],
+    facade: FromDishka[AssessmentUserFacade],
 ) -> StartAttemptResponse:
     try:
-        attempt = handle_start_attempt(
-            StartAttemptCommand(
-                assignment_id=body.assignment_id,
-                child_id=body.child_id,
-            ),
-            uow=uow,
+        attempt = facade.start_attempt(
+            assignment_id=body.assignment_id,
+            child_id=body.child_id,
         )
     except NotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
@@ -101,11 +73,11 @@ def start_attempt(
 def start_attempt_for_assignment(
     assignment_id: UUID,
     body: StartAttemptByAssignmentRequest,
-    uow: FromDishka[UnitOfWork],
+    facade: FromDishka[AssessmentUserFacade],
 ) -> StartAttemptResponse:
     return start_attempt(
         StartAttemptRequest(assignment_id=assignment_id, child_id=body.child_id),
-        uow=uow,
+        facade=facade,
     )
 
 
@@ -120,23 +92,20 @@ def start_attempt_for_assignment(
 def submit_attempt(
     attempt_id: UUID,
     body: SubmitAttemptRequest,
-    uow: FromDishka[UnitOfWork],
+    facade: FromDishka[AssessmentUserFacade],
 ) -> SubmitAttemptResponse:
     try:
-        result = handle_submit_attempt(
-            SubmitAttemptCommand(
-                attempt_id=attempt_id,
-                answers=[
-                    SubmittedAnswerInput(
-                        question_id=a.question_id,
-                        value=a.value,
-                        selected_option_id=a.selected_option_id,
-                        time_spent_ms=a.time_spent_ms,
-                    )
-                    for a in body.answers
-                ],
-            ),
-            uow=uow,
+        result = facade.submit_attempt(
+            attempt_id=attempt_id,
+            answers=[
+                SubmittedAnswerInput(
+                    question_id=a.question_id,
+                    value=a.value,
+                    selected_option_id=a.selected_option_id,
+                    time_spent_ms=a.time_spent_ms,
+                )
+                for a in body.answers
+            ],
         )
     except NotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
@@ -153,23 +122,20 @@ def submit_attempt(
 def save_attempt_answers(
     attempt_id: UUID,
     body: SaveAttemptAnswersRequest,
-    uow: FromDishka[UnitOfWork],
+    facade: FromDishka[AssessmentUserFacade],
 ) -> SaveAttemptAnswersResponse:
     try:
-        result = handle_save_attempt_answers(
-            SaveAttemptAnswersCommand(
-                attempt_id=attempt_id,
-                answers=[
-                    SubmittedAnswerInput(
-                        question_id=a.question_id,
-                        value=a.value,
-                        selected_option_id=a.selected_option_id,
-                        time_spent_ms=a.time_spent_ms,
-                    )
-                    for a in body.answers
-                ],
-            ),
-            uow=uow,
+        result = facade.save_attempt_answers(
+            attempt_id=attempt_id,
+            answers=[
+                SubmittedAnswerInput(
+                    question_id=a.question_id,
+                    value=a.value,
+                    selected_option_id=a.selected_option_id,
+                    time_spent_ms=a.time_spent_ms,
+                )
+                for a in body.answers
+            ],
         )
     except NotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
@@ -184,13 +150,10 @@ def save_attempt_answers(
 @router.get("/attempts/{attempt_id}", response_model=AttemptResultResponse)
 def get_attempt_result(
     attempt_id: UUID,
-    uow: FromDishka[UnitOfWork],
+    facade: FromDishka[AssessmentUserFacade],
 ) -> AttemptResultResponse:
     try:
-        result = handle_get_attempt_result(
-            GetAttemptResultQuery(attempt_id=attempt_id),
-            uow=uow,
-        )
+        result = facade.get_attempt_result(attempt_id=attempt_id)
     except NotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     return AttemptResultResponse(
@@ -222,6 +185,6 @@ def get_attempt_result(
 )
 def get_attempt_result_for_user(
     attempt_id: UUID,
-    uow: FromDishka[UnitOfWork],
+    facade: FromDishka[AssessmentUserFacade],
 ) -> AttemptResultResponse:
-    return get_attempt_result(attempt_id, uow=uow)
+    return get_attempt_result(attempt_id, facade=facade)

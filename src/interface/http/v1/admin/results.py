@@ -3,23 +3,7 @@ from uuid import UUID
 from dishka.integrations.fastapi import DishkaRoute, FromDishka
 from fastapi import APIRouter
 
-from src.application.ports.unit_of_work import UnitOfWork
-from src.application.reporting.handlers.get_child_diagnostics import (
-    handle_get_child_diagnostics,
-)
-from src.application.reporting.handlers.get_child_results import (
-    handle_get_child_results,
-)
-from src.application.reporting.handlers.get_child_skill_results import (
-    handle_get_child_skill_results,
-)
-from src.application.reporting.queries.get_child_diagnostics import (
-    GetChildDiagnosticsQuery,
-)
-from src.application.reporting.queries.get_child_results import GetChildResultsQuery
-from src.application.reporting.queries.get_child_skill_results import (
-    GetChildSkillResultsQuery,
-)
+from src.application.facade import AssessmentAdminFacade
 from src.interface.http.v1.admin._helpers import sorted_diagnostic_tag_counts
 from src.interface.http.v1.schemas import (
     ChildDiagnosticsResponse,
@@ -40,12 +24,9 @@ router = APIRouter(tags=["assessment"], route_class=DishkaRoute)
 )
 def get_child_diagnostics(
     child_id: UUID,
-    uow: FromDishka[UnitOfWork],
+    facade: FromDishka[AssessmentAdminFacade],
 ) -> ChildDiagnosticsResponse:
-    result = handle_get_child_diagnostics(
-        GetChildDiagnosticsQuery(child_id=child_id),
-        uow=uow,
-    )
+    result = facade.get_child_diagnostics(child_id=child_id)
     return ChildDiagnosticsResponse(
         child_id=child_id,
         assignments_total=result["assignments_total"],
@@ -59,12 +40,9 @@ def get_child_diagnostics(
 )
 def get_child_results(
     child_id: UUID,
-    uow: FromDishka[UnitOfWork],
+    facade: FromDishka[AssessmentAdminFacade],
 ) -> ChildResultsResponse:
-    result = handle_get_child_results(
-        GetChildResultsQuery(child_id=child_id),
-        uow=uow,
-    )
+    result = facade.get_child_results(child_id=child_id)
     return ChildResultsResponse(
         child_id=child_id,
         summary=ChildResultsSummaryResponse(
@@ -116,12 +94,9 @@ def get_child_results(
 )
 def get_child_skill_results(
     child_id: UUID,
-    uow: FromDishka[UnitOfWork],
+    facade: FromDishka[AssessmentAdminFacade],
 ) -> ChildSkillResultsResponse:
-    result = handle_get_child_skill_results(
-        GetChildSkillResultsQuery(child_id=child_id),
-        uow=uow,
-    )
+    result = facade.get_child_skill_results(child_id=child_id)
     return ChildSkillResultsResponse(
         child_id=child_id,
         summary=ChildSkillResultsSummaryResponse(

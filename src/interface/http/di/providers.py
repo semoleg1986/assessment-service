@@ -5,6 +5,7 @@ from dataclasses import dataclass
 
 from dishka import Provider, Scope, provide
 
+from src.application.facade import AssessmentAdminFacade, AssessmentUserFacade
 from src.application.ports.fixture_cleanup import FixtureCleanupService
 from src.application.ports.unit_of_work import UnitOfWork
 from src.interface.http import dependencies as deps
@@ -32,3 +33,18 @@ class AppProvider(Provider):  # type: ignore[misc]
     @provide(scope=Scope.APP)  # type: ignore[misc]
     def provide_fixture_cleanup_service(self) -> FixtureCleanupService:
         return deps.get_fixture_cleanup_service()
+
+    @provide(scope=Scope.REQUEST)  # type: ignore[misc]
+    def provide_admin_facade(
+        self,
+        uow: UnitOfWork,
+        fixture_cleanup_service: FixtureCleanupService,
+    ) -> AssessmentAdminFacade:
+        return AssessmentAdminFacade(
+            uow=uow,
+            fixture_cleanup_service=fixture_cleanup_service,
+        )
+
+    @provide(scope=Scope.REQUEST)  # type: ignore[misc]
+    def provide_user_facade(self, uow: UnitOfWork) -> AssessmentUserFacade:
+        return AssessmentUserFacade(uow=uow)

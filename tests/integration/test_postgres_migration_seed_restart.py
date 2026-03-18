@@ -12,6 +12,14 @@ from pathlib import Path
 import pytest
 from sqlalchemy import create_engine, text
 
+from src.application.facade import AssessmentAdminFacade
+from src.application.ports.fixture_cleanup import (
+    FixtureCleanupCounts,
+    FixtureCleanupExecution,
+    FixtureCleanupFilters,
+    FixtureCleanupService,
+)
+from src.application.ports.unit_of_work import UnitOfWork
 from src.infrastructure.db.uow import SqlAlchemyUnitOfWork
 from src.interface.http.v1.router import _import_content_with_uow
 from src.interface.http.v1.schemas import ContentImportRequest
@@ -23,6 +31,23 @@ pytestmark = pytest.mark.skipif(
     not RUN_INTEGRATION_TESTS,
     reason="set RUN_INTEGRATION_TESTS=1 to run integration tests",
 )
+
+
+class _NoopFixtureCleanup(FixtureCleanupService):
+    def run(
+        self,
+        *,
+        uow: UnitOfWork,
+        dry_run: bool,
+        filters: FixtureCleanupFilters,
+    ) -> FixtureCleanupExecution:
+        _ = (uow, dry_run, filters)
+        return FixtureCleanupExecution(
+            dry_run=True,
+            filters=filters,
+            matched=FixtureCleanupCounts(),
+            deleted=FixtureCleanupCounts(),
+        )
 
 
 def _run(
@@ -233,8 +258,11 @@ def test_content_import_v12_large_payload_is_idempotent_and_fast(
     )
 
     uow_first = SqlAlchemyUnitOfWork(postgres_url)
+    facade_first = AssessmentAdminFacade(
+        uow=uow_first, fixture_cleanup_service=_NoopFixtureCleanup()
+    )
     started_first = time.perf_counter()
-    first = _import_content_with_uow(body=request, current_uow=uow_first)
+    first = _import_content_with_uow(body=request, facade=facade_first)
     duration_first = time.perf_counter() - started_first
     uow_first.close()
 
@@ -246,8 +274,11 @@ def test_content_import_v12_large_payload_is_idempotent_and_fast(
     assert duration_first < 25.0
 
     uow_second = SqlAlchemyUnitOfWork(postgres_url)
+    facade_second = AssessmentAdminFacade(
+        uow=uow_second, fixture_cleanup_service=_NoopFixtureCleanup()
+    )
     started_second = time.perf_counter()
-    second = _import_content_with_uow(body=request, current_uow=uow_second)
+    second = _import_content_with_uow(body=request, facade=facade_second)
     duration_second = time.perf_counter() - started_second
     uow_second.close()
 

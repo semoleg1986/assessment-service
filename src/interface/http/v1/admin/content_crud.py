@@ -1,36 +1,8 @@
 from dishka.integrations.fastapi import DishkaRoute, FromDishka
 from fastapi import APIRouter, HTTPException, status
 
-from src.application.content.commands.create_micro_skill import CreateMicroSkillCommand
-from src.application.content.commands.create_subject import CreateSubjectCommand
-from src.application.content.commands.create_topic import CreateTopicCommand
-from src.application.content.commands.delete_micro_skill import DeleteMicroSkillCommand
-from src.application.content.commands.link_micro_skill_predecessors import (
-    LinkMicroSkillPredecessorsCommand,
-)
-from src.application.content.commands.update_micro_skill import UpdateMicroSkillCommand
-from src.application.content.handlers.create_micro_skill import (
-    handle_create_micro_skill,
-)
-from src.application.content.handlers.create_subject import handle_create_subject
-from src.application.content.handlers.create_topic import handle_create_topic
-from src.application.content.handlers.delete_micro_skill import (
-    handle_delete_micro_skill,
-)
-from src.application.content.handlers.link_micro_skill_predecessors import (
-    handle_link_micro_skill_predecessors,
-)
-from src.application.content.handlers.list_micro_skills import handle_list_micro_skills
-from src.application.content.handlers.list_subjects import handle_list_subjects
-from src.application.content.handlers.list_topics import handle_list_topics
-from src.application.content.handlers.update_micro_skill import (
-    handle_update_micro_skill,
-)
-from src.application.content.queries.list_micro_skills import ListMicroSkillsQuery
-from src.application.content.queries.list_subjects import ListSubjectsQuery
-from src.application.content.queries.list_topics import ListTopicsQuery
 from src.application.errors import InvariantViolationError, NotFoundError
-from src.application.ports.unit_of_work import UnitOfWork
+from src.application.facade import AssessmentAdminFacade
 from src.interface.http.v1.admin._helpers import micro_skill_response
 from src.interface.http.v1.schemas import (
     MicroSkillCreateRequest,
@@ -46,11 +18,11 @@ from src.interface.http.v1.schemas import (
 router = APIRouter(tags=["assessment"], route_class=DishkaRoute)
 
 
-def _micro_skill_blocks_count(node_id: str, *, uow: UnitOfWork) -> int:
+def _micro_skill_blocks_count(node_id: str, *, facade: AssessmentAdminFacade) -> int:
     return next(
         (
             item["blocks_count"]
-            for item in handle_list_micro_skills(ListMicroSkillsQuery(), uow=uow)
+            for item in facade.list_micro_skills()
             if item["node"].node_id == node_id
         ),
         0,
@@ -64,13 +36,10 @@ def _micro_skill_blocks_count(node_id: str, *, uow: UnitOfWork) -> int:
 )
 def create_subject(
     body: SubjectCreateRequest,
-    uow: FromDishka[UnitOfWork],
+    facade: FromDishka[AssessmentAdminFacade],
 ) -> SubjectResponse:
     try:
-        subject = handle_create_subject(
-            CreateSubjectCommand(code=body.code, name=body.name),
-            uow=uow,
-        )
+        subject = facade.create_subject(code=body.code, name=body.name)
     except InvariantViolationError as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
     return SubjectResponse(code=subject.code, name=subject.name)
@@ -78,9 +47,9 @@ def create_subject(
 
 @router.get("/admin/subjects", response_model=list[SubjectResponse])
 def list_subjects(
-    uow: FromDishka[UnitOfWork],
+    facade: FromDishka[AssessmentAdminFacade],
 ) -> list[SubjectResponse]:
-    subjects = handle_list_subjects(ListSubjectsQuery(), uow=uow)
+    subjects = facade.list_subjects()
     return [
         SubjectResponse(code=subject.code, name=subject.name) for subject in subjects
     ]
@@ -93,17 +62,14 @@ def list_subjects(
 )
 def create_topic(
     body: TopicCreateRequest,
-    uow: FromDishka[UnitOfWork],
+    facade: FromDishka[AssessmentAdminFacade],
 ) -> TopicResponse:
     try:
-        topic = handle_create_topic(
-            CreateTopicCommand(
-                code=body.code,
-                subject_code=body.subject_code,
-                grade=body.grade,
-                name=body.name,
-            ),
-            uow=uow,
+        topic = facade.create_topic(
+            code=body.code,
+            subject_code=body.subject_code,
+            grade=body.grade,
+            name=body.name,
         )
     except NotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
@@ -119,9 +85,9 @@ def create_topic(
 
 @router.get("/admin/topics", response_model=list[TopicResponse])
 def list_topics(
-    uow: FromDishka[UnitOfWork],
+    facade: FromDishka[AssessmentAdminFacade],
 ) -> list[TopicResponse]:
-    topics = handle_list_topics(ListTopicsQuery(), uow=uow)
+    topics = facade.list_topics()
     return [
         TopicResponse(
             code=topic.code,
@@ -140,26 +106,23 @@ def list_topics(
 )
 def create_micro_skill(
     body: MicroSkillCreateRequest,
-    uow: FromDishka[UnitOfWork],
+    facade: FromDishka[AssessmentAdminFacade],
 ) -> MicroSkillResponse:
     try:
-        node = handle_create_micro_skill(
-            CreateMicroSkillCommand(
-                node_id=body.node_id,
-                subject_code=body.subject_code,
-                topic_code=body.topic_code,
-                grade=body.grade,
-                section_code=body.section_code,
-                section_name=body.section_name,
-                micro_skill_name=body.micro_skill_name,
-                predecessor_ids=body.predecessor_ids,
-                criticality=body.criticality,
-                source_ref=body.source_ref,
-                description=body.description,
-                status=body.status,
-                external_ref=body.external_ref,
-            ),
-            uow=uow,
+        node = facade.create_micro_skill(
+            node_id=body.node_id,
+            subject_code=body.subject_code,
+            topic_code=body.topic_code,
+            grade=body.grade,
+            section_code=body.section_code,
+            section_name=body.section_name,
+            micro_skill_name=body.micro_skill_name,
+            predecessor_ids=body.predecessor_ids,
+            criticality=body.criticality,
+            source_ref=body.source_ref,
+            description=body.description,
+            status=body.status,
+            external_ref=body.external_ref,
         )
     except NotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
@@ -176,26 +139,23 @@ def create_micro_skill(
 def update_micro_skill(
     node_id: str,
     body: MicroSkillUpdateRequest,
-    uow: FromDishka[UnitOfWork],
+    facade: FromDishka[AssessmentAdminFacade],
 ) -> MicroSkillResponse:
     try:
-        node = handle_update_micro_skill(
-            UpdateMicroSkillCommand(
-                node_id=node_id,
-                subject_code=body.subject_code,
-                topic_code=body.topic_code,
-                grade=body.grade,
-                section_code=body.section_code,
-                section_name=body.section_name,
-                micro_skill_name=body.micro_skill_name,
-                predecessor_ids=body.predecessor_ids,
-                criticality=body.criticality,
-                source_ref=body.source_ref,
-                description=body.description,
-                status=body.status,
-                external_ref=body.external_ref,
-            ),
-            uow=uow,
+        node = facade.update_micro_skill(
+            node_id=node_id,
+            subject_code=body.subject_code,
+            topic_code=body.topic_code,
+            grade=body.grade,
+            section_code=body.section_code,
+            section_name=body.section_name,
+            micro_skill_name=body.micro_skill_name,
+            predecessor_ids=body.predecessor_ids,
+            criticality=body.criticality,
+            source_ref=body.source_ref,
+            description=body.description,
+            status=body.status,
+            external_ref=body.external_ref,
         )
     except NotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
@@ -204,7 +164,7 @@ def update_micro_skill(
 
     return micro_skill_response(
         node,
-        blocks_count=_micro_skill_blocks_count(node.node_id, uow=uow),
+        blocks_count=_micro_skill_blocks_count(node.node_id, facade=facade),
     )
 
 
@@ -214,13 +174,10 @@ def update_micro_skill(
 )
 def delete_micro_skill(
     node_id: str,
-    uow: FromDishka[UnitOfWork],
+    facade: FromDishka[AssessmentAdminFacade],
 ) -> None:
     try:
-        handle_delete_micro_skill(
-            DeleteMicroSkillCommand(node_id=node_id),
-            uow=uow,
-        )
+        facade.delete_micro_skill(node_id=node_id)
     except NotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     except InvariantViolationError as exc:
@@ -234,15 +191,12 @@ def delete_micro_skill(
 def link_micro_skill_predecessors(
     node_id: str,
     body: MicroSkillLinkRequest,
-    uow: FromDishka[UnitOfWork],
+    facade: FromDishka[AssessmentAdminFacade],
 ) -> MicroSkillResponse:
     try:
-        node = handle_link_micro_skill_predecessors(
-            LinkMicroSkillPredecessorsCommand(
-                node_id=node_id,
-                predecessor_ids=body.predecessor_ids,
-            ),
-            uow=uow,
+        node = facade.link_micro_skill_predecessors(
+            node_id=node_id,
+            predecessor_ids=body.predecessor_ids,
         )
     except NotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
@@ -251,15 +205,15 @@ def link_micro_skill_predecessors(
 
     return micro_skill_response(
         node,
-        blocks_count=_micro_skill_blocks_count(node.node_id, uow=uow),
+        blocks_count=_micro_skill_blocks_count(node.node_id, facade=facade),
     )
 
 
 @router.get("/admin/micro-skills", response_model=list[MicroSkillResponse])
 def list_micro_skills(
-    uow: FromDishka[UnitOfWork],
+    facade: FromDishka[AssessmentAdminFacade],
 ) -> list[MicroSkillResponse]:
-    items = handle_list_micro_skills(ListMicroSkillsQuery(), uow=uow)
+    items = facade.list_micro_skills()
     return [
         micro_skill_response(item["node"], blocks_count=item["blocks_count"])
         for item in items

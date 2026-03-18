@@ -13,8 +13,7 @@ from src.application.content.commands.import_content import (
     ImportTextDistractorInput,
     ImportTopicInput,
 )
-from src.application.content.handlers.import_content import handle_import_content
-from src.application.ports.unit_of_work import UnitOfWork
+from src.application.facade import AssessmentAdminFacade
 from src.interface.http.v1.schemas import (
     ContentImportDetails,
     ContentImportIssue,
@@ -135,7 +134,7 @@ def _to_response(result: ImportContentResult) -> ContentImportResponse:
 def import_content_with_uow(
     *,
     body: ContentImportRequest,
-    current_uow: UnitOfWork,
+    facade: AssessmentAdminFacade,
 ) -> ContentImportResponse:
-    result = handle_import_content(_to_command(body), uow=current_uow)
+    result = facade.import_content(command=_to_command(body))
     return _to_response(result)

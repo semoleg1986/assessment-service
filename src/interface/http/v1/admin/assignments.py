@@ -1,10 +1,8 @@
 from dishka.integrations.fastapi import DishkaRoute, FromDishka
 from fastapi import APIRouter, HTTPException, status
 
-from src.application.delivery.commands.assign_test import AssignTestCommand
-from src.application.delivery.handlers.assign_test import handle_assign_test
 from src.application.errors import InvariantViolationError, NotFoundError
-from src.application.ports.unit_of_work import UnitOfWork
+from src.application.facade import AssessmentAdminFacade
 from src.interface.http.v1.schemas import AssignmentResponse, AssignTestRequest
 
 router = APIRouter(tags=["assessment"], route_class=DishkaRoute)
@@ -22,16 +20,13 @@ router = APIRouter(tags=["assessment"], route_class=DishkaRoute)
 )
 def assign_test(
     body: AssignTestRequest,
-    uow: FromDishka[UnitOfWork],
+    facade: FromDishka[AssessmentAdminFacade],
 ) -> AssignmentResponse:
     try:
-        assignment = handle_assign_test(
-            AssignTestCommand(
-                test_id=body.test_id,
-                child_id=body.child_id,
-                retake=body.retake,
-            ),
-            uow=uow,
+        assignment = facade.assign_test(
+            test_id=body.test_id,
+            child_id=body.child_id,
+            retake=body.retake,
         )
     except NotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
