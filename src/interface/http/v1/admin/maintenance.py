@@ -1,8 +1,9 @@
 from dishka.integrations.fastapi import DishkaRoute, FromDishka
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, status
 
 from src.application.facade import AssessmentContentFacade
 from src.application.ports.fixture_cleanup import FixtureCleanupUnsupportedError
+from src.interface.http.policies import with_error_mapping
 from src.interface.http.v1.admin._helpers import cleanup_counts_response
 from src.interface.http.v1.mappers import to_cleanup_fixtures_input
 from src.interface.http.v1.schemas import (
@@ -19,22 +20,12 @@ router = APIRouter(tags=["assessment"], route_class=DishkaRoute)
     response_model=FixtureCleanupResponse,
     status_code=status.HTTP_200_OK,
 )
+@with_error_mapping((FixtureCleanupUnsupportedError, 501), (ValueError, 422))
 def cleanup_fixtures(
     body: FixtureCleanupRequest,
     facade: FromDishka[AssessmentContentFacade],
 ) -> FixtureCleanupResponse:
-    try:
-        result = facade.cleanup_fixtures(payload=to_cleanup_fixtures_input(body))
-    except FixtureCleanupUnsupportedError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_501_NOT_IMPLEMENTED,
-            detail=str(exc),
-        ) from exc
-    except ValueError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail=str(exc),
-        ) from exc
+    result = facade.cleanup_fixtures(payload=to_cleanup_fixtures_input(body))
 
     return FixtureCleanupResponse(
         status="planned" if result.dry_run else "completed",

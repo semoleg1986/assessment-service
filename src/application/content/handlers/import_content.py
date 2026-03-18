@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from uuid import NAMESPACE_URL, uuid4, uuid5
+from uuid import uuid4
 
 from src.application.content.commands.create_micro_skill import CreateMicroSkillCommand
 from src.application.content.commands.create_subject import CreateSubjectCommand
@@ -18,6 +18,7 @@ from src.application.content.handlers.create_micro_skill import (
 )
 from src.application.content.handlers.create_subject import handle_create_subject
 from src.application.content.handlers.create_topic import handle_create_topic
+from src.application.policies import stable_uuid
 from src.application.ports.unit_of_work import UnitOfWork
 from src.domain.content.subject.entity import Subject
 from src.domain.content.test.entity import AssessmentTest
@@ -182,12 +183,12 @@ def _build_question_entity(
     text_distractors: list[ImportTextDistractorInput],
 ) -> Question:
     return Question(
-        question_id=uuid5(
-            NAMESPACE_URL,
-            (
-                f"{source_id}:test:{test_external_id}:question:"
-                f"{question_external_id}"
-            ),
+        question_id=stable_uuid(
+            source_id,
+            "test",
+            test_external_id,
+            "question",
+            question_external_id,
         ),
         node_id=node_id,
         text=text,
@@ -264,7 +265,7 @@ def _predict_details(
     for test in payload.tests:
         if skipped_test_ids and test.external_id in skipped_test_ids:
             continue
-        test_id = uuid5(NAMESPACE_URL, f"{command.source_id}:test:{test.external_id}")
+        test_id = stable_uuid(command.source_id, "test", test.external_id)
         existing_test = current_uow.tests.get(test_id)
         question_tuples = [
             _entity_question_tuple(
@@ -648,7 +649,7 @@ def handle_import_content(
             apply_errors.extend(test_entity_errors)
             continue
 
-        test_id = uuid5(NAMESPACE_URL, f"{command.source_id}:test:{test.external_id}")
+        test_id = stable_uuid(command.source_id, "test", test.external_id)
         existing_test = uow.tests.get(test_id)
         questions = [
             _build_question_entity(

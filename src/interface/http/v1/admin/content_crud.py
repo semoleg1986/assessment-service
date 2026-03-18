@@ -1,8 +1,9 @@
 from dishka.integrations.fastapi import DishkaRoute, FromDishka
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, status
 
 from src.application.errors import InvariantViolationError, NotFoundError
 from src.application.facade import AssessmentContentFacade
+from src.interface.http.policies import with_error_mapping
 from src.interface.http.v1.mappers import (
     to_create_subject_input,
     to_create_topic_input,
@@ -40,14 +41,12 @@ def _micro_skill_blocks_count(node_id: str, *, facade: AssessmentContentFacade) 
     response_model=SubjectResponse,
     status_code=status.HTTP_201_CREATED,
 )
+@with_error_mapping((InvariantViolationError, 409))
 def create_subject(
     body: SubjectCreateRequest,
     facade: FromDishka[AssessmentContentFacade],
 ) -> SubjectResponse:
-    try:
-        subject = facade.create_subject(payload=to_create_subject_input(body))
-    except InvariantViolationError as exc:
-        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    subject = facade.create_subject(payload=to_create_subject_input(body))
     return SubjectResponse(code=subject.code, name=subject.name)
 
 
@@ -66,16 +65,12 @@ def list_subjects(
     response_model=TopicResponse,
     status_code=status.HTTP_201_CREATED,
 )
+@with_error_mapping((NotFoundError, 404), (InvariantViolationError, 409))
 def create_topic(
     body: TopicCreateRequest,
     facade: FromDishka[AssessmentContentFacade],
 ) -> TopicResponse:
-    try:
-        topic = facade.create_topic(payload=to_create_topic_input(body))
-    except NotFoundError as exc:
-        raise HTTPException(status_code=404, detail=str(exc)) from exc
-    except InvariantViolationError as exc:
-        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    topic = facade.create_topic(payload=to_create_topic_input(body))
     return TopicResponse(
         code=topic.code,
         subject_code=topic.subject_code,
@@ -105,18 +100,12 @@ def list_topics(
     response_model=MicroSkillResponse,
     status_code=status.HTTP_201_CREATED,
 )
+@with_error_mapping((NotFoundError, 404), (InvariantViolationError, 409))
 def create_micro_skill(
     body: MicroSkillCreateRequest,
     facade: FromDishka[AssessmentContentFacade],
 ) -> MicroSkillResponse:
-    try:
-        node = facade.create_micro_skill(
-            payload=to_upsert_micro_skill_input(body=body)
-        )
-    except NotFoundError as exc:
-        raise HTTPException(status_code=404, detail=str(exc)) from exc
-    except InvariantViolationError as exc:
-        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    node = facade.create_micro_skill(payload=to_upsert_micro_skill_input(body=body))
 
     return micro_skill_response(node, blocks_count=0)
 
@@ -125,19 +114,15 @@ def create_micro_skill(
     "/admin/micro-skills/{node_id}",
     response_model=MicroSkillResponse,
 )
+@with_error_mapping((NotFoundError, 404), (InvariantViolationError, 409))
 def update_micro_skill(
     node_id: str,
     body: MicroSkillUpdateRequest,
     facade: FromDishka[AssessmentContentFacade],
 ) -> MicroSkillResponse:
-    try:
-        node = facade.update_micro_skill(
-            payload=to_upsert_micro_skill_input(node_id=node_id, body=body)
-        )
-    except NotFoundError as exc:
-        raise HTTPException(status_code=404, detail=str(exc)) from exc
-    except InvariantViolationError as exc:
-        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    node = facade.update_micro_skill(
+        payload=to_upsert_micro_skill_input(node_id=node_id, body=body)
+    )
 
     return micro_skill_response(
         node,
@@ -149,35 +134,27 @@ def update_micro_skill(
     "/admin/micro-skills/{node_id}",
     status_code=status.HTTP_204_NO_CONTENT,
 )
+@with_error_mapping((NotFoundError, 404), (InvariantViolationError, 409))
 def delete_micro_skill(
     node_id: str,
     facade: FromDishka[AssessmentContentFacade],
 ) -> None:
-    try:
-        facade.delete_micro_skill(node_id=node_id)
-    except NotFoundError as exc:
-        raise HTTPException(status_code=404, detail=str(exc)) from exc
-    except InvariantViolationError as exc:
-        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    facade.delete_micro_skill(node_id=node_id)
 
 
 @router.post(
     "/admin/micro-skills/{node_id}/links",
     response_model=MicroSkillResponse,
 )
+@with_error_mapping((NotFoundError, 404), (InvariantViolationError, 409))
 def link_micro_skill_predecessors(
     node_id: str,
     body: MicroSkillLinkRequest,
     facade: FromDishka[AssessmentContentFacade],
 ) -> MicroSkillResponse:
-    try:
-        node = facade.link_micro_skill_predecessors(
-            payload=to_link_micro_skill_predecessors_input(node_id=node_id, body=body)
-        )
-    except NotFoundError as exc:
-        raise HTTPException(status_code=404, detail=str(exc)) from exc
-    except InvariantViolationError as exc:
-        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    node = facade.link_micro_skill_predecessors(
+        payload=to_link_micro_skill_predecessors_input(node_id=node_id, body=body)
+    )
 
     return micro_skill_response(
         node,

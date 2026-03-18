@@ -1,11 +1,12 @@
 from uuid import UUID
 
 from dishka.integrations.fastapi import DishkaRoute, FromDishka
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter
 
 from src.application.contracts.questions import DiagnosticTag
 from src.application.errors import InvariantViolationError, NotFoundError
 from src.application.facade import AssessmentUserFacade
+from src.interface.http.policies import with_error_mapping
 from src.interface.http.v1.mappers import (
     to_attempt_id_input,
     to_child_scoped_input,
@@ -52,16 +53,12 @@ def list_assignments_by_child(
 
 
 @router.post("/attempts/start", response_model=StartAttemptResponse)
+@with_error_mapping((NotFoundError, 404), (InvariantViolationError, 409))
 def start_attempt(
     body: StartAttemptRequest,
     facade: FromDishka[AssessmentUserFacade],
 ) -> StartAttemptResponse:
-    try:
-        attempt = facade.start_attempt(payload=to_start_attempt_input(body))
-    except NotFoundError as exc:
-        raise HTTPException(status_code=404, detail=str(exc)) from exc
-    except InvariantViolationError as exc:
-        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    attempt = facade.start_attempt(payload=to_start_attempt_input(body))
 
     return StartAttemptResponse(
         attempt_id=attempt.attempt_id,
@@ -94,19 +91,15 @@ def start_attempt_for_assignment(
     "/user/attempts/{attempt_id}/submit",
     response_model=SubmitAttemptResponse,
 )
+@with_error_mapping((NotFoundError, 404), (InvariantViolationError, 409))
 def submit_attempt(
     attempt_id: UUID,
     body: SubmitAttemptRequest,
     facade: FromDishka[AssessmentUserFacade],
 ) -> SubmitAttemptResponse:
-    try:
-        result = facade.submit_attempt(
-            payload=to_submit_attempt_input(attempt_id=attempt_id, body=body)
-        )
-    except NotFoundError as exc:
-        raise HTTPException(status_code=404, detail=str(exc)) from exc
-    except InvariantViolationError as exc:
-        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    result = facade.submit_attempt(
+        payload=to_submit_attempt_input(attempt_id=attempt_id, body=body)
+    )
 
     return SubmitAttemptResponse(**result)
 
@@ -115,19 +108,15 @@ def submit_attempt(
     "/user/attempts/{attempt_id}/answers",
     response_model=SaveAttemptAnswersResponse,
 )
+@with_error_mapping((NotFoundError, 404), (InvariantViolationError, 409))
 def save_attempt_answers(
     attempt_id: UUID,
     body: SaveAttemptAnswersRequest,
     facade: FromDishka[AssessmentUserFacade],
 ) -> SaveAttemptAnswersResponse:
-    try:
-        result = facade.save_attempt_answers(
-            payload=to_save_attempt_answers_input(attempt_id=attempt_id, body=body)
-        )
-    except NotFoundError as exc:
-        raise HTTPException(status_code=404, detail=str(exc)) from exc
-    except InvariantViolationError as exc:
-        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    result = facade.save_attempt_answers(
+        payload=to_save_attempt_answers_input(attempt_id=attempt_id, body=body)
+    )
     return SaveAttemptAnswersResponse(
         attempt_id=str(result["attempt_id"]),
         saved_answers=int(result["saved_answers"]),
@@ -135,16 +124,14 @@ def save_attempt_answers(
 
 
 @router.get("/attempts/{attempt_id}", response_model=AttemptResultResponse)
+@with_error_mapping((NotFoundError, 404))
 def get_attempt_result(
     attempt_id: UUID,
     facade: FromDishka[AssessmentUserFacade],
 ) -> AttemptResultResponse:
-    try:
-        result = facade.get_attempt_result(
-            payload=to_attempt_id_input(attempt_id=attempt_id)
-        )
-    except NotFoundError as exc:
-        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    result = facade.get_attempt_result(
+        payload=to_attempt_id_input(attempt_id=attempt_id)
+    )
     return AttemptResultResponse(
         attempt_id=result["attempt_id"],
         status=result["status"],

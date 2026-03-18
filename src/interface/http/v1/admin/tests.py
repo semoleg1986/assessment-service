@@ -5,6 +5,7 @@ from fastapi import APIRouter, HTTPException, status
 
 from src.application.errors import InvariantViolationError, NotFoundError
 from src.application.facade import AssessmentContentFacade
+from src.interface.http.policies import with_error_mapping
 from src.interface.http.v1.mappers import to_create_test_input
 from src.interface.http.v1.admin._helpers import test_response
 from src.interface.http.v1.schemas import (
@@ -22,16 +23,12 @@ router = APIRouter(tags=["assessment"], route_class=DishkaRoute)
     response_model=TestResponse,
     status_code=status.HTTP_201_CREATED,
 )
+@with_error_mapping((NotFoundError, 404), (InvariantViolationError, 409))
 def create_test(
     body: CreateTestRequest,
     facade: FromDishka[AssessmentContentFacade],
 ) -> TestResponse:
-    try:
-        test = facade.create_test(payload=to_create_test_input(body))
-    except NotFoundError as exc:
-        raise HTTPException(status_code=404, detail=str(exc)) from exc
-    except InvariantViolationError as exc:
-        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    test = facade.create_test(payload=to_create_test_input(body))
 
     return test_response(test)
 
