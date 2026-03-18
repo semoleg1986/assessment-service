@@ -3,8 +3,9 @@ from uuid import UUID
 from dishka.integrations.fastapi import DishkaRoute, FromDishka
 from fastapi import APIRouter
 
-from src.application.facade import AssessmentResultsFacade, ChildScopedInput
+from src.application.facade import AssessmentResultsFacade
 from src.interface.http.v1.admin._helpers import sorted_diagnostic_tag_counts
+from src.interface.http.v1.mappers import to_child_scoped_input
 from src.interface.http.v1.schemas import (
     ChildDiagnosticsResponse,
     ChildResultsAttemptResponse,
@@ -26,7 +27,9 @@ def get_child_diagnostics(
     child_id: UUID,
     facade: FromDishka[AssessmentResultsFacade],
 ) -> ChildDiagnosticsResponse:
-    result = facade.get_child_diagnostics(payload=ChildScopedInput(child_id=child_id))
+    result = facade.get_child_diagnostics(
+        payload=to_child_scoped_input(child_id=child_id)
+    )
     return ChildDiagnosticsResponse(
         child_id=child_id,
         assignments_total=result["assignments_total"],
@@ -42,7 +45,9 @@ def get_child_results(
     child_id: UUID,
     facade: FromDishka[AssessmentResultsFacade],
 ) -> ChildResultsResponse:
-    result = facade.get_child_results(payload=ChildScopedInput(child_id=child_id))
+    result = facade.get_child_results(
+        payload=to_child_scoped_input(child_id=child_id)
+    )
     return ChildResultsResponse(
         child_id=child_id,
         summary=ChildResultsSummaryResponse(
@@ -96,7 +101,9 @@ def get_child_skill_results(
     child_id: UUID,
     facade: FromDishka[AssessmentResultsFacade],
 ) -> ChildSkillResultsResponse:
-    result = facade.get_child_skill_results(payload=ChildScopedInput(child_id=child_id))
+    result = facade.get_child_skill_results(
+        payload=to_child_scoped_input(child_id=child_id)
+    )
     return ChildSkillResultsResponse(
         child_id=child_id,
         summary=ChildSkillResultsSummaryResponse(

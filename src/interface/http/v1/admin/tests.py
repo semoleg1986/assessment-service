@@ -4,13 +4,8 @@ from dishka.integrations.fastapi import DishkaRoute, FromDishka
 from fastapi import APIRouter, HTTPException, status
 
 from src.application.errors import InvariantViolationError, NotFoundError
-from src.application.facade import (
-    AssessmentContentFacade,
-    CreateTestInput,
-    TestQuestionData,
-    TestQuestionOptionData,
-    TestTextDistractorData,
-)
+from src.application.facade import AssessmentContentFacade
+from src.interface.http.v1.mappers import to_create_test_input
 from src.interface.http.v1.admin._helpers import test_response
 from src.interface.http.v1.schemas import (
     CreateTestRequest,
@@ -32,40 +27,7 @@ def create_test(
     facade: FromDishka[AssessmentContentFacade],
 ) -> TestResponse:
     try:
-        test = facade.create_test(
-            payload=CreateTestInput(
-                subject_code=body.subject_code,
-                grade=body.grade,
-                questions=[
-                    TestQuestionData(
-                        node_id=question.node_id,
-                        text=question.text,
-                        question_type=question.question_type,
-                        answer_key=question.answer_key,
-                        correct_option_id=question.correct_option_id,
-                        options=[
-                            TestQuestionOptionData(
-                                option_id=option.option_id,
-                                text=option.text,
-                                position=option.position,
-                                diagnostic_tag=option.diagnostic_tag,
-                            )
-                            for option in question.options
-                        ],
-                        text_distractors=[
-                            TestTextDistractorData(
-                                pattern=distractor.pattern,
-                                match_mode=distractor.match_mode,
-                                diagnostic_tag=distractor.diagnostic_tag,
-                            )
-                            for distractor in question.text_distractors
-                        ],
-                        max_score=question.max_score,
-                    )
-                    for question in body.questions
-                ],
-            ),
-        )
+        test = facade.create_test(payload=to_create_test_input(body))
     except NotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     except InvariantViolationError as exc:

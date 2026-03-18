@@ -5,14 +5,12 @@ from fastapi import APIRouter, HTTPException
 
 from src.application.contracts.questions import DiagnosticTag
 from src.application.errors import InvariantViolationError, NotFoundError
-from src.application.facade import (
-    AssessmentUserFacade,
-    AttemptIdInput,
-    ChildScopedInput,
-    SaveAttemptAnswersInput,
-    StartAttemptInput,
-    SubmitAttemptInput,
-    SubmittedAnswerData,
+from src.application.facade import AssessmentUserFacade, ChildScopedInput
+from src.interface.http.v1.mappers import (
+    to_attempt_id_input,
+    to_save_attempt_answers_input,
+    to_start_attempt_input,
+    to_submit_attempt_input,
 )
 from src.interface.http.v1.schemas import (
     AssignmentListItemResponse,
@@ -58,12 +56,7 @@ def start_attempt(
     facade: FromDishka[AssessmentUserFacade],
 ) -> StartAttemptResponse:
     try:
-        attempt = facade.start_attempt(
-            payload=StartAttemptInput(
-                assignment_id=body.assignment_id,
-                child_id=body.child_id,
-            )
-        )
+        attempt = facade.start_attempt(payload=to_start_attempt_input(body))
     except NotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     except InvariantViolationError as exc:
@@ -107,18 +100,7 @@ def submit_attempt(
 ) -> SubmitAttemptResponse:
     try:
         result = facade.submit_attempt(
-            payload=SubmitAttemptInput(
-                attempt_id=attempt_id,
-                answers=[
-                    SubmittedAnswerData(
-                        question_id=a.question_id,
-                        value=a.value,
-                        selected_option_id=a.selected_option_id,
-                        time_spent_ms=a.time_spent_ms,
-                    )
-                    for a in body.answers
-                ],
-            )
+            payload=to_submit_attempt_input(attempt_id=attempt_id, body=body)
         )
     except NotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
@@ -139,18 +121,7 @@ def save_attempt_answers(
 ) -> SaveAttemptAnswersResponse:
     try:
         result = facade.save_attempt_answers(
-            payload=SaveAttemptAnswersInput(
-                attempt_id=attempt_id,
-                answers=[
-                    SubmittedAnswerData(
-                        question_id=a.question_id,
-                        value=a.value,
-                        selected_option_id=a.selected_option_id,
-                        time_spent_ms=a.time_spent_ms,
-                    )
-                    for a in body.answers
-                ],
-            )
+            payload=to_save_attempt_answers_input(attempt_id=attempt_id, body=body)
         )
     except NotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
@@ -169,7 +140,7 @@ def get_attempt_result(
 ) -> AttemptResultResponse:
     try:
         result = facade.get_attempt_result(
-            payload=AttemptIdInput(attempt_id=attempt_id)
+            payload=to_attempt_id_input(attempt_id=attempt_id)
         )
     except NotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc

@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Any, Protocol
 
 from src.application.facade import ImportContentPayloadInput
+from src.interface.http.v1.mappers import to_import_content_payload_input
 from src.interface.http.v1.schemas import (
     ContentImportDetails,
     ContentImportIssue,
@@ -55,12 +56,6 @@ def import_content_with_uow(
     facade: _ImportFacadeLike,
 ) -> ContentImportResponse:
     result = facade.import_content_payload(
-        payload=ImportContentPayloadInput(
-            source_id=body.source_id,
-            contract_version=body.contract_version,
-            validate_only=body.validate_only,
-            error_mode=body.error_mode,
-            payload=body.payload.model_dump(mode="python"),
-        )
+        payload=to_import_content_payload_input(body)
     )
     return _to_response(result)
