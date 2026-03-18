@@ -5,9 +5,10 @@ from fastapi import APIRouter, HTTPException
 
 from src.application.contracts.questions import DiagnosticTag
 from src.application.errors import InvariantViolationError, NotFoundError
-from src.application.facade import AssessmentUserFacade, ChildScopedInput
+from src.application.facade import AssessmentUserFacade
 from src.interface.http.v1.mappers import (
     to_attempt_id_input,
+    to_child_scoped_input,
     to_save_attempt_answers_input,
     to_start_attempt_input,
     to_submit_attempt_input,
@@ -37,7 +38,7 @@ def list_assignments_by_child(
     facade: FromDishka[AssessmentUserFacade],
 ) -> list[AssignmentListItemResponse]:
     assignments = facade.list_assignments_by_child(
-        payload=ChildScopedInput(child_id=child_id)
+        payload=to_child_scoped_input(child_id=child_id)
     )
     return [
         AssignmentListItemResponse(
