@@ -8,6 +8,7 @@ from src.application.reporting.queries.get_child_skill_results import (
     GetChildSkillResultsQuery,
 )
 from src.domain.shared.questions import DiagnosticTag
+from src.domain.shared.signals import SkillSignal
 
 _WILSON_Z_95 = 1.96
 _INSUFFICIENT_DATA_THRESHOLD = 3
@@ -34,7 +35,6 @@ _DIAGNOSTIC_RECOMMENDATIONS: dict[str, str] = {
 }
 
 GapLevel: TypeAlias = Literal["insufficient_data", "high", "medium", "low"]
-Signal: TypeAlias = Literal["normal", "risk", "gap", "critical_gap"]
 
 _GAP_LEVEL_RANK: dict[GapLevel, int] = {
     "high": 0,
@@ -43,11 +43,11 @@ _GAP_LEVEL_RANK: dict[GapLevel, int] = {
     "insufficient_data": 3,
 }
 
-_SIGNAL_RANK: dict[Signal, int] = {
-    "critical_gap": 0,
-    "gap": 1,
-    "risk": 2,
-    "normal": 3,
+_SIGNAL_RANK: dict[SkillSignal, int] = {
+    SkillSignal.CRITICAL_GAP: 0,
+    SkillSignal.GAP: 1,
+    SkillSignal.RISK: 2,
+    SkillSignal.NORMAL: 3,
 }
 
 
@@ -62,7 +62,7 @@ class ChildSkillResult(TypedDict):
     wilson_low: float
     wilson_high: float
     gap_level: GapLevel
-    signal: Signal
+    signal: SkillSignal
     resolved_diagnostic_tags: dict[str, int]
     recommendation: str
 
@@ -140,17 +140,17 @@ def _signal(
     accuracy_percent: float,
     wilson_low: float,
     gap_level: GapLevel,
-) -> Signal:
+) -> SkillSignal:
     del attempted_questions, accuracy_percent, wilson_low
     if gap_level == "high":
-        return "critical_gap"
+        return SkillSignal.CRITICAL_GAP
     if gap_level == "medium":
-        return "gap"
+        return SkillSignal.GAP
     if gap_level == "low":
-        return "normal"
+        return SkillSignal.NORMAL
     if gap_level == "insufficient_data":
-        return "risk"
-    return "risk"
+        return SkillSignal.RISK
+    return SkillSignal.RISK
 
 
 def _recommendation(
@@ -286,11 +286,11 @@ def handle_get_child_skill_results(
         else:
             insufficient_data_total += 1
 
-        if signal == "critical_gap":
+        if signal == SkillSignal.CRITICAL_GAP:
             critical_gap_total += 1
-        elif signal == "gap":
+        elif signal == SkillSignal.GAP:
             gap_total += 1
-        elif signal == "risk":
+        elif signal == SkillSignal.RISK:
             risk_total += 1
         else:
             normal_total += 1

@@ -1011,7 +1011,6 @@ paths:
                   wilson_low: 1
                   wilson_high: 1
                   gap_level: insufficient_data
-                  signal: normal
                   recommendation: string
         '422':
           description: Validation Error
@@ -1775,13 +1774,7 @@ components:
           - low
           title: Gap Level
         signal:
-          type: string
-          enum:
-          - normal
-          - risk
-          - gap
-          - critical_gap
-          title: Signal
+          $ref: '#/components/schemas/SkillSignal'
         resolved_diagnostic_tags:
           items:
             $ref: '#/components/schemas/ChildResultsDiagnosticTagCountResponse'
@@ -2706,6 +2699,14 @@ components:
       - attempt_id
       - saved_answers
       title: SaveAttemptAnswersResponse
+    SkillSignal:
+      type: string
+      enum:
+      - normal
+      - risk
+      - gap
+      - critical_gap
+      title: SkillSignal
     StartAttemptByAssignmentRequest:
       properties:
         child_id:

@@ -7,6 +7,7 @@ from uuid import UUID
 from pydantic import BaseModel, Field
 
 from src.application.contracts.questions import DiagnosticTag
+from src.domain.shared.signals import SkillSignal
 
 
 class ChildDiagnosticsResponse(BaseModel):
@@ -74,7 +75,7 @@ class ChildSkillResultResponse(BaseModel):
     wilson_low: float
     wilson_high: float
     gap_level: Literal["insufficient_data", "high", "medium", "low"]
-    signal: Literal["normal", "risk", "gap", "critical_gap"]
+    signal: SkillSignal
     resolved_diagnostic_tags: list[ChildResultsDiagnosticTagCountResponse] = Field(
         default_factory=list
     )
